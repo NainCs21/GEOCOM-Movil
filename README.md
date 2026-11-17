@@ -17,14 +17,6 @@ usa el ingeniero en sus ejemplos de clase: Retrofit + OkHttp + Gson +
 3. Deja que sincronice (va a descargar las dependencias de Retrofit, OkHttp,
    Navigation, ZXing, etc. automáticamente).
 
-## URL del backend
-
-Está configurada en `app/src/main/java/com/example/apimovil/data/ApiClient.kt`:
-
-```kotlin
-private const val BASE_URL = "https://geocom-production.up.railway.app/api/"
-```
-
 Actualmente apunta al servidor de producción en Railway, por lo que funciona tanto en emulador como en dispositivos físicos sin necesidad de levantar un servidor local (`php artisan serve`).
 
 ## Qué cubre cada rol
