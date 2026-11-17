@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginFragment">
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.example.apimovil.ui.login.LoginFragment"
+        android:label="Iniciar sesión" />
+
+    <!-- Conductor -->
+
+    <fragment
+        android:id="@+id/homeConductorFragment"
+        android:name="com.example.apimovil.ui.conductor.HomeConductorFragment"
+        android:label="Mis órdenes" />
+
+    <fragment
+        android:id="@+id/nuevaSolicitudFragment"
+        android:name="com.example.apimovil.ui.conductor.NuevaSolicitudFragment"
+        android:label="Nueva solicitud" />
+
+    <fragment
+        android:id="@+id/escanearQrFragment"
+        android:name="com.example.apimovil.ui.conductor.EscanearQrFragment"
+        android:label="Escanear código QR" />
+
+    <fragment
+        android:id="@+id/ordenDetalleFragment"
+        android:name="com.example.apimovil.ui.conductor.OrdenDetalleFragment"
+        android:label="Detalle de la orden" />
+
+    <fragment
+        android:id="@+id/historialFragment"
+        android:name="com.example.apimovil.ui.conductor.HistorialFragment"
+        android:label="Mi historial" />
+
+    <fragment
+        android:id="@+id/perfilConductorFragment"
+        android:name="com.example.apimovil.ui.conductor.PerfilConductorFragment"
+        android:label="Mi perfil" />
+
+    <!-- Administrador / Supervisor -->
+
+    <fragment
+        android:id="@+id/homeAdminFragment"
+        android:name="com.example.apimovil.ui.admin.HomeAdminFragment"
+        android:label="Panel" />
+
+    <fragment
+        android:id="@+id/solicitudesPendientesFragment"
+        android:name="com.example.apimovil.ui.admin.SolicitudesPendientesFragment"
+        android:label="Solicitudes pendientes" />
+
+    <fragment
+        android:id="@+id/asignarMontoFragment"
+        android:name="com.example.apimovil.ui.admin.AsignarMontoFragment"
+        android:label="Asignar monto" />
+
+    <fragment
+        android:id="@+id/ordenesAdminFragment"
+        android:name="com.example.apimovil.ui.admin.OrdenesAdminFragment"
+        android:label="Órdenes" />
+
+    <fragment
+        android:id="@+id/catalogosFragment"
+        android:name="com.example.apimovil.ui.admin.CatalogosFragment"
+        android:label="Catálogos" />
+
+    <fragment
+        android:id="@+id/cajaChicaFragment"
+        android:name="com.example.apimovil.ui.admin.CajaChicaFragment"
+        android:label="Caja chica" />
+
+    <fragment
+        android:id="@+id/reportesFragment"
+        android:name="com.example.apimovil.ui.admin.ReportesFragment"
+        android:label="Reportes" />
+
+    <fragment
+        android:id="@+id/ordenDetalleAdminFragment"
+        android:name="com.example.apimovil.ui.admin.OrdenDetalleAdminFragment"
+        android:label="Detalle de orden" />
+
+    <fragment
+        android:id="@+id/masFragment"
+        android:name="com.example.apimovil.ui.admin.MasFragment"
+        android:label="Más" />
+
+    <fragment
+        android:id="@+id/notificacionesFragment"
+        android:name="com.example.apimovil.ui.admin.NotificacionesFragment"
+        android:label="Notificaciones" />
+
+    <fragment
+        android:id="@+id/perfilAdminFragment"
+        android:name="com.example.apimovil.ui.admin.PerfilAdminFragment"
+        android:label="Mi perfil" />
+
+</navigation>

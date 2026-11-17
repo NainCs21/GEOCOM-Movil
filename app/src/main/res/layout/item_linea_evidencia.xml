@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_card"
+    android:padding="14dp"
+    android:layout_marginBottom="12dp">
+
+    <TextView
+        android:id="@+id/textDestino"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/textMonto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="15sp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="12dp" />
+
+    <!-- 1. Bomba -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="@string/foto_bomba"
+            android:textSize="13sp"
+            android:textColor="@color/texto_principal" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnBomba"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="@string/subir_foto"
+            android:textSize="12sp" />
+        <TextView
+            android:id="@+id/textBombaListo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/foto_subida"
+            android:textColor="#2E7D32"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- 2. Tablero -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+        <TextView
+            android:id="@+id/textTableroLabel"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="@string/foto_tablero"
+            android:textSize="13sp"
+            android:textColor="@color/texto_principal" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTablero"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="@string/subir_foto"
+            android:textSize="12sp" />
+        <TextView
+            android:id="@+id/textTableroListo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/foto_subida"
+            android:textColor="#2E7D32"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- 3. Tanque -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="@string/foto_tanque"
+            android:textSize="13sp"
+            android:textColor="@color/texto_principal" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTanque"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="@string/subir_foto"
+            android:textSize="12sp" />
+        <TextView
+            android:id="@+id/textTanqueListo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/foto_subida"
+            android:textColor="#2E7D32"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- 4. Factura -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="@string/foto_factura"
+            android:textSize="13sp"
+            android:textColor="@color/texto_principal" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFactura"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="@string/subir_foto"
+            android:textSize="12sp" />
+        <TextView
+            android:id="@+id/textFacturaListo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/foto_subida"
+            android:textColor="#2E7D32"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+</LinearLayout>

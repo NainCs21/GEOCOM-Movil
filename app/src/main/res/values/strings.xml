@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Órdenes de Combustible</string>
+
+    <!-- Login -->
+    <string name="correo">Correo electrónico</string>
+    <string name="contrasena">Contraseña</string>
+    <string name="ingresar">Ingresar</string>
+    <string name="inicia_sesion">Inicia sesión</string>
+    <string name="acceso_seguro">Acceso seguro</string>
+    <string name="control_movil">ADMINISTRACIÓN MÓVIL</string>
+    <string name="control_de_combustible_desde_tu_movil">Control de combustible.\nDesde tu móvil.</string>
+    <string name="asigna_consulta_y_gestiona">Asigna, consulta y gestiona en un solo lugar.</string>
+    <string name="olvidaste_tu_contrasena">¿Olvidaste tu contraseña?</string>
+    <string name="una_app_el_acceso_que_corresponde">Una app, el acceso que te corresponde</string>
+    <string name="al_ingresar_tu_rol_te_lleva">Al ingresar, tu rol te lleva automáticamente a la vista que corresponde.</string>
+    <string name="acceso_exclusivo_personal_autorizado">Acceso exclusivo para personal autorizado.</string>
+    <string name="hola_usuario">Hola, %1$s</string>
+    <string name="hola_usuario_rol">Hola, %1$s (%2$s)</string>
+    <string name="rol_administrador">Administrador</string>
+    <string name="rol_supervisor">Supervisor</string>
+    <string name="cerrar_sesion">Cerrar sesión</string>
+
+    <!-- Conductor: inicio -->
+    <string name="nueva_solicitud">Nueva solicitud</string>
+    <string name="escanear_qr">Escanear QR</string>
+    <string name="sin_ordenes_todavia">Todavía no tienes órdenes.</string>
+
+    <!-- Conductor: nueva solicitud -->
+    <string name="para_que_necesitas_combustible">¿Para qué necesitas combustible?</string>
+    <string name="destino">Destino (vehiculo, mgp o ambos)</string>
+    <string name="id_del_vehiculo">Id del vehículo</string>
+    <string name="descripcion_de_la_planta_mgp">Descripción de la planta generadora (MGP)</string>
+    <string name="descripcion_de_la_actividad">Descripción de la actividad</string>
+    <string name="enviar_solicitud">Enviar solicitud</string>
+    <string name="elige_un_destino_valido">Elige un destino válido: vehiculo, mgp o ambos.</string>
+
+    <!-- Conductor: escanear QR -->
+    <string name="escanea_el_qr_de_la_gasolinera">Escanea el código QR de la gasolinera para ver tu orden</string>
+    <string name="abrir_camara">Abrir cámara</string>
+    <string name="apunta_al_codigo_qr">Apunta la cámara al código QR de la gasolinera</string>
+
+    <!-- Conductor: detalle de orden -->
+    <string name="tiempo_restante_max_15">Tiempo restante · máximo 15 min</string>
+    <string name="al_llegar_a_0_la_orden_vence">Al llegar a 00:00, la orden vence.</string>
+    <string name="monto_total_autorizado">MONTO TOTAL AUTORIZADO</string>
+    <string name="monto_total_lempiras">L %1$.2f</string>
+    <string name="distribuido_en_n_lineas">Distribuido en %1$d línea(s) de combustible</string>
+    <string name="orden_numero">Orden #%1$s</string>
+    <string name="pendiente_de_retirar_badge">PENDIENTE</string>
+    <string name="abierta_badge">ABIERTA</string>
+    <string name="completada_badge">COMPLETADA</string>
+    <string name="vencida_badge">VENCIDA</string>
+    <string name="gasolinera_por_definir">Gasolinera por definir</string>
+
+    <!-- Navegación conductor -->
+    <string name="mi_historial">Mi historial</string>
+    <string name="mi_perfil">Mi perfil</string>
+
+    <!-- Pendiente de retirar -->
+    <string name="orden_protegida">Orden protegida</string>
+    <string name="el_monto_y_gasolinera_tras_qr">El monto y la gasolinera se mostrarán únicamente después de validar el QR.</string>
+    <string name="plazo_de_retiro">Retira antes de las %1$s</string>
+    <string name="informacion_protegida_conductor">Solo puedes consultar y gestionar tus propias solicitudes.</string>
+    <string name="escanear_qr_de_gasolinera">Escanear QR de gasolinera</string>
+
+    <!-- Historial -->
+    <string name="historial_titulo">Mi historial</string>
+    <string name="historial_subtitulo">Consulta el estado final de tus órdenes.</string>
+    <string name="filtro_todas">Todas</string>
+    <string name="filtro_completadas">Completadas</string>
+    <string name="filtro_vencidas">Vencidas</string>
+    <string name="privacidad_historial">Este historial muestra únicamente tus órdenes.</string>
+
+    <!-- Perfil -->
+    <string name="datos_de_mi_cuenta">Datos de mi cuenta</string>
+    <string name="rol_conductor">CONDUCTOR</string>
+    <string name="tu_informacion_es_personal">Tu información es personal</string>
+    <string name="si_necesitas_actualizar_contacta_admin">Si necesitas actualizar tus datos, contacta al administrador.</string>
+    <string name="informacion_cierre_sesion">Al salir, volverás a la pantalla de acceso. Tus solicitudes y evidencias guardadas se conservarán.</string>
+    <string name="tiempo_restante">%1$s:%2$s restantes</string>
+    <string name="tiempo_agotado">Tiempo agotado</string>
+    <string name="orden_completada_mensaje">Orden completada. ¡Buen viaje!</string>
+    <string name="orden_vencida_mensaje">Esta orden venció. Genera una nueva solicitud.</string>
+    <string name="vehiculo">Vehículo</string>
+    <string name="planta_generadora">Planta generadora</string>
+    <string name="monto_lempiras">Monto autorizado: L %1$.2f</string>
+    <string name="subir_evidencia">Subir evidencia</string>
+    <string name="evidencia_subida_el">Evidencia subida el %1$s</string>
+
+    <!-- Admin: inicio -->
+    <string name="solicitudes_pendientes">Solicitudes pendientes</string>
+    <string name="ordenes">Órdenes</string>
+    <string name="catalogos">Catálogos</string>
+    <string name="inicio">Inicio</string>
+    <string name="solicitudes">Solicitudes</string>
+    <string name="mas">Más</string>
+    <string name="avisos">Avisos</string>
+    <string name="perfil">Perfil</string>
+
+    <!-- Dashboard admin -->
+    <string name="notificaciones">Notificaciones</string>
+    <string name="buen_dia_usuario">Buen día, %1$s</string>
+    <string name="esperan_asignacion_de_monto">Esperan asignación de monto</string>
+    <string name="asignar_montos">Asignar montos  →</string>
+    <string name="ordenes_del_dia_vigencia">Órdenes del día · vigencia de 15 min</string>
+    <string name="ver_orden">Ver orden →</string>
+    <string name="quedan_n_min">Quedan %1$d min</string>
+    <string name="vence_a_las">%1$s · Vence a las %2$s</string>
+    <string name="accesos_rapidos">Accesos rápidos</string>
+    <string name="mas_caja_chica">＋ Caja chica</string>
+    <string name="catalogos_flecha">Catálogos →</string>
+    <string name="volver">Volver</string>
+
+    <!-- Más -->
+    <string name="mas_opciones">Más opciones</string>
+    <string name="notificaciones_subtitulo">Avisos de órdenes asignadas, completadas y vencidas.</string>
+    <string name="reportes_subtitulo">Consumo por conductor y por gasolinera.</string>
+    <string name="caja_chica_subtitulo">Registro de entregas para trabajos foráneos.</string>
+    <string name="mi_perfil_subtitulo">Tus datos y cierre de sesión.</string>
+
+    <!-- Notificaciones (derivadas de ordenes, no hay endpoint propio) -->
+    <string name="notificaciones_titulo">Notificaciones</string>
+    <string name="notificaciones_nota">Se generan a partir de tus órdenes completadas y vencidas recientes.</string>
+    <string name="sin_notificaciones">No hay notificaciones por ahora.</string>
+    <string name="orden_completada_notif">%1$s completó su carga en %2$s.</string>
+    <string name="orden_vencida_notif">%1$s no completó la orden %2$s dentro del tiempo de vigencia.</string>
+
+    <!-- Perfil admin/supervisor -->
+    <string name="correo_de_acceso">%1$s</string>
+
+    <!-- Solicitudes (tarjetas) -->
+    <string name="hace_n_min">Hace %1$d min</string>
+    <string name="hace_n_h">Hace %1$d h</string>
+    <string name="solicitud_codigo">SOL-%1$04d</string>
+    <string name="conductor_numero">Conductor #%1$d</string>
+    <string name="asignar_monto_flecha">Asignar monto  →</string>
+    <string name="asignar_monto_titulo">Asignar monto</string>
+    <string name="linea_01_vehiculo">01 · Vehículo</string>
+    <string name="linea_02_mgp">02 · MGP</string>
+    <string name="total_de_la_solicitud">Total de la solicitud · L %1$.2f</string>
+    <string name="caja_chica">Caja chica</string>
+    <string name="reportes">Reportes</string>
+    <string name="no_hay_solicitudes_pendientes">No hay solicitudes pendientes.</string>
+    <string name="solo_consulta_no_puedes_asignar">Tu rol es de solo consulta: puedes ver las solicitudes, pero no asignar montos.</string>
+
+    <!-- Admin: asignar monto -->
+    <string name="gasolinera">Gasolinera</string>
+    <string name="horas_de_vigencia_1_a_3">Horas de vigencia (1 a 3)</string>
+    <string name="monto_vehiculo_lempiras">Monto para el vehículo (L)</string>
+    <string name="monto_mgp_lempiras">Monto para la planta MGP (L)</string>
+    <string name="asignar_y_generar_orden">Asignar monto y generar orden</string>
+    <string name="completa_gasolinera_y_vigencia">Elige la gasolinera e indica las horas de vigencia (1 a 3).</string>
+    <string name="ingresa_al_menos_un_monto">Ingresa al menos un monto.</string>
+
+    <!-- Admin: órdenes -->
+    <string name="filtrar_por_estado">Filtrar por estado</string>
+
+    <!-- Admin: catálogos -->
+    <string name="conductores">Conductores</string>
+    <string name="vehiculos">Vehículos</string>
+    <string name="gasolineras">Gasolineras</string>
+
+    <!-- Admin: caja chica -->
+    <string name="registrar_caja_chica">Registrar caja chica</string>
+    <string name="id_conductor_opcional">Id del conductor (opcional)</string>
+    <string name="monto_lempiras_hint">Monto (L)</string>
+    <string name="descripcion">Descripción</string>
+    <string name="registrar">Registrar</string>
+    <string name="completa_monto_y_descripcion">Completa el monto y la descripción.</string>
+
+    <!-- Admin: reportes -->
+    <string name="por_conductor">Por conductor</string>
+    <string name="por_gasolinera">Por gasolinera</string>
+    <string name="inactivo">inactivo</string>
+    <string name="monto_y_descripcion">L %1$.2f · %2$s</string>
+    <string name="ordenes_y_monto">%1$d órdenes · L %2$.2f</string>
+    <string name="nuevo">＋ Nuevo</string>
+    <string name="nuevo_conductor">Nuevo conductor</string>
+    <string name="nuevo_vehiculo">Nuevo vehículo</string>
+    <string name="nueva_gasolinera">Nueva gasolinera</string>
+    <string name="nombre">Nombre</string>
+    <string name="telefono">Teléfono</string>
+    <string name="cargo">Cargo</string>
+    <string name="placa">Placa</string>
+    <string name="marca">Marca</string>
+    <string name="modelo">Modelo</string>
+    <string name="anio">Año</string>
+    <string name="tipo_combustible">Tipo de combustible</string>
+    <string name="direccion">Dirección</string>
+    <string name="codigo_qr">Código QR</string>
+    <string name="guardar">Guardar</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="registro_exitoso">Registro exitoso</string>
+    <string name="que_deseas_hacer">¿Qué deseas hacer con este elemento?</string>
+    <string name="eliminar">Eliminar</string>
+    <string name="editar">Editar</string>
+    <string name="eliminacion_exitosa">Elemento eliminado con éxito</string>
+    <string name="actualizacion_exitosa">Actualización exitosa</string>
+    <string name="ver_codigo_qr">Ver código QR</string>
+    <string name="aceptar">Aceptar</string>
+    <string name="compartir_qr">Compartir QR</string>
+    <string name="foto_bomba">1. Bomba (cantidad llenada)</string>
+    <string name="foto_tablero">2. Tablero del carro</string>
+    <string name="foto_tablero_opcional">2. Tablero del carro (Opcional - MGP)</string>
+    <string name="foto_tanque">3. Tanque (evidencia de llenado)</string>
+    <string name="foto_factura">4. Factura emitida</string>
+    <string name="subir_foto">Subir foto</string>
+    <string name="foto_subida">✓ Subida</string>
+    <string name="evidencia">Evidencia fotográfica</string>
+    <string name="ver_evidencia">Ver evidencia</string>
+    <string name="detalle_de_orden">Detalle de la orden</string>
+    <string name="rehabilitar_orden">Rehabilitar orden</string>
+    <string name="orden_rehabilitada">Orden rehabilitada con éxito</string>
+    <string name="justificacion_tardanza">Justificación de entrega tardía</string>
+    <string name="ingresa_justificacion">Ingresa el motivo por el cual se entrega tarde este pedido:</string>
+    <string name="tardio_badge">COMPLETADO TARDÍO</string>
+    <string name="rehabilitada_badge">REHABILITADA</string>
+    <string name="continuar">Continuar</string>
+    <string name="filtrar_por_conductor">Filtrar por conductor</string>
+    <string name="todos_los_conductores">Todos los conductores</string>
+    <string name="todos_los_estados">Todos los estados</string>
+    <string name="descargar_foto">Descargar / Exportar foto</string>
+    <string name="no_aplica">No aplica</string>
+    <string name="rechazar">Rechazar</string>
+    <string name="confirmar_rechazo_solicitud">¿Estás seguro de que deseas rechazar esta solicitud?</string>
+    <string name="solicitud_rechazada">Solicitud rechazada con éxito</string>
+</resources>

@@ -1,0 +1,34 @@
+package com.example.apimovil.ui.admin
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
+import com.example.apimovil.databinding.ItemFilaDobleBinding
+
+// Modelo simple para mostrar filas de dos lineas de texto
+data class FilaDoble(val id: Int = 0, val titulo: String, val subtitulo: String)
+
+// Adapter para listas de catalogos y reportes simples
+class FilaDobleAdapter(
+    private val items: List<FilaDoble>,
+    private val onItemClick: ((Int, String) -> Unit)? = null
+) : RecyclerView.Adapter<FilaDobleAdapter.Holder>() {
+
+    class Holder(val binding: ItemFilaDobleBinding) : RecyclerView.ViewHolder(binding.root)
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
+        val binding = ItemFilaDobleBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return Holder(binding)
+    }
+
+    override fun getItemCount() = items.size
+
+    override fun onBindViewHolder(holder: Holder, position: Int) {
+        val item = items[position]
+        holder.binding.textTitulo.text = item.titulo
+        holder.binding.textSubtitulo.text = item.subtitulo
+        holder.binding.root.setOnClickListener {
+            onItemClick?.invoke(item.id, item.titulo)
+        }
+    }
+}

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sistema de diseño unificado, extraído del Figma. Mismo morado para
+         Administrador, Supervisor y Conductor (en el Figma original el
+         Conductor traía un verde azulado distinto; se unificó a este morado
+         por decisión de diseño, para que las tres vistas compartan una sola
+         identidad de marca). -->
+    <color name="fondo">#FAF9FC</color>
+    <color name="texto_principal">#24212D</color>
+    <color name="texto_secundario">#706A7A</color>
+    <color name="marca">#6042A6</color>
+    <color name="marca_oscuro">#342052</color>
+    <color name="marca_claro">#EEE7FA</color>
+    <color name="borde">#E5E0EB</color>
+    <color name="blanco">#FFFFFF</color>
+
+    <!-- Badges de estado de orden -->
+    <color name="estado_pendiente">#F5A623</color>
+    <color name="estado_pendiente_fondo">#FDF1DD</color>
+    <color name="estado_abierta">#4A90D9</color>
+    <color name="estado_abierta_fondo">#E3EEFB</color>
+    <color name="estado_completada">#2E7D32</color>
+    <color name="estado_completada_fondo">#E3F1E4</color>
+    <color name="estado_vencida">#C62828</color>
+    <color name="estado_vencida_fondo">#FAE3E3</color>
+
+    <!-- Advertencia de tiempo (cuenta regresiva de 15 min). Se mantiene ámbar
+         a propósito, independiente de la marca: es una señal de urgencia
+         universal, no un acento de identidad visual. -->
+    <color name="advertencia_texto">#684A00</color>
+    <color name="advertencia_texto_secundario">#795300</color>
+    <color name="advertencia_fondo">#FFF0CE</color>
+
+    <!-- Compatibilidad con referencias previas -->
+    <color name="purple_500">#6042A6</color>
+    <color name="purple_700">#342052</color>
+    <color name="teal_200">#6042A6</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

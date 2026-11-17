@@ -1,0 +1,302 @@
+package com.example.apimovil.ui.admin
+
+import android.content.ContentValues
+import android.content.Context
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.Toast
+import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.model.GlideUrl
+import com.bumptech.glide.load.model.LazyHeaders
+import com.google.android.material.button.MaterialButton
+import com.example.apimovil.R
+import com.example.apimovil.data.ApiClient
+import com.example.apimovil.data.SessionManager
+import com.example.apimovil.data.models.DetalleOrden
+import com.example.apimovil.data.models.Orden
+import com.example.apimovil.databinding.FragmentOrdenDetalleBinding
+import com.example.apimovil.databinding.ItemLineaEvidenciaBinding
+import com.example.apimovil.ui.common.colorDeEstado
+import com.example.apimovil.ui.common.etiquetaDeEstado
+import com.example.apimovil.ui.common.fondoBadgeDeEstado
+import com.example.apimovil.ui.common.mensajeDeError
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.Request
+
+class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
+
+    private val model: AdminViewModel by viewModels()
+    private var _binding: FragmentOrdenDetalleBinding? = null
+    private val binding get() = _binding!!
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        _binding = FragmentOrdenDetalleBinding.bind(view)
+        binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
+
+        val ordenId = arguments?.getInt("ordenId") ?: -1
+        if (ordenId != -1) {
+            cargarOrden(ordenId)
+        }
+    }
+
+    private fun cargarOrden(ordenId: Int) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            binding.progress.isVisible = true
+            try {
+                val orden = withContext(Dispatchers.IO) { ApiClient.api.verOrden(ordenId) }
+                binding.progress.isVisible = false
+                pintarOrden(orden)
+            } catch (e: Exception) {
+                binding.progress.isVisible = false
+                binding.textError.isVisible = true
+                binding.textError.text = mensajeDeError(e)
+            }
+        }
+    }
+
+    private fun pintarOrden(orden: Orden) {
+        binding.textNumeroOrden.text = getString(R.string.orden_numero, orden.numero_orden)
+
+        binding.textEstado.text = etiquetaDeEstado(requireContext(), orden.estado)
+        binding.textEstado.setBackgroundResource(fondoBadgeDeEstado(orden.estado))
+        binding.textEstado.setTextColor(colorDeEstado(requireContext(), orden.estado))
+
+        binding.contenedorContador.isVisible = false
+        binding.contenedorProtegido.isVisible = false
+        binding.contenedorDetalleRevelado.isVisible = true
+
+        binding.textGasolinera.text = orden.gasolinera?.nombre ?: "—"
+        binding.textDireccionGasolinera.text = orden.gasolinera?.direccion.orEmpty()
+
+        val lineas = orden.detalles.orEmpty()
+        val montoTotal = lineas.sumOf { it.monto }
+        binding.textMontoTotal.text = getString(R.string.monto_total_lempiras, montoTotal)
+        binding.textCantidadLineas.text = getString(R.string.distribuido_en_n_lineas, lineas.size)
+
+        binding.contenedorLineas.removeAllViews()
+        lineas.forEach { linea -> agregarVistaDeLinea(linea) }
+
+        binding.btnRehabilitar.isVisible = orden.estado == "vencida"
+        binding.btnRehabilitar.setOnClickListener {
+            model.rehabilitarOrden(orden.id) {
+                Toast.makeText(requireContext(), R.string.orden_rehabilitada, Toast.LENGTH_SHORT).show()
+                cargarOrden(orden.id)
+            }
+        }
+
+        if (orden.estado == "completada" || orden.estado == "tardio" || orden.estado == "completado_tardio") {
+            binding.textMensajeFinal.isVisible = true
+            binding.textMensajeFinal.text = getString(R.string.orden_completada_mensaje)
+        } else if (orden.estado == "vencida") {
+            binding.textMensajeFinal.isVisible = true
+            binding.textMensajeFinal.text = getString(R.string.orden_vencida_mensaje)
+        } else {
+            binding.textMensajeFinal.isVisible = false
+        }
+    }
+
+    private fun agregarVistaDeLinea(linea: DetalleOrden) {
+        val itemBinding = ItemLineaEvidenciaBinding.inflate(LayoutInflater.from(requireContext()), binding.contenedorLineas, false)
+
+        val esMgp = linea.tipo_destino == "mgp" || linea.vehiculo_id == null
+        val etiquetaDestino = if (!esMgp) {
+            linea.vehiculo?.placa ?: getString(R.string.vehiculo)
+        } else {
+            linea.descripcion_mgp ?: getString(R.string.planta_generadora)
+        }
+
+        itemBinding.textDestino.text = "$etiquetaDestino (${linea.tipo_combustible})"
+        itemBinding.textMonto.text = getString(R.string.monto_lempiras, linea.monto)
+
+        val evidenciasMap = linea.evidencias.associateBy { it.tipo }
+        val evBomba = evidenciasMap["bomba"]
+        val evTablero = evidenciasMap["tablero"]
+        val evTanque = evidenciasMap["tanque"]
+        val evFactura = evidenciasMap["factura"]
+
+        // Admin: modo consulta (ver evidencias subidas)
+        // 1. Bomba
+        itemBinding.btnBomba.isVisible = false
+        itemBinding.textBombaListo.isVisible = true
+        itemBinding.textBombaListo.text = if (evBomba != null) getString(R.string.ver_evidencia) else "Sin evidencia"
+        itemBinding.textBombaListo.setOnClickListener {
+            evBomba?.url?.let { url -> mostrarDialogoVerEvidencia(url) }
+        }
+
+        // 2. Tablero
+        if (esMgp) {
+            itemBinding.textTableroLabel.text = getString(R.string.foto_tablero_opcional)
+            itemBinding.btnTablero.isVisible = false
+            itemBinding.textTableroListo.isVisible = true
+            itemBinding.textTableroListo.text = getString(R.string.no_aplica)
+        } else {
+            itemBinding.textTableroLabel.text = getString(R.string.foto_tablero)
+            itemBinding.btnTablero.isVisible = false
+            itemBinding.textTableroListo.isVisible = true
+            itemBinding.textTableroListo.text = if (evTablero != null) getString(R.string.ver_evidencia) else "Sin evidencia"
+            itemBinding.textTableroListo.setOnClickListener {
+                evTablero?.url?.let { url -> mostrarDialogoVerEvidencia(url) }
+            }
+        }
+
+        // 3. Tanque
+        itemBinding.btnTanque.isVisible = false
+        itemBinding.textTanqueListo.isVisible = true
+        itemBinding.textTanqueListo.text = if (evTanque != null) getString(R.string.ver_evidencia) else "Sin evidencia"
+        itemBinding.textTanqueListo.setOnClickListener {
+            evTanque?.url?.let { url -> mostrarDialogoVerEvidencia(url) }
+        }
+
+        // 4. Factura
+        itemBinding.btnFactura.isVisible = false
+        itemBinding.textFacturaListo.isVisible = true
+        itemBinding.textFacturaListo.text = if (evFactura != null) getString(R.string.ver_evidencia) else "Sin evidencia"
+        itemBinding.textFacturaListo.setOnClickListener {
+            evFactura?.url?.let { url -> mostrarDialogoVerEvidencia(url) }
+        }
+
+        binding.contenedorLineas.addView(itemBinding.root)
+    }
+
+    private fun mostrarDialogoVerEvidencia(urlEvidencia: String) {
+        val context = requireContext()
+        val layout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(48, 48, 48, 48)
+        }
+
+        val imageView = ImageView(context).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                750
+            ).apply {
+                setMargins(0, 0, 0, 32)
+            }
+            adjustViewBounds = true
+            scaleType = ImageView.ScaleType.FIT_CENTER
+        }
+
+        val token = SessionManager.token
+        val glideUrl = GlideUrl(
+            urlEvidencia,
+            LazyHeaders.Builder()
+                .addHeader("Authorization", "Bearer $token")
+                .build()
+        )
+
+        Glide.with(context)
+            .load(glideUrl)
+            .placeholder(android.R.drawable.ic_menu_gallery)
+            .error(android.R.drawable.ic_dialog_alert)
+            .into(imageView)
+
+        layout.addView(imageView)
+
+        val btnDescargar = MaterialButton(context).apply {
+            text = getString(R.string.descargar_foto)
+            setIconResource(android.R.drawable.ic_menu_save)
+            setOnClickListener {
+                descargarFoto(urlEvidencia)
+            }
+        }
+        layout.addView(btnDescargar)
+
+        MaterialAlertDialogBuilder(context)
+            .setTitle(R.string.evidencia)
+            .setView(layout)
+            .setPositiveButton(R.string.aceptar, null)
+            .show()
+    }
+
+    private fun descargarFoto(urlEvidencia: String) {
+        val context = requireContext()
+        Toast.makeText(context, "Descargando foto...", Toast.LENGTH_SHORT).show()
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val token = SessionManager.token
+                val request = Request.Builder()
+                    .url(urlEvidencia)
+                    .addHeader("Authorization", "Bearer $token")
+                    .build()
+                val response = ApiClient.client.newCall(request).execute()
+                if (response.isSuccessful) {
+                    val bytes = response.body?.bytes()
+                    if (bytes != null) {
+                        val filename = "evidencia_${System.currentTimeMillis()}.jpg"
+                        val saved = saveImageToGalleryOrDownloads(context, bytes, filename)
+                        withContext(Dispatchers.Main) {
+                            if (saved) {
+                                Toast.makeText(context, "¡Foto descargada con éxito en Imágenes/GeoComEvidencias!", Toast.LENGTH_LONG).show()
+                            } else {
+                                Toast.makeText(context, "Error al guardar la foto", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "Error al descargar: ${response.code}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun saveImageToGalleryOrDownloads(context: Context, bytes: ByteArray, filename: String): Boolean {
+        return try {
+            val contentValues = ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, filename)
+                put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/GeoComEvidencias")
+                    put(MediaStore.Images.Media.IS_PENDING, 1)
+                }
+            }
+
+            val resolver = context.contentResolver
+            val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            if (uri != null) {
+                resolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(bytes)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    contentValues.clear()
+                    contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
+                    resolver.update(uri, contentValues, null, null)
+                }
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    override fun onDestroyView() {
+        _binding = null
+        super.onDestroyView()
+    }
+}

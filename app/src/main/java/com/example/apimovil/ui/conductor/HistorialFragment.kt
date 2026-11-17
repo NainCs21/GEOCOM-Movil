@@ -1,0 +1,70 @@
+package com.example.apimovil.ui.conductor
+
+import android.os.Bundle
+import android.view.View
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.apimovil.R
+import com.example.apimovil.data.models.Orden
+import com.example.apimovil.databinding.FragmentHistorialBinding
+import com.example.apimovil.ui.common.OrdenAdapter
+import kotlinx.coroutines.launch
+
+/**
+ * El backend ya excluye las órdenes "vencida" para el rol conductor (así
+ * quedó definido a propósito), así que aquí solo tiene sentido ofrecer
+ * "Todas" y "Completadas"; un filtro de "Vencidas" nunca tendría nada que
+ * mostrar para este rol.
+ */
+class HistorialFragment : Fragment(R.layout.fragment_historial) {
+
+    private val model: ConductorViewModel by viewModels()
+    private var _binding: FragmentHistorialBinding? = null
+    private val binding get() = _binding!!
+    private val adapter = OrdenAdapter { orden ->
+        val bundle = Bundle().apply { putInt("ordenId", orden.id) }
+        findNavController().navigate(R.id.ordenDetalleFragment, bundle)
+    }
+    private var todasLasOrdenes: List<Orden> = emptyList()
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        _binding = FragmentHistorialBinding.bind(view)
+        binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
+        binding.recyclerHistorial.layoutManager = LinearLayoutManager(requireContext())
+        binding.recyclerHistorial.adapter = adapter
+
+        binding.toggleFiltro.check(R.id.btnTodas)
+        binding.btnTodas.setOnClickListener { aplicarFiltro() }
+        binding.btnCompletadas.setOnClickListener { aplicarFiltro() }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                model.ordenes.collect { estado ->
+                    todasLasOrdenes = estado.data.orEmpty()
+                    aplicarFiltro()
+                }
+            }
+        }
+
+        model.cargarMisOrdenes()
+    }
+
+    private fun aplicarFiltro() {
+        val filtradas = if (binding.toggleFiltro.checkedButtonId == R.id.btnCompletadas) {
+            todasLasOrdenes.filter { it.estado == "completada" }
+        } else {
+            todasLasOrdenes
+        }
+        adapter.submitList(filtradas)
+    }
+
+    override fun onDestroyView() {
+        _binding = null
+        super.onDestroyView()
+    }
+}
