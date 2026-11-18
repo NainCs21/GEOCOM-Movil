@@ -145,7 +145,7 @@ class AdminViewModel : ViewModel() {
         viewModelScope.launch {
             _vehiculos.value = UiState(loading = true)
             try {
-                _vehiculos.value = UiState(data = ApiClient.api.listarVehiculos().data)
+                _vehiculos.value = UiState(data = ApiClient.api.listarVehiculos(todos = 1).data)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -247,11 +247,13 @@ class AdminViewModel : ViewModel() {
         }
     }
 
-    // Gestion de catalogos (crear, editar, eliminar)
+    // Gestion de catalogos (crear, editar, eliminar, reactivar)
+    var ultimoTipoAccion: String = "exito" // "exito" o "reactivado"
     private val _accionCatalogo = MutableStateFlow(UiState<Boolean>())
     val accionCatalogo = _accionCatalogo.asStateFlow()
 
     fun crearConductor(datos: Map<String, Any?>) {
+        ultimoTipoAccion = "exito"
         viewModelScope.launch {
             _accionCatalogo.value = UiState(loading = true)
             try {
@@ -267,6 +269,7 @@ class AdminViewModel : ViewModel() {
     }
 
     fun crearVehiculo(datos: Map<String, Any?>) {
+        ultimoTipoAccion = "exito"
         viewModelScope.launch {
             _accionCatalogo.value = UiState(loading = true)
             try {
@@ -282,6 +285,7 @@ class AdminViewModel : ViewModel() {
     }
 
     fun crearGasolinera(datos: Map<String, Any?>) {
+        ultimoTipoAccion = "exito"
         viewModelScope.launch {
             _accionCatalogo.value = UiState(loading = true)
             try {
@@ -296,7 +300,8 @@ class AdminViewModel : ViewModel() {
         }
     }
 
-    fun eliminarConductor(id: Int) {
+    fun desactivarConductor(id: Int) {
+        ultimoTipoAccion = "exito"
         viewModelScope.launch {
             _accionCatalogo.value = UiState(loading = true)
             try {
@@ -311,7 +316,8 @@ class AdminViewModel : ViewModel() {
         }
     }
 
-    fun eliminarVehiculo(id: Int) {
+    fun desactivarVehiculo(id: Int) {
+        ultimoTipoAccion = "exito"
         viewModelScope.launch {
             _accionCatalogo.value = UiState(loading = true)
             try {
@@ -326,7 +332,8 @@ class AdminViewModel : ViewModel() {
         }
     }
 
-    fun eliminarGasolinera(id: Int) {
+    fun desactivarGasolinera(id: Int) {
+        ultimoTipoAccion = "exito"
         viewModelScope.launch {
             _accionCatalogo.value = UiState(loading = true)
             try {
@@ -384,5 +391,20 @@ class AdminViewModel : ViewModel() {
                 _accionCatalogo.value = UiState(error = mensajeDeError(e))
             }
         }
+    }
+
+    fun reactivarConductor(id: Int) {
+        ultimoTipoAccion = "reactivado"
+        editarConductor(id, mapOf("activo" to true))
+    }
+
+    fun reactivarVehiculo(id: Int) {
+        ultimoTipoAccion = "reactivado"
+        editarVehiculo(id, mapOf("activo" to true))
+    }
+
+    fun reactivarGasolinera(id: Int) {
+        ultimoTipoAccion = "reactivado"
+        editarGasolinera(id, mapOf("activo" to true))
     }
 }

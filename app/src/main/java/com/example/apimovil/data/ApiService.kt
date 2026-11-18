@@ -70,7 +70,7 @@ interface ApiService {
     suspend fun verConductor(@Path("id") id: Int): Conductor
 
     @GET("vehiculos")
-    suspend fun listarVehiculos(): PaginaRespuesta<Vehiculo>
+    suspend fun listarVehiculos(@Query("todos") todos: Int? = null): PaginaRespuesta<Vehiculo>
 
     @GET("vehiculos/{id}")
     suspend fun verVehiculo(@Path("id") id: Int): Vehiculo

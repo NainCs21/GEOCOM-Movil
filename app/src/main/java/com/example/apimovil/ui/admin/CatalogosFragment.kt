@@ -141,7 +141,12 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                     if (estado.error != null) {
                         Toast.makeText(requireContext(), estado.error, Toast.LENGTH_SHORT).show()
                     } else if (estado.data == true) {
-                        Toast.makeText(requireContext(), R.string.registro_exitoso, Toast.LENGTH_SHORT).show()
+                        val mensajeRes = if (model.ultimoTipoAccion == "reactivado") {
+                            R.string.registro_reactivado
+                        } else {
+                            R.string.registro_exitoso
+                        }
+                        Toast.makeText(requireContext(), mensajeRes, Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -151,30 +156,50 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
     private fun mostrarDialogoOpciones(id: Int, titulo: String) {
         if (!SessionManager.esAdmin) return
         val context = requireContext()
-        val esGasolinera = binding.toggleCatalogo.checkedButtonId == R.id.btnGasolineras
+        val toggleId = binding.toggleCatalogo.checkedButtonId
+        val esGasolinera = toggleId == R.id.btnGasolineras
 
-        val opciones = if (esGasolinera) {
-            arrayOf(getString(R.string.ver_codigo_qr), getString(R.string.editar), getString(R.string.eliminar))
-        } else {
-            arrayOf(getString(R.string.editar), getString(R.string.eliminar))
+        val esActivo = when (toggleId) {
+            R.id.btnConductores -> model.conductores.value.data?.find { it.id == id }?.activo == true
+            R.id.btnVehiculos -> model.vehiculos.value.data?.find { it.id == id }?.activo == true
+            R.id.btnGasolineras -> model.gasolineras.value.data?.find { it.id == id }?.activo == true
+            else -> true
         }
+
+        val opcionesPares = mutableListOf<Pair<String, () -> Unit>>()
+        if (esGasolinera) {
+            opcionesPares.add(Pair(getString(R.string.ver_codigo_qr)) { mostrarDialogoVerQr(id) })
+        }
+        opcionesPares.add(Pair(getString(R.string.editar)) { mostrarDialogoEditar(id) })
+        if (esActivo) {
+            opcionesPares.add(Pair(getString(R.string.desactivar)) { confirmarDesactivar(id) })
+        } else {
+            opcionesPares.add(Pair(getString(R.string.reactivar)) { confirmarReactivar(id) })
+        }
+
+        val textosOpciones = opcionesPares.map { it.first }.toTypedArray()
 
         MaterialAlertDialogBuilder(context)
             .setTitle(titulo)
-            .setItems(opciones) { _, which ->
-                if (esGasolinera) {
-                    when (which) {
-                        0 -> mostrarDialogoVerQr(id)
-                        1 -> mostrarDialogoEditar(id)
-                        2 -> confirmarEliminar(id)
-                    }
-                } else {
-                    when (which) {
-                        0 -> mostrarDialogoEditar(id)
-                        1 -> confirmarEliminar(id)
-                    }
+            .setItems(textosOpciones) { _, which ->
+                opcionesPares.getOrNull(which)?.second?.invoke()
+            }
+            .show()
+    }
+
+    private fun confirmarReactivar(id: Int) {
+        val context = requireContext()
+        MaterialAlertDialogBuilder(context)
+            .setTitle(R.string.reactivar)
+            .setMessage(R.string.reactivar_mensaje)
+            .setPositiveButton(R.string.reactivar) { _, _ ->
+                when (binding.toggleCatalogo.checkedButtonId) {
+                    R.id.btnConductores -> model.reactivarConductor(id)
+                    R.id.btnVehiculos -> model.reactivarVehiculo(id)
+                    R.id.btnGasolineras -> model.reactivarGasolinera(id)
                 }
             }
+            .setNegativeButton(R.string.cancelar, null)
             .show()
     }
 
@@ -215,16 +240,16 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
             .show()
     }
 
-    private fun confirmarEliminar(id: Int) {
+    private fun confirmarDesactivar(id: Int) {
         val context = requireContext()
         MaterialAlertDialogBuilder(context)
-            .setTitle(R.string.eliminar)
-            .setMessage(R.string.que_deseas_hacer)
-            .setPositiveButton(R.string.eliminar) { _, _ ->
+            .setTitle(R.string.desactivar)
+            .setMessage(R.string.desactivar_mensaje)
+            .setPositiveButton(R.string.desactivar) { _, _ ->
                 when (binding.toggleCatalogo.checkedButtonId) {
-                    R.id.btnConductores -> model.eliminarConductor(id)
-                    R.id.btnVehiculos -> model.eliminarVehiculo(id)
-                    R.id.btnGasolineras -> model.eliminarGasolinera(id)
+                    R.id.btnConductores -> model.desactivarConductor(id)
+                    R.id.btnVehiculos -> model.desactivarVehiculo(id)
+                    R.id.btnGasolineras -> model.desactivarGasolinera(id)
                 }
             }
             .setNegativeButton(R.string.cancelar, null)
@@ -397,9 +422,9 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                 builder.setView(layout)
                 builder.setPositiveButton(R.string.guardar) { _, _ ->
                     val map = mapOf(
-                        "nombre" to inputNombre.text?.toString()?.trim(),
-                        "direccion" to inputDireccion.text?.toString()?.trim(),
-                        "codigo_qr" to inputQr.text?.toString()?.trim()
+                        "nombre"     to inputNombre.text?.toString()?.trim(),
+                        "direccion"  to inputDireccion.text?.toString()?.trim(),
+                        "codigo_qr"  to inputQr.text?.toString()?.trim()
                     )
                     if (esEdicion && gas != null) {
                         model.editarGasolinera(gas.id, map)

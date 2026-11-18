@@ -193,7 +193,8 @@
     <string name="cancelar">Cancelar</string>
     <string name="registro_exitoso">Registro exitoso</string>
     <string name="que_deseas_hacer">¿Qué deseas hacer con este elemento?</string>
-    <string name="eliminar">Eliminar</string>
+    <string name="desactivar">Desactivar</string>
+    <string name="desactivar_mensaje">¿Desactivar este registro? Dejará de estar disponible, pero no se borra y se puede reactivar después.</string>
     <string name="editar">Editar</string>
     <string name="eliminacion_exitosa">Elemento eliminado con éxito</string>
     <string name="actualizacion_exitosa">Actualización exitosa</string>
@@ -249,4 +250,7 @@
     <string name="periodo_ultimos_7_dias">Últimos 7 días</string>
     <string name="periodo_personalizado">Personalizado…</string>
     <string name="exportar_pdf">Exportar PDF</string>
+    <string name="reactivar">Reactivar</string>
+    <string name="reactivar_mensaje">¿Reactivar este registro? Volverá a estar disponible en el sistema.</string>
+    <string name="registro_reactivado">Registro reactivado</string>
 </resources>
