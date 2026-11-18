@@ -7,8 +7,6 @@ import android.text.InputType
 import android.text.TextWatcher
 import android.view.Gravity
 import android.view.View
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -73,10 +71,31 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         binding.btnVehiculos.setOnClickListener { mostrarVehiculos() }
         binding.btnGasolineras.setOnClickListener { mostrarGasolineras() }
 
+        binding.inputBuscarVehiculo.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val b = _binding ?: return
+                if (b.toggleCatalogo.checkedButtonId == R.id.btnVehiculos) {
+                    val estado = model.vehiculos.value
+                    pintar(estado.loading, estado.error, aplicarFiltrosVehiculos(estado.data))
+                }
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        binding.toggleFiltroCombustible.addOnButtonCheckedListener { _, _, isChecked ->
+            val b = _binding ?: return@addOnButtonCheckedListener
+            if (isChecked && b.toggleCatalogo.checkedButtonId == R.id.btnVehiculos) {
+                val estado = model.vehiculos.value
+                pintar(estado.loading, estado.error, aplicarFiltrosVehiculos(estado.data))
+            }
+        }
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 model.conductores.collect { estado ->
-                    if (binding.toggleCatalogo.checkedButtonId == R.id.btnConductores) {
+                    val b = _binding ?: return@collect
+                    if (b.toggleCatalogo.checkedButtonId == R.id.btnConductores) {
                         pintar(estado.loading, estado.error, estado.data?.map {
                             FilaDoble(
                                 id = it.id,
@@ -92,15 +111,9 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 model.vehiculos.collect { estado ->
-                    if (binding.toggleCatalogo.checkedButtonId == R.id.btnVehiculos) {
-                        pintar(estado.loading, estado.error, estado.data?.map {
-                            FilaDoble(
-                                id = it.id,
-                                titulo = "${it.placa} · ${it.marca} ${it.modelo}",
-                                subtitulo = it.tipo_combustible +
-                                    if (!it.activo) " · " + getString(R.string.inactivo) else ""
-                            )
-                        })
+                    val b = _binding ?: return@collect
+                    if (b.toggleCatalogo.checkedButtonId == R.id.btnVehiculos) {
+                        pintar(estado.loading, estado.error, aplicarFiltrosVehiculos(estado.data))
                     }
                 }
             }
@@ -108,7 +121,8 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 model.gasolineras.collect { estado ->
-                    if (binding.toggleCatalogo.checkedButtonId == R.id.btnGasolineras) {
+                    val b = _binding ?: return@collect
+                    if (b.toggleCatalogo.checkedButtonId == R.id.btnGasolineras) {
                         pintar(estado.loading, estado.error, estado.data?.map {
                             FilaDoble(
                                 id = it.id,
@@ -123,6 +137,7 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 model.accionCatalogo.collect { estado ->
+                    if (_binding == null) return@collect
                     if (estado.error != null) {
                         Toast.makeText(requireContext(), estado.error, Toast.LENGTH_SHORT).show()
                     } else if (estado.data == true) {
@@ -306,9 +321,13 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
 
                 val opcionesCombustible = arrayOf("Diesel", "Gasolina")
                 val mapaCombustible = mapOf("Diesel" to "diesel", "Gasolina" to "gasolina", "Diésel" to "diesel")
-                val textoInicialCombustible = when (veh?.tipo_combustible?.lowercase()) {
-                    "gasolina" -> "Gasolina"
-                    else -> "Diesel"
+                val textoInicialCombustible = if (esEdicion && veh != null) {
+                    when (veh.tipo_combustible.lowercase()) {
+                        "gasolina" -> "Gasolina"
+                        else -> "Diesel"
+                    }
+                } else {
+                    ""
                 }
 
                 val inputCombustible = TextInputEditText(context).apply {
@@ -395,25 +414,67 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
     }
 
     private fun mostrarConductores() {
-        binding.toggleCatalogo.check(R.id.btnConductores)
+        val b = _binding ?: return
+        b.toggleCatalogo.check(R.id.btnConductores)
+        b.layoutFiltrosVehiculos.isVisible = false
         model.cargarConductores()
     }
 
     private fun mostrarVehiculos() {
-        binding.toggleCatalogo.check(R.id.btnVehiculos)
+        val b = _binding ?: return
+        b.toggleCatalogo.check(R.id.btnVehiculos)
+        b.layoutFiltrosVehiculos.isVisible = true
+        if (b.toggleFiltroCombustible.checkedButtonId == View.NO_ID) {
+            b.toggleFiltroCombustible.check(R.id.btnFiltroTodos)
+        }
+        val estado = model.vehiculos.value
+        if (estado.data != null) {
+            pintar(estado.loading, estado.error, aplicarFiltrosVehiculos(estado.data))
+        }
         model.cargarVehiculos()
     }
 
     private fun mostrarGasolineras() {
-        binding.toggleCatalogo.check(R.id.btnGasolineras)
+        val b = _binding ?: return
+        b.toggleCatalogo.check(R.id.btnGasolineras)
+        b.layoutFiltrosVehiculos.isVisible = false
         model.cargarGasolineras()
     }
 
+    private fun aplicarFiltrosVehiculos(vehiculos: List<Vehiculo>?): List<FilaDoble> {
+        val b = _binding ?: return emptyList()
+        val query = b.inputBuscarVehiculo.text?.toString()?.trim()?.lowercase().orEmpty()
+        val filtroCombustibleId = b.toggleFiltroCombustible.checkedButtonId
+
+        val filtrados = vehiculos.orEmpty().filter { veh ->
+            val matchesCombustible = when (filtroCombustibleId) {
+                R.id.btnFiltroGasolina -> veh.tipo_combustible.equals("gasolina", ignoreCase = true)
+                R.id.btnFiltroDiesel -> veh.tipo_combustible.contains("diesel", ignoreCase = true) || veh.tipo_combustible.contains("diésel", ignoreCase = true)
+                else -> true
+            }
+
+            val textoVehiculo = "${veh.placa} ${veh.marca} ${veh.modelo} ${veh.anio ?: ""} ${veh.tipo_combustible}".lowercase()
+            val matchesTexto = query.isEmpty() || textoVehiculo.contains(query)
+
+            matchesCombustible && matchesTexto
+        }
+
+        return filtrados.map {
+            FilaDoble(
+                id = it.id,
+                titulo = "${it.placa} · ${it.marca} ${it.modelo}",
+                subtitulo = it.tipo_combustible +
+                    if (!it.activo) " · " + getString(R.string.inactivo) else ""
+            )
+        }
+    }
+
     private fun pintar(loading: Boolean, error: String?, items: List<FilaDoble>?) {
-        binding.progress.isVisible = loading
-        binding.textError.isVisible = error != null
-        binding.textError.text = error
-        binding.recycler.adapter = FilaDobleAdapter(items.orEmpty()) { id, titulo ->
+        val b = _binding ?: return
+        b.progress.isVisible = loading
+        b.textError.isVisible = error != null
+        b.textError.text = error
+        b.recycler.adapter = FilaDobleAdapter(items.orEmpty()) { id, titulo ->
             mostrarDialogoOpciones(id, titulo)
         }
     }
