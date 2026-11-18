@@ -9,12 +9,15 @@ import com.example.apimovil.data.models.Orden
 import com.example.apimovil.data.models.SolicitudRequest
 import com.example.apimovil.data.models.Vehiculo
 import com.example.apimovil.ui.common.UiState
+import com.example.apimovil.ui.common.comprimirFoto
 import com.example.apimovil.ui.common.mensajeDeError
 import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -143,12 +146,30 @@ class ConductorViewModel : ViewModel() {
     // Envia la foto de evidencia al servidor
     fun subirEvidencia(detalleId: Int, tipo: String, justificacion: String?, archivoFoto: File, ordenIdParaRefrescar: Int? = null) {
         viewModelScope.launch {
-            _evidencia.value = UiState(loading = true)
+            var archivoComprimidoTemporal: File? = null
+
             try {
+                _evidencia.value = UiState(loading = true)
+
+                // Comprimir la foto en un hilo secundario (IO) antes de construir el multipart
+                val (fotoComp, esTemp) = withContext(Dispatchers.IO) {
+                    try {
+                        val tempDir = archivoFoto.parentFile ?: File(archivoFoto.path).parentFile
+                        Pair(comprimirFoto(archivoFoto, tempDir), true)
+                    } catch (_: Exception) {
+                        Pair(archivoFoto, false) // Respaldo: subir el original si falla la compresion
+                    }
+                }
+
+                val archivoAEnviar = fotoComp
+                if (esTemp) {
+                    archivoComprimidoTemporal = fotoComp
+                }
+
                 val cuerpoTipo = tipo.toRequestBody("text/plain".toMediaTypeOrNull())
                 val cuerpoJustificacion = justificacion?.takeIf { it.isNotBlank() }?.toRequestBody("text/plain".toMediaTypeOrNull())
-                val cuerpoFoto = archivoFoto.asRequestBody("image/jpeg".toMediaTypeOrNull())
-                val parteFoto = MultipartBody.Part.createFormData("foto", archivoFoto.name, cuerpoFoto)
+                val cuerpoFoto = archivoAEnviar.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                val parteFoto = MultipartBody.Part.createFormData("foto", archivoAEnviar.name, cuerpoFoto)
                 val orden = ApiClient.api.subirEvidencia(detalleId, cuerpoTipo, cuerpoJustificacion, parteFoto)
                 _evidencia.value = UiState(data = orden)
             } catch (e: CancellationException) {
@@ -172,6 +193,9 @@ class ConductorViewModel : ViewModel() {
                     }
                 }
                 _evidencia.value = UiState(error = mensajeDeError(e))
+            } finally {
+                // Borra el archivo comprimido temporal al terminar la subida (exito o error)
+                archivoComprimidoTemporal?.delete()
             }
         }
     }
