@@ -60,6 +60,7 @@ class SolicitudesPendientesFragment : Fragment(R.layout.fragment_solicitudes_pen
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentSolicitudesPendientesBinding.bind(view)
+        binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
         binding.recycler.layoutManager = LinearLayoutManager(requireContext())
         binding.recycler.adapter = adapter
         binding.textAyuda.isVisible = !SessionManager.esAdmin

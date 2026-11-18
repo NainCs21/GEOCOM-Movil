@@ -61,6 +61,8 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
             bottomNav.configurarNavegacionSupervisor(findNavController(), R.id.catalogosFragment)
         }
 
+        binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
+
         binding.btnNuevo.isVisible = SessionManager.esAdmin
         binding.btnNuevo.setOnClickListener { mostrarDialogoNuevo() }
 

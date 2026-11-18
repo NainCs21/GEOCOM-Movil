@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.ApiMovil" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/purple_500</item>
-        <item name="colorPrimaryVariant">@color/purple_700</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="colorSecondary">@color/teal_200</item>
+    <style name="Theme.ApiMovil" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/marca</item>
+        <item name="colorPrimaryVariant">@color/marca_oscuro</item>
+        <item name="colorOnPrimary">@color/blanco</item>
+        <item name="colorSecondary">@color/marca_claro</item>
+        <item name="colorOnSecondary">@color/texto_principal</item>
+        <item name="android:windowBackground">@color/fondo</item>
+        <item name="android:statusBarColor">@color/marca_oscuro</item>
     </style>
 </resources>

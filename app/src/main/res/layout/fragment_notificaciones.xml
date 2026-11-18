@@ -3,34 +3,47 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/fondo">
+    android:background="@color/fondo"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="@color/blanco"
-        android:padding="20dp">
+        app:elevation="0dp">
 
-        <ImageButton
-            android:id="@+id/btnVolver"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_back"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/volver" />
+        <com.google.android.material.appbar.MaterialToolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary">
 
-        <TextView
-            android:text="@string/notificaciones_titulo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@color/texto_principal"
-            android:layout_marginStart="8dp" />
-    </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp">
+
+                <ImageButton
+                    android:id="@+id/btnVolver"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/volver"
+                    android:src="@drawable/ic_back"
+                    app:tint="@color/blanco" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/notificaciones_titulo"
+                    android:textColor="@color/blanco"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefresh"
@@ -46,27 +59,38 @@
                 android:id="@+id/recyclerNotificaciones"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:padding="20dp"
-                android:clipToPadding="false" />
+                android:clipToPadding="false"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="88dp" />
+
+            <ProgressBar
+                android:id="@+id/progress"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/textVacio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:accessibilityLiveRegion="polite"
                 android:text="@string/sin_notificaciones"
                 android:textColor="@color/texto_secundario"
+                android:textSize="14sp"
                 android:visibility="gone" />
         </FrameLayout>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <TextView
-        android:text="@string/notificaciones_nota"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/texto_secundario"
-        android:textSize="12sp"
         android:gravity="center"
-        android:padding="16dp" />
+        android:padding="16dp"
+        android:text="@string/notificaciones_nota"
+        android:textColor="@color/texto_secundario"
+        android:textSize="12sp" />
 
 </LinearLayout>

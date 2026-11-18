@@ -3,34 +3,47 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/fondo">
+    android:background="@color/fondo"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="@color/blanco"
-        android:padding="20dp">
+        app:elevation="0dp">
 
-        <ImageButton
-            android:id="@+id/btnVolver"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_back"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/volver" />
+        <com.google.android.material.appbar.MaterialToolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary">
 
-        <TextView
-            android:text="@string/nueva_solicitud"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@color/texto_principal"
-            android:layout_marginStart="8dp" />
-    </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp">
+
+                <ImageButton
+                    android:id="@+id/btnVolver"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/volver"
+                    android:src="@drawable/ic_back"
+                    app:tint="@color/blanco" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/nueva_solicitud"
+                    android:textColor="@color/blanco"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -46,17 +59,22 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
                 android:text="@string/para_que_necesitas_combustible"
-                android:textSize="22sp"
-                android:textStyle="bold"
                 android:textColor="@color/texto_principal"
-                android:layout_marginBottom="20dp" />
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/destino">
+                android:hint="@string/destino"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp">
+
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/spinnerDestino"
                     android:layout_width="match_parent"
@@ -70,7 +88,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:hint="@string/vehiculo">
+                android:hint="@string/vehiculo"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp">
+
                 <com.google.android.material.textfield.MaterialAutoCompleteTextView
                     android:id="@+id/spinnerVehiculo"
                     android:layout_width="match_parent"
@@ -80,10 +103,16 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layoutDescripcionMgp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:hint="@string/descripcion_de_la_planta_mgp">
+                android:hint="@string/descripcion_de_la_planta_mgp"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputDescripcionMgp"
                     android:layout_width="match_parent"
@@ -91,10 +120,16 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:hint="@string/descripcion_de_la_actividad">
+                android:hint="@string/descripcion_de_la_actividad"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputActividad"
                     android:layout_width="match_parent"
@@ -105,16 +140,16 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnEnviar"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="50dp"
                 android:layout_marginTop="24dp"
                 android:text="@string/enviar_solicitud"
-                app:cornerRadius="28dp"
-                app:backgroundTint="@color/marca" />
+                app:backgroundTint="@color/marca"
+                app:cornerRadius="16dp" />
 
             <ProgressBar
                 android:id="@+id/progress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:layout_gravity="center"
                 android:layout_marginTop="16dp"
                 android:visibility="gone" />
@@ -124,8 +159,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
+                android:accessibilityLiveRegion="polite"
                 android:gravity="center"
                 android:textColor="@color/estado_vencida"
+                android:textSize="13sp"
                 android:visibility="gone" />
 
         </LinearLayout>

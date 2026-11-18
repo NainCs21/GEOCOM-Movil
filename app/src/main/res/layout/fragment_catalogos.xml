@@ -3,74 +3,106 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/fondo">
+    android:background="@color/fondo"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="@color/blanco"
-        android:padding="20dp">
+        app:elevation="0dp">
 
-        <TextView
-            android:text="@string/catalogos"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:textSize="21sp"
-            android:textStyle="bold"
-            android:textColor="@color/texto_principal" />
+        <com.google.android.material.appbar.MaterialToolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnNuevo"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:text="@string/nuevo"
-            android:textSize="12sp"
-            app:cornerRadius="18dp"
-            app:backgroundTint="@color/marca"
-            android:visibility="gone" />
-    </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp">
+
+                <ImageButton
+                    android:id="@+id/btnVolver"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/volver"
+                    android:src="@drawable/ic_back"
+                    app:tint="@color/blanco" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/catalogos"
+                    android:textColor="@color/blanco"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnNuevo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="@string/nuevo"
+                    android:textColor="@color/marca_oscuro"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    app:backgroundTint="@color/marca_claro"
+                    app:cornerRadius="18dp" />
+            </LinearLayout>
+
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/toggleCatalogo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
         android:background="@color/blanco"
+        android:padding="12dp"
         app:singleSelection="true">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConductores"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="40dp"
             style="@style/Widget.Material3.Button.OutlinedButton"
-            app:cornerRadius="20dp"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="@string/conductores"
+            android:textColor="@color/selector_toggle_button_text"
             android:textSize="13sp"
-            android:text="@string/conductores" />
+            app:backgroundTint="@color/selector_toggle_button_bg"
+            app:cornerRadius="12dp"
+            app:strokeColor="@color/borde" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnVehiculos"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="40dp"
             style="@style/Widget.Material3.Button.OutlinedButton"
-            app:cornerRadius="20dp"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="@string/vehiculos"
+            android:textColor="@color/selector_toggle_button_text"
             android:textSize="13sp"
-            android:text="@string/vehiculos" />
+            app:backgroundTint="@color/selector_toggle_button_bg"
+            app:cornerRadius="12dp"
+            app:strokeColor="@color/borde" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnGasolineras"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="40dp"
             style="@style/Widget.Material3.Button.OutlinedButton"
-            app:cornerRadius="20dp"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:text="@string/gasolineras"
+            android:textColor="@color/selector_toggle_button_text"
             android:textSize="13sp"
-            android:text="@string/gasolineras" />
+            app:backgroundTint="@color/selector_toggle_button_bg"
+            app:cornerRadius="12dp"
+            app:strokeColor="@color/borde" />
 
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -83,13 +115,15 @@
             android:id="@+id/recycler"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="20dp"
-            android:clipToPadding="false" />
+            android:clipToPadding="false"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="88dp" />
 
         <ProgressBar
             android:id="@+id/progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_gravity="center"
             android:visibility="gone" />
 
@@ -98,11 +132,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:accessibilityLiveRegion="polite"
             android:gravity="center"
             android:textColor="@color/estado_vencida"
+            android:textSize="14sp"
             android:visibility="gone" />
     </FrameLayout>
 
-    <include layout="@layout/widget_bottom_nav_admin" android:id="@+id/incluirNavInferior" />
+    <include
+        android:id="@+id/incluirNavInferior"
+        layout="@layout/widget_bottom_nav_admin" />
 
 </LinearLayout>

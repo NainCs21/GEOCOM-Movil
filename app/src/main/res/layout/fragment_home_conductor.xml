@@ -1,99 +1,123 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/fondo"
-    android:orientation="vertical">
+    android:background="@color/fondo">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="20dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/textSaludo"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+        <com.google.android.material.appbar.AppBarLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@color/texto_principal" />
+            app:elevation="0dp">
 
-        <ImageButton
-            android:id="@+id/btnHistorial"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@android:drawable/ic_menu_recent_history"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            app:tint="@color/marca"
-            android:contentDescription="@string/mi_historial" />
+            <com.google.android.material.appbar.MaterialToolbar
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="?attr/colorPrimary">
 
-        <ImageButton
-            android:id="@+id/btnPerfil"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="4dp"
-            android:src="@android:drawable/ic_menu_myplaces"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            app:tint="@color/marca"
-            android:contentDescription="@string/mi_perfil" />
-    </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp">
 
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipeRefresh"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+                    <TextView
+                        android:id="@+id/textSaludo"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="@color/blanco"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
 
-        <FrameLayout
+                    <ImageButton
+                        android:id="@+id/btnHistorial"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/mi_historial"
+                        android:src="@android:drawable/ic_menu_recent_history"
+                        app:tint="@color/blanco" />
+
+                    <ImageButton
+                        android:id="@+id/btnPerfil"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="4dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/mi_perfil"
+                        android:src="@android:drawable/ic_menu_myplaces"
+                        app:tint="@color/blanco" />
+                </LinearLayout>
+
+            </com.google.android.material.appbar.MaterialToolbar>
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefresh"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerOrdenes"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:paddingHorizontal="20dp"
-                android:clipToPadding="false" />
+                android:layout_height="match_parent">
 
-            <TextView
-                android:id="@+id/textVacio"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:text="@string/sin_ordenes_todavia"
-                android:textColor="@color/texto_secundario"
-                android:visibility="gone" />
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerOrdenes"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false"
+                    android:paddingHorizontal="20dp"
+                    android:paddingTop="16dp"
+                    android:paddingBottom="88dp" />
 
-            <TextView
-                android:id="@+id/textError"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:textColor="@color/estado_vencida"
-                android:visibility="gone" />
-        </FrameLayout>
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+                <ProgressBar
+                    android:id="@+id/progress"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center"
+                    android:visibility="gone" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@color/blanco"
-        android:padding="20dp">
+                <TextView
+                    android:id="@+id/textVacio"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:accessibilityLiveRegion="polite"
+                    android:text="@string/sin_ordenes_todavia"
+                    android:textColor="@color/texto_secundario"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnNuevaSolicitud"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:text="@string/nueva_solicitud"
-            app:icon="@android:drawable/ic_input_add"
-            app:iconGravity="textStart"
-            app:cornerRadius="28dp"
-            app:backgroundTint="@color/marca" />
+                <TextView
+                    android:id="@+id/textError"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:accessibilityLiveRegion="polite"
+                    android:textColor="@color/estado_vencida"
+                    android:textSize="14sp"
+                    android:visibility="gone" />
+            </FrameLayout>
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
     </LinearLayout>
 
-</LinearLayout>
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnNuevaSolicitud"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="20dp"
+        android:contentDescription="@string/nueva_solicitud"
+        android:src="@android:drawable/ic_input_add"
+        app:backgroundTint="@color/marca"
+        app:tint="@color/blanco" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

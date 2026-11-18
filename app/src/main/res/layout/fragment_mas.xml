@@ -1,86 +1,258 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/fondo">
+    android:background="@color/fondo"
+    android:orientation="vertical">
 
-    <TextView
-        android:text="@string/mas_opciones"
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:textColor="@color/texto_principal"
-        android:padding="20dp" />
+        app:elevation="0dp">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:title="@string/mas_opciones"
+            app:titleTextColor="@color/blanco" />
+    </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:paddingHorizontal="20dp">
+        android:paddingHorizontal="20dp"
+        android:paddingTop="20dp">
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/opcionNotificaciones"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/bg_tarjeta"
-            android:padding="18dp"
             android:layout_marginBottom="12dp"
             android:clickable="true"
             android:focusable="true"
-            android:foreground="?attr/selectableItemBackground">
-            <TextView android:text="@string/notificaciones" android:layout_width="match_parent" android:layout_height="wrap_content" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/texto_principal" />
-            <TextView android:text="@string/notificaciones_subtitulo" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="13sp" android:textColor="@color/texto_secundario" android:layout_marginTop="4dp" />
-        </LinearLayout>
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="@color/blanco"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:contentPadding="12dp"
+            app:strokeColor="@color/borde"
+            app:strokeWidth="1dp">
 
-        <LinearLayout
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_tarjeta_info"
+                    android:contentDescription="@null"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_bell"
+                    app:tint="@color/marca" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/notificaciones"
+                        android:textColor="@color/texto_principal"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/notificaciones_subtitulo"
+                        android:textColor="@color/texto_secundario"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/opcionReportes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/bg_tarjeta"
-            android:padding="18dp"
             android:layout_marginBottom="12dp"
             android:clickable="true"
             android:focusable="true"
-            android:foreground="?attr/selectableItemBackground">
-            <TextView android:text="@string/reportes" android:layout_width="match_parent" android:layout_height="wrap_content" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/texto_principal" />
-            <TextView android:text="@string/reportes_subtitulo" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="13sp" android:textColor="@color/texto_secundario" android:layout_marginTop="4dp" />
-        </LinearLayout>
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="@color/blanco"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:contentPadding="12dp"
+            app:strokeColor="@color/borde"
+            app:strokeWidth="1dp">
 
-        <LinearLayout
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_tarjeta_info"
+                    android:contentDescription="@null"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_nav_reportes"
+                    app:tint="@color/marca" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/reportes"
+                        android:textColor="@color/texto_principal"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/reportes_subtitulo"
+                        android:textColor="@color/texto_secundario"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/opcionCajaChica"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/bg_tarjeta"
-            android:padding="18dp"
             android:layout_marginBottom="12dp"
             android:clickable="true"
             android:focusable="true"
-            android:foreground="?attr/selectableItemBackground">
-            <TextView android:text="@string/caja_chica" android:layout_width="match_parent" android:layout_height="wrap_content" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/texto_principal" />
-            <TextView android:text="@string/caja_chica_subtitulo" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="13sp" android:textColor="@color/texto_secundario" android:layout_marginTop="4dp" />
-        </LinearLayout>
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="@color/blanco"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:contentPadding="12dp"
+            app:strokeColor="@color/borde"
+            app:strokeWidth="1dp">
 
-        <LinearLayout
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_tarjeta_info"
+                    android:contentDescription="@null"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_nav_mas"
+                    app:tint="@color/marca" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/caja_chica"
+                        android:textColor="@color/texto_principal"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/caja_chica_subtitulo"
+                        android:textColor="@color/texto_secundario"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/opcionPerfil"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/bg_tarjeta"
-            android:padding="18dp"
             android:clickable="true"
             android:focusable="true"
-            android:foreground="?attr/selectableItemBackground">
-            <TextView android:text="@string/mi_perfil" android:layout_width="match_parent" android:layout_height="wrap_content" android:textStyle="bold" android:textSize="16sp" android:textColor="@color/texto_principal" />
-            <TextView android:text="@string/mi_perfil_subtitulo" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="13sp" android:textColor="@color/texto_secundario" android:layout_marginTop="4dp" />
-        </LinearLayout>
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="@color/blanco"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:contentPadding="12dp"
+            app:strokeColor="@color/borde"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/bg_tarjeta_info"
+                    android:contentDescription="@null"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_nav_perfil"
+                    app:tint="@color/marca" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/mi_perfil"
+                        android:textColor="@color/texto_principal"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/mi_perfil_subtitulo"
+                        android:textColor="@color/texto_secundario"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
-    <include layout="@layout/widget_bottom_nav_admin" android:id="@+id/incluirNavInferior" />
+    <include
+        android:id="@+id/incluirNavInferior"
+        layout="@layout/widget_bottom_nav_admin" />
 
 </LinearLayout>

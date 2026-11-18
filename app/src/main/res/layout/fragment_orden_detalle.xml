@@ -3,34 +3,47 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/fondo">
+    android:background="@color/fondo"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="@color/blanco"
-        android:padding="20dp">
+        app:elevation="0dp">
 
-        <ImageButton
-            android:id="@+id/btnVolver"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_back"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/volver" />
+        <com.google.android.material.appbar.MaterialToolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary">
 
-        <TextView
-            android:text="@string/detalle_de_orden"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@color/texto_principal"
-            android:layout_marginStart="8dp" />
-    </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp">
+
+                <ImageButton
+                    android:id="@+id/btnVolver"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/volver"
+                    android:src="@drawable/ic_back"
+                    app:tint="@color/blanco" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/detalle_de_orden"
+                    android:textColor="@color/blanco"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -48,235 +61,277 @@
                 android:id="@+id/textNumeroOrden"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="20sp"
                 android:textColor="@color/texto_principal"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/textEstado"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:background="@drawable/bg_badge_abierta"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="6dp"
-                android:textStyle="bold"
                 android:textSize="12sp"
-                android:layout_marginTop="8dp" />
+                android:textStyle="bold" />
 
             <!-- Contador de 15 minutos: tarjeta de advertencia -->
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/contenedorContador"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:background="@drawable/bg_tarjeta_advertencia"
-                android:padding="18dp"
                 android:layout_marginTop="16dp"
-                android:visibility="gone">
-
-                <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:src="@android:drawable/ic_lock_idle_alarm"
-                    app:tint="@color/advertencia_texto" />
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/advertencia_fondo"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:contentPadding="16dp"
+                app:strokeWidth="0dp">
 
                 <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginStart="14dp">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                    <TextView
-                        android:id="@+id/textContador"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textSize="36sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/advertencia_texto" />
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:contentDescription="@null"
+                        android:src="@android:drawable/ic_lock_idle_alarm"
+                        app:tint="@color/advertencia_texto" />
 
-                    <TextView
-                        android:layout_width="match_parent"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/tiempo_restante_max_15"
-                        android:textColor="@color/advertencia_texto_secundario"
-                        android:textSize="12sp" />
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="@string/al_llegar_a_0_la_orden_vence"
-                        android:textColor="@color/advertencia_texto_secundario"
-                        android:textSize="12sp" />
+                        <TextView
+                            android:id="@+id/textContador"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/advertencia_texto"
+                            android:textSize="32sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/tiempo_restante_max_15"
+                            android:textColor="@color/advertencia_texto_secundario"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/al_llegar_a_0_la_orden_vence"
+                            android:textColor="@color/advertencia_texto_secundario"
+                            android:textSize="12sp" />
+                    </LinearLayout>
                 </LinearLayout>
-            </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-            <!-- Pendiente de retirar: orden protegida, sin monto ni gasolinera visibles -->
-            <LinearLayout
+            <!-- Pendiente de retirar: orden protegida -->
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/contenedorProtegido"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_tarjeta"
-                android:padding="24dp"
-                android:gravity="center"
                 android:layout_marginTop="16dp"
-                android:visibility="gone">
+                android:visibility="gone"
+                app:cardBackgroundColor="@color/blanco"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:contentPadding="20dp"
+                app:strokeColor="@color/borde"
+                app:strokeWidth="1dp">
 
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:src="@android:drawable/ic_lock_lock"
-                    app:tint="@color/marca" />
-
-                <TextView
-                    android:text="@string/orden_protegida"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/texto_principal"
-                    android:textStyle="bold"
-                    android:textSize="18sp"
                     android:gravity="center"
-                    android:layout_marginTop="12dp" />
+                    android:orientation="vertical">
 
-                <TextView
-                    android:text="@string/el_monto_y_gasolinera_tras_qr"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/texto_secundario"
-                    android:textSize="13sp"
-                    android:gravity="center"
-                    android:layout_marginTop="6dp" />
+                    <ImageView
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:contentDescription="@null"
+                        android:src="@android:drawable/ic_lock_lock"
+                        app:tint="@color/marca" />
 
-                <TextView
-                    android:id="@+id/textPlazoRetiro"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/marca"
-                    android:textStyle="bold"
-                    android:textSize="14sp"
-                    android:gravity="center"
-                    android:layout_marginTop="16dp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center"
+                        android:text="@string/orden_protegida"
+                        android:textColor="@color/texto_principal"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnEscanearDesdeDetalle"
-                    android:layout_width="match_parent"
-                    android:layout_height="52dp"
-                    android:text="@string/escanear_qr_de_gasolinera"
-                    app:icon="@android:drawable/ic_menu_camera"
-                    app:cornerRadius="28dp"
-                    app:backgroundTint="@color/marca"
-                    android:layout_marginTop="16dp" />
-            </LinearLayout>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:gravity="center"
+                        android:text="@string/el_monto_y_gasolinera_tras_qr"
+                        android:textColor="@color/texto_secundario"
+                        android:textSize="13sp" />
 
-            <!-- Gasolinera + monto + lineas: solo visibles tras escanear el QR -->
+                    <TextView
+                        android:id="@+id/textPlazoRetiro"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center"
+                        android:textColor="@color/marca"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnEscanearDesdeDetalle"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="16dp"
+                        android:text="@string/escanear_qr_de_gasolinera"
+                        app:backgroundTint="@color/marca"
+                        app:cornerRadius="16dp"
+                        app:icon="@android:drawable/ic_menu_camera" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Gasolinera + monto + lineas -->
             <LinearLayout
                 android:id="@+id/contenedorDetalleRevelado"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginTop="16dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@android:drawable/ic_menu_mylocation"
-                        app:tint="@color/marca" />
+                    android:layout_marginTop="16dp"
+                    app:cardBackgroundColor="@color/blanco"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:contentPadding="16dp"
+                    app:strokeColor="@color/borde"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_weight="1"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginStart="10dp">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                        <TextView
-                            android:id="@+id/textGasolinera"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/texto_principal" />
+                        <ImageView
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:contentDescription="@null"
+                            android:src="@android:drawable/ic_menu_mylocation"
+                            app:tint="@color/marca" />
 
-                        <TextView
-                            android:id="@+id/textDireccionGasolinera"
-                            android:layout_width="match_parent"
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:textSize="13sp"
-                            android:textColor="@color/texto_secundario" />
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/textGasolinera"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/texto_principal"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/textDireccionGasolinera"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="@color/texto_secundario"
+                                android:textSize="13sp" />
+                        </LinearLayout>
                     </LinearLayout>
-                </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/bg_tarjeta_info"
-                    android:padding="20dp"
-                    android:layout_marginTop="16dp">
+                    android:layout_marginTop="16dp"
+                    app:cardBackgroundColor="@color/marca_claro"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:contentPadding="16dp"
+                    app:strokeWidth="0dp">
 
-                    <TextView
-                        android:text="@string/monto_total_autorizado"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/marca_oscuro"
-                        android:textStyle="bold"
-                        android:textSize="11sp" />
+                        android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/textMontoTotal"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/texto_principal"
-                        android:textStyle="bold"
-                        android:textSize="32sp"
-                        android:layout_marginTop="2dp" />
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/monto_total_autorizado"
+                            android:textColor="@color/marca_oscuro"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/textCantidadLineas"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/texto_secundario"
-                        android:textSize="13sp" />
-                </LinearLayout>
+                        <TextView
+                            android:id="@+id/textMontoTotal"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:textColor="@color/texto_principal"
+                            android:textSize="28sp"
+                            android:textStyle="bold" />
 
-                <LinearLayout
+                        <TextView
+                            android:id="@+id/textCantidadLineas"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/texto_secundario"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="@drawable/bg_tarjeta"
-                    android:padding="18dp"
-                    android:layout_marginTop="16dp">
+                    android:layout_marginTop="16dp"
+                    app:cardBackgroundColor="@color/blanco"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:contentPadding="16dp"
+                    app:strokeColor="@color/borde"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:id="@+id/contenedorLineas"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical" />
-                </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
             <TextView
                 android:id="@+id/textMensajeFinal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:textColor="@color/texto_secundario"
-                android:gravity="center"
                 android:layout_marginTop="16dp"
+                android:gravity="center"
+                android:textColor="@color/texto_secundario"
+                android:textSize="14sp"
                 android:visibility="gone" />
 
             <ProgressBar
                 android:id="@+id/progress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:layout_gravity="center"
                 android:layout_marginTop="16dp"
                 android:visibility="gone" />
@@ -286,19 +341,21 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
+                android:accessibilityLiveRegion="polite"
                 android:gravity="center"
                 android:textColor="@color/estado_vencida"
+                android:textSize="13sp"
                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRehabilitar"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:text="@string/rehabilitar_orden"
-                app:cornerRadius="28dp"
-                app:backgroundTint="@color/marca"
+                android:layout_height="50dp"
                 android:layout_marginTop="16dp"
-                android:visibility="gone" />
+                android:text="@string/rehabilitar_orden"
+                android:visibility="gone"
+                app:backgroundTint="@color/marca"
+                app:cornerRadius="16dp" />
 
         </LinearLayout>
     </ScrollView>

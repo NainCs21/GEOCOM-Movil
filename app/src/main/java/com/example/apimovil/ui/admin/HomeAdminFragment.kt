@@ -53,6 +53,11 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
         binding.btnNotificaciones.setOnClickListener {
             findNavController().navigate(R.id.notificacionesFragment)
         }
+        if (SessionManager.esAdmin) {
+            binding.btnAsignarMontos.text = getString(R.string.asignar_montos)
+        } else {
+            binding.btnAsignarMontos.text = getString(R.string.ver_solicitudes)
+        }
         binding.btnAsignarMontos.setOnClickListener {
             findNavController().navigate(R.id.solicitudesPendientesFragment)
         }

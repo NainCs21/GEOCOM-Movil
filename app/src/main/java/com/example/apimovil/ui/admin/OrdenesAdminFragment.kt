@@ -52,6 +52,8 @@ class OrdenesAdminFragment : Fragment(R.layout.fragment_ordenes_admin) {
             bottomNav.configurarNavegacionSupervisor(findNavController(), R.id.ordenesAdminFragment)
         }
 
+        binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
+
         // Spinner Estado
         binding.spinnerEstado.setAdapter(
             ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, estados)

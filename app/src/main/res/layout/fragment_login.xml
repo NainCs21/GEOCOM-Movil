@@ -10,94 +10,108 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:padding="24dp">
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
             android:gravity="center_vertical"
-            android:layout_marginTop="12dp">
+            android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_myplaces"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_nav_home"
                 app:tint="@color/marca" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginStart="12dp">
+                android:layout_marginStart="12dp"
+                android:orientation="vertical">
 
                 <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:text="@string/app_name"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textSize="21sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/texto_principal" />
+                    android:textColor="@color/texto_principal"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
 
                 <TextView
-                    android:text="@string/acceso_seguro"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/marca" />
+                    android:text="@string/acceso_seguro"
+                    android:textColor="@color/marca"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@drawable/bg_tarjeta_hero"
-            android:padding="24dp"
-            android:layout_marginTop="20dp">
+            android:layout_marginTop="24dp"
+            app:cardBackgroundColor="@color/marca_oscuro"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:contentPadding="20dp"
+            app:strokeWidth="0dp">
 
-            <TextView
-                android:text="@string/control_movil"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#D8C9F4"
-                android:textStyle="bold"
-                android:textSize="11sp" />
+                android:orientation="vertical">
 
-            <TextView
-                android:text="@string/control_de_combustible_desde_tu_movil"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/blanco"
-                android:textSize="26sp"
-                android:lineSpacingExtra="4dp"
-                android:textStyle="bold"
-                android:layout_marginTop="10dp" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/control_movil"
+                    android:textColor="@color/marca_claro"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
 
-            <TextView
-                android:text="@string/asigna_consulta_y_gestiona"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="#E5DAF7"
-                android:textSize="14sp"
-                android:layout_marginTop="10dp" />
-        </LinearLayout>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:lineSpacingExtra="2dp"
+                    android:text="@string/control_de_combustible_desde_tu_movil"
+                    android:textColor="@color/blanco"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/asigna_consulta_y_gestiona"
+                    android:textColor="@color/marca_claro"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <TextView
-            android:text="@string/inicia_sesion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="24sp"
-            android:textStyle="bold"
+            android:layout_marginTop="28dp"
+            android:text="@string/inicia_sesion"
             android:textColor="@color/texto_principal"
-            android:layout_marginTop="24dp" />
+            android:textSize="22sp"
+            android:textStyle="bold" />
 
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:hint="@string/correo">
+            android:hint="@string/correo"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/inputCorreo"
@@ -107,10 +121,15 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:hint="@string/contrasena"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusTopStart="12dp"
             app:endIconMode="password_toggle">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -121,39 +140,29 @@
         </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
-            android:text="@string/olvidaste_tu_contrasena"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
+            android:layout_marginTop="12dp"
+            android:background="?attr/selectableItemBackground"
+            android:text="@string/olvidaste_tu_contrasena"
             android:textColor="@color/marca"
-            android:textStyle="bold"
-            android:textSize="14sp"
-            android:layout_marginTop="12dp" />
-
-
-
-        <TextView
-            android:text="@string/acceso_exclusivo_personal_autorizado"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/texto_secundario"
-            android:textSize="12sp"
-            android:gravity="center"
-            android:layout_marginTop="16dp" />
+            android:textSize="13sp"
+            android:textStyle="bold" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnIngresar"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="20dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="24dp"
             android:text="@string/ingresar"
-            app:cornerRadius="28dp"
-            app:backgroundTint="@color/marca" />
+            app:backgroundTint="@color/marca"
+            app:cornerRadius="16dp" />
 
         <ProgressBar
             android:id="@+id/progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_gravity="center"
             android:layout_marginTop="16dp"
             android:visibility="gone" />
@@ -163,9 +172,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
+            android:accessibilityLiveRegion="polite"
             android:gravity="center"
             android:textColor="@color/estado_vencida"
+            android:textSize="13sp"
             android:visibility="gone" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:text="@string/acceso_exclusivo_personal_autorizado"
+            android:textColor="@color/texto_secundario"
+            android:textSize="12sp" />
 
     </LinearLayout>
 </ScrollView>

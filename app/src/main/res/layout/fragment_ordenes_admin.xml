@@ -3,62 +3,104 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/fondo">
+    android:background="@color/fondo"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="@color/blanco"
-        android:padding="20dp">
+        app:elevation="0dp">
 
-        <TextView
-            android:text="@string/ordenes"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:textSize="21sp"
-            android:textStyle="bold"
-            android:textColor="@color/texto_principal" />
-    </LinearLayout>
+        <com.google.android.material.appbar.MaterialToolbar
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary">
 
-    <LinearLayout
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp">
+
+                <ImageButton
+                    android:id="@+id/btnVolver"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/volver"
+                    android:src="@drawable/ic_back"
+                    app:tint="@color/blanco" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/ordenes"
+                    android:textColor="@color/blanco"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@color/blanco"
-        android:paddingHorizontal="16dp"
-        android:paddingBottom="16dp">
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="8dp"
+        app:cardBackgroundColor="@color/blanco"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:contentPadding="12dp"
+        app:strokeColor="@color/borde"
+        app:strokeWidth="1dp">
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/filtrar_por_estado">
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/spinnerEstado"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:dropDownHeight="200dp"
-                android:inputType="none" />
-        </com.google.android.material.textfield.TextInputLayout>
+            android:orientation="vertical">
 
-        <com.google.android.material.textfield.TextInputLayout
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="@string/filtrar_por_conductor">
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/spinnerConductor"
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:dropDownHeight="200dp"
-                android:inputType="none" />
-        </com.google.android.material.textfield.TextInputLayout>
-    </LinearLayout>
+                android:hint="@string/filtrar_por_estado"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp">
+
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/spinnerEstado"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:dropDownHeight="200dp"
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:hint="@string/filtrar_por_conductor"
+                app:boxCornerRadiusBottomEnd="12dp"
+                app:boxCornerRadiusBottomStart="12dp"
+                app:boxCornerRadiusTopEnd="12dp"
+                app:boxCornerRadiusTopStart="12dp">
+
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/spinnerConductor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:dropDownHeight="200dp"
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefresh"
@@ -68,21 +110,33 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="20dp"
-            android:clipToPadding="false">
+            android:layout_height="match_parent">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="88dp" />
+
+            <ProgressBar
+                android:id="@+id/progress"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/textVacio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:accessibilityLiveRegion="polite"
                 android:text="@string/sin_ordenes_todavia"
+                android:textColor="@color/texto_secundario"
+                android:textSize="14sp"
                 android:visibility="gone" />
 
             <TextView
@@ -90,11 +144,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:accessibilityLiveRegion="polite"
                 android:textColor="@color/estado_vencida"
+                android:textSize="14sp"
                 android:visibility="gone" />
         </FrameLayout>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-    <include layout="@layout/widget_bottom_nav_admin" android:id="@+id/incluirNavInferior" />
+    <include
+        android:id="@+id/incluirNavInferior"
+        layout="@layout/widget_bottom_nav_admin" />
 
 </LinearLayout>
