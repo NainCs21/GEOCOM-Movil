@@ -31,6 +31,9 @@
     },
     "updates": {
       "url": "https://u.expo.dev/2aa8003f-af56-474f-ab22-d5084bb5c3fc"
-    }
+    },
+    "plugins": [
+      "expo-sharing"
+    ]
   }
 }
