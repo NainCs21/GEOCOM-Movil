@@ -237,12 +237,26 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         }
     }
 
+    private fun campoTexto(view: View, bottomMarginDp: Int = 16): TextInputLayout {
+        val density = resources.displayMetrics.density
+        return TextInputLayout(
+            requireContext(), null, com.google.android.material.R.attr.textInputOutlinedStyle
+        ).apply {
+            addView(view)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = (bottomMarginDp * density).toInt() }
+        }
+    }
+
     private fun mostrarDialogoFormulario(item: Any?) {
         val context = requireContext()
         val builder = MaterialAlertDialogBuilder(context)
         val layout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(48, 32, 48, 16)
+            val d = resources.displayMetrics.density
+            setPadding((24 * d).toInt(), (16 * d).toInt(), (24 * d).toInt(), (8 * d).toInt())
         }
 
         val esEdicion = item != null
@@ -257,23 +271,23 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                 val inputTelefono = TextInputEditText(context).apply { hint = getString(R.string.telefono); inputType = InputType.TYPE_CLASS_PHONE; setText(cond?.telefono) }
                 val inputCargo = TextInputEditText(context).apply { hint = getString(R.string.cargo); setText(cond?.cargo) }
 
-                layout.addView(TextInputLayout(context).apply { addView(inputNombre); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 16 } })
-                layout.addView(TextInputLayout(context).apply { addView(inputCorreo); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 16 } })
-                layout.addView(TextInputLayout(context).apply { addView(inputPassword); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 16 } })
-                layout.addView(TextInputLayout(context).apply { addView(inputTelefono); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 16 } })
-                layout.addView(TextInputLayout(context).apply { addView(inputCargo); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT) })
+                layout.addView(campoTexto(inputNombre))
+                layout.addView(campoTexto(inputCorreo))
+                layout.addView(campoTexto(inputPassword))
+                layout.addView(campoTexto(inputTelefono))
+                layout.addView(campoTexto(inputCargo, 0))
 
                 builder.setView(layout)
                 builder.setPositiveButton(R.string.guardar) { _, _ ->
                     val pass = inputPassword.text?.toString()
                     val map = mutableMapOf<String, Any?>(
-                        "name" to inputNombre.text?.toString()?.trim(),
-                        "email" to inputCorreo.text?.toString()?.trim(),
+                        "nombre" to inputNombre.text?.toString()?.trim(),
+                        "correo" to inputCorreo.text?.toString()?.trim(),
                         "telefono" to inputTelefono.text?.toString()?.trim(),
                         "cargo" to inputCargo.text?.toString()?.trim()
                     )
                     if (!pass.isNullOrBlank()) {
-                        map["password"] = pass
+                        map["contrasena"] = pass
                     }
                     if (esEdicion && cond != null) {
                         model.editarConductor(cond.id, map)
@@ -290,33 +304,46 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                 val inputModelo = TextInputEditText(context).apply { hint = getString(R.string.modelo); setText(veh?.modelo) }
                 val inputAnio = TextInputEditText(context).apply { hint = getString(R.string.anio); inputType = InputType.TYPE_CLASS_NUMBER; setText(veh?.anio?.toString()) }
 
-                val opcionesCombustible = arrayOf("Regular", "Super", "Diesel")
-                val adapterCombustible = ArrayAdapter(context, android.R.layout.simple_dropdown_item_1line, opcionesCombustible)
-                val inputCombustible = AutoCompleteTextView(context).apply {
-                    hint = getString(R.string.tipo_combustible)
-                    setAdapter(adapterCombustible)
-                    setText(veh?.tipo_combustible ?: "Regular", false)
-                    inputType = InputType.TYPE_NULL
+                val opcionesCombustible = arrayOf("Diesel", "Gasolina")
+                val mapaCombustible = mapOf("Diesel" to "diesel", "Gasolina" to "gasolina", "Diésel" to "diesel")
+                val textoInicialCombustible = when (veh?.tipo_combustible?.lowercase()) {
+                    "gasolina" -> "Gasolina"
+                    else -> "Diesel"
                 }
 
-                layout.addView(TextInputLayout(context).apply { addView(inputPlaca); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 16 } })
-                layout.addView(TextInputLayout(context).apply { addView(inputMarca); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 16 } })
-                layout.addView(TextInputLayout(context).apply { addView(inputModelo); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 16 } })
-                layout.addView(TextInputLayout(context).apply { addView(inputAnio); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 16 } })
-                layout.addView(TextInputLayout(context, null, com.google.android.material.R.attr.textInputStyle).apply {
-                    addView(inputCombustible)
-                    layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-                })
+                val inputCombustible = TextInputEditText(context).apply {
+                    hint = getString(R.string.tipo_combustible)
+                    setText(textoInicialCombustible)
+                    isFocusable = false
+                    isClickable = true
+                    keyListener = null
+                    setOnClickListener {
+                        MaterialAlertDialogBuilder(context)
+                            .setTitle(getString(R.string.tipo_combustible))
+                            .setItems(opcionesCombustible) { _, which ->
+                                setText(opcionesCombustible[which])
+                            }
+                            .show()
+                    }
+                }
+
+                layout.addView(campoTexto(inputPlaca))
+                layout.addView(campoTexto(inputMarca))
+                layout.addView(campoTexto(inputModelo))
+                layout.addView(campoTexto(inputAnio))
+                layout.addView(campoTexto(inputCombustible, 0))
 
                 builder.setView(layout)
                 builder.setPositiveButton(R.string.guardar) { _, _ ->
                     val anioVal = inputAnio.text?.toString()?.toIntOrNull()
+                    val seleccionCombustible = inputCombustible.text?.toString()?.trim()
+                    val tipoCombustibleVal = mapaCombustible[seleccionCombustible] ?: "diesel"
                     val map = mapOf(
                         "placa" to inputPlaca.text?.toString()?.trim(),
                         "marca" to inputMarca.text?.toString()?.trim(),
                         "modelo" to inputModelo.text?.toString()?.trim(),
                         "anio" to anioVal,
-                        "tipo_combustible" to inputCombustible.text?.toString()?.trim()
+                        "tipo_combustible" to tipoCombustibleVal
                     )
                     if (esEdicion && veh != null) {
                         model.editarVehiculo(veh.id, map)
@@ -344,9 +371,9 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                     })
                 }
 
-                layout.addView(TextInputLayout(context).apply { addView(inputNombre); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 16 } })
-                layout.addView(TextInputLayout(context).apply { addView(inputDireccion); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { bottomMargin = 16 } })
-                layout.addView(TextInputLayout(context).apply { addView(inputQr); layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT) })
+                layout.addView(campoTexto(inputNombre))
+                layout.addView(campoTexto(inputDireccion))
+                layout.addView(campoTexto(inputQr, 0))
 
                 builder.setView(layout)
                 builder.setPositiveButton(R.string.guardar) { _, _ ->
