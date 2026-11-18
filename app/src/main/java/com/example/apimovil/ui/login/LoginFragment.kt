@@ -11,7 +11,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.apimovil.R
 import com.example.apimovil.data.SessionManager
+import com.example.apimovil.data.SesionEventos
 import com.example.apimovil.databinding.FragmentLoginBinding
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 
 class LoginFragment : Fragment(R.layout.fragment_login) {
@@ -22,6 +24,13 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentLoginBinding.bind(view)
+
+        // Mostrar mensaje de sesion expirada o inactividad si existe
+        val mensajeSalida = SessionManager.obtenerYLimpiarMensajeSalida()
+        if (!mensajeSalida.isNullOrBlank()) {
+            Snackbar.make(binding.root, mensajeSalida, Snackbar.LENGTH_LONG).show()
+        }
+        SesionEventos.reiniciarGuardia()
 
         binding.btnIngresar.setOnClickListener {
             val correo = binding.inputCorreo.text?.toString().orEmpty()

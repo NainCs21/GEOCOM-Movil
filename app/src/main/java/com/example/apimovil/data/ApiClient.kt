@@ -4,6 +4,7 @@ import com.example.apimovil.BuildConfig
 import com.example.apimovil.data.models.Gasolinera
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonDeserializer
+import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -19,15 +20,33 @@ const val BASE_URL = "https://geocom-production.up.railway.app/api/"
 private class AuthInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val original = chain.request()
-        if (original.url.encodedPath.endsWith("/login")) {
-            return chain.proceed(original)
-        }
-        val token = SessionManager.token
         val requestBuilder = original.newBuilder().addHeader("Accept", "application/json")
-        if (!token.isNullOrBlank()) {
-            requestBuilder.addHeader("Authorization", "Bearer $token")
+        val path = original.url.encodedPath
+        if (!path.endsWith("/login")) {
+            val token = SessionManager.token
+            if (!token.isNullOrBlank()) {
+                requestBuilder.addHeader("Authorization", "Bearer $token")
+            }
         }
         return chain.proceed(requestBuilder.build())
+    }
+}
+
+// Interceptor para detectar respuestas 401 fuera de login/logout y cerrar sesion localmente
+private class SessionExpiredInterceptor : Interceptor {
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val original = chain.request()
+        val response = chain.proceed(original)
+        if (response.code == 401 && SessionManager.haySesion) {
+            val path = original.url.encodedPath
+            if (!path.endsWith("/login") && !path.endsWith("/logout")) {
+                SessionManager.cerrarSesion()
+                runBlocking {
+                    SesionEventos.notificarSesionExpirada("Tu sesión expiró. Inicia sesión de nuevo.")
+                }
+            }
+        }
+        return response
     }
 }
 
@@ -58,6 +77,7 @@ object ApiClient {
         .readTimeout(20, TimeUnit.SECONDS)
         .callTimeout(30, TimeUnit.SECONDS)
         .addInterceptor(AuthInterceptor())
+        .addInterceptor(SessionExpiredInterceptor())
         .addInterceptor(logging)
         .build()
 

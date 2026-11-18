@@ -1,6 +1,8 @@
 package com.example.apimovil.ui.common
 
 import com.google.gson.Gson
+import com.google.gson.JsonParseException
+import com.google.gson.stream.MalformedJsonException
 import com.example.apimovil.data.models.MensajeResponse
 import java.io.IOException
 import retrofit2.HttpException
@@ -37,6 +39,8 @@ fun mensajeDeError(error: Exception): String {
         }
     }
     return when (error) {
+        is JsonParseException,
+        is MalformedJsonException -> "El servidor respondió algo inesperado. Intenta de nuevo."
         is IOException -> "No se pudo conectar al servidor. Revisa que el backend Laravel esté activo."
         else -> error.localizedMessage?.takeIf { it.isNotBlank() } ?: "Ocurrió un error inesperado. Intenta de nuevo."
     }
