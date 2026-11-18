@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <style name="Theme.ApiMovil" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.ApiMovil" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/marca</item>
         <item name="colorPrimaryVariant">@color/marca_oscuro</item>
         <item name="colorOnPrimary">@color/blanco</item>
@@ -8,5 +8,6 @@
         <item name="colorOnSecondary">@color/texto_principal</item>
         <item name="android:windowBackground">@color/fondo</item>
         <item name="android:statusBarColor">@color/marca_oscuro</item>
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
     </style>
 </resources>
