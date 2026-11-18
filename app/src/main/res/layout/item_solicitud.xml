@@ -106,19 +106,6 @@
                     android:background="?attr/selectableItemBackground"
                     android:padding="4dp" />
 
-                <TextView
-                    android:id="@+id/textEditar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/editar"
-                    android:textColor="@color/marca"
-                    android:textStyle="bold"
-                    android:textSize="13sp"
-                    android:background="?attr/selectableItemBackground"
-                    android:padding="4dp"
-                    android:visibility="gone"
-                    android:layout_marginStart="8dp" />
-
                 <View
                     android:layout_width="0dp"
                     android:layout_height="0dp"

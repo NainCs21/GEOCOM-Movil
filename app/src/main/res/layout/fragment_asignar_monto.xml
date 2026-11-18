@@ -188,7 +188,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnMonto500Vehiculo"
-                            style="@style/Widget.App.Button.Outlined"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="0dp"
                             android:layout_height="36dp"
                             android:layout_marginEnd="4dp"
@@ -204,7 +204,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnMonto1000Vehiculo"
-                            style="@style/Widget.App.Button.Outlined"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="0dp"
                             android:layout_height="36dp"
                             android:layout_marginHorizontal="4dp"
@@ -220,7 +220,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnMonto1500Vehiculo"
-                            style="@style/Widget.App.Button.Outlined"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="0dp"
                             android:layout_height="36dp"
                             android:layout_marginStart="4dp"
@@ -289,7 +289,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnMonto500Mgp"
-                            style="@style/Widget.App.Button.Outlined"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="0dp"
                             android:layout_height="36dp"
                             android:layout_marginEnd="4dp"
@@ -305,7 +305,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnMonto1000Mgp"
-                            style="@style/Widget.App.Button.Outlined"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="0dp"
                             android:layout_height="36dp"
                             android:layout_marginHorizontal="4dp"
@@ -321,7 +321,7 @@
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnMonto1500Mgp"
-                            style="@style/Widget.App.Button.Outlined"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="0dp"
                             android:layout_height="36dp"
                             android:layout_marginStart="4dp"

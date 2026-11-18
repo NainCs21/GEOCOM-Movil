@@ -33,24 +33,13 @@
                     app:tint="@color/blanco" />
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginStart="8dp"
                     android:text="@string/detalle_de_orden"
                     android:textColor="@color/blanco"
                     android:textSize="18sp"
                     android:textStyle="bold" />
-
-                <ImageButton
-                    android:id="@+id/btnExportarPdf"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="@string/exportar_pdf"
-                    android:src="@android:drawable/ic_menu_save"
-                    android:visibility="gone"
-                    app:tint="@color/blanco" />
             </LinearLayout>
 
         </com.google.android.material.appbar.MaterialToolbar>
@@ -86,17 +75,6 @@
                 android:paddingVertical="6dp"
                 android:textSize="12sp"
                 android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/textAvisoRehabilitacion"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_tarjeta_info"
-                android:padding="12dp"
-                android:textColor="@color/marca_oscuro"
-                android:textSize="13sp"
-                android:visibility="gone" />
 
             <!-- Contador de 15 minutos: tarjeta de advertencia -->
             <com.google.android.material.card.MaterialCardView
@@ -338,19 +316,6 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical" />
                 </com.google.android.material.card.MaterialCardView>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnVerFacturaPdf"
-                    style="@style/Widget.App.Button.Outlined"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="@string/ver_factura_pdf"
-                    android:visibility="gone"
-                    app:icon="@android:drawable/ic_menu_save"
-                    app:iconGravity="textStart"
-                    app:iconPadding="8dp"
-                    app:iconSize="20dp" />
             </LinearLayout>
 
             <TextView
@@ -361,15 +326,6 @@
                 android:gravity="center"
                 android:textColor="@color/texto_secundario"
                 android:textSize="14sp"
-                android:visibility="gone" />
-
-            <TextView
-                android:id="@+id/textJustificacionRehabilitacion"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:textColor="@color/texto_principal"
-                android:textSize="13sp"
                 android:visibility="gone" />
 
             <ProgressBar

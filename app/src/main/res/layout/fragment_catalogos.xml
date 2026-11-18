@@ -67,7 +67,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnConductores"
-            style="@style/Widget.App.Button.Outlined"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
@@ -80,7 +80,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnVehiculos"
-            style="@style/Widget.App.Button.Outlined"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
@@ -93,7 +93,7 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnGasolineras"
-            style="@style/Widget.App.Button.Outlined"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"

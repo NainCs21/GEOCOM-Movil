@@ -89,18 +89,6 @@
                 app:cornerRadius="12dp"
                 app:strokeColor="@color/borde" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnVencidas"
-                style="@style/Widget.App.Button.Outlined"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:text="@string/filtro_vencidas"
-                android:textColor="@color/selector_toggle_button_text"
-                android:textSize="13sp"
-                app:backgroundTint="@color/selector_toggle_button_bg"
-                app:cornerRadius="12dp"
-                app:strokeColor="@color/borde" />
-
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <FrameLayout

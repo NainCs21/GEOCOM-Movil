@@ -42,8 +42,7 @@
                         android:layout_height="40dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="@string/mi_historial"
-                        android:src="@drawable/ic_history"
-                        android:tooltipText="@string/mi_historial"
+                        android:src="@android:drawable/ic_menu_recent_history"
                         app:tint="@color/blanco" />
 
                     <ImageButton
@@ -53,67 +52,17 @@
                         android:layout_marginStart="4dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:contentDescription="@string/mi_perfil"
-                        android:src="@drawable/ic_person"
-                        android:tooltipText="@string/mi_perfil"
+                        android:src="@android:drawable/ic_menu_myplaces"
                         app:tint="@color/blanco" />
                 </LinearLayout>
 
             </com.google.android.material.appbar.MaterialToolbar>
         </com.google.android.material.appbar.AppBarLayout>
 
-        <!-- Tarjeta destacada si hay orden pendiente -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardBannerPendiente"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="20dp"
-            android:layout_marginTop="16dp"
-            android:visibility="gone"
-            app:cardBackgroundColor="@color/marca_claro"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:contentPadding="16dp"
-            app:strokeWidth="0dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/tienes_una_orden_pendiente"
-                    android:textColor="@color/marca_oscuro"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/escanea_el_qr_de_la_gasolinera"
-                    android:textColor="@color/texto_secundario"
-                    android:textSize="13sp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnEscanearBanner"
-                    style="@style/Widget.MaterialComponents.Button"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="12dp"
-                    android:text="@string/escanear_qr_de_gasolinera"
-                    app:backgroundTint="@color/marca"
-                    app:cornerRadius="12dp"
-                    app:icon="@android:drawable/ic_menu_camera" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
             android:id="@+id/swipeRefresh"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_height="match_parent">
 
             <FrameLayout
                 android:layout_width="match_parent"
@@ -141,7 +90,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:accessibilityLiveRegion="polite"
-                    android:text="@string/no_tienes_ordenes_activas"
+                    android:text="@string/sin_ordenes_todavia"
                     android:textColor="@color/texto_secundario"
                     android:textSize="14sp"
                     android:visibility="gone" />
@@ -160,17 +109,15 @@
 
     </LinearLayout>
 
-    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnNuevaSolicitud"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="20dp"
         android:contentDescription="@string/nueva_solicitud"
-        android:text="@string/nueva_solicitud"
-        android:textColor="@color/blanco"
+        android:src="@android:drawable/ic_input_add"
         app:backgroundTint="@color/marca"
-        app:icon="@drawable/ic_add"
-        app:iconTint="@color/blanco" />
+        app:tint="@color/blanco" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
