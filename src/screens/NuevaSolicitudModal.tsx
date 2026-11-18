@@ -30,9 +30,11 @@ export default function NuevaSolicitudModal({ visible, onClose, token, onSuccess
   const [actividad, setActividad] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (visible) {
+      setErrorMsg(null);
       setLoading(true);
       fetch(`${API_URL}/vehiculos`, {
         headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
@@ -41,23 +43,21 @@ export default function NuevaSolicitudModal({ visible, onClose, token, onSuccess
         .then((d) => {
           const list = Array.isArray(d) ? d : d.data || [];
           setVehiculos(list);
-          if (list.length > 0) setVehiculoId(list[0].id);
+          if (list.length > 0 && !vehiculoId) setVehiculoId(list[0].id);
         })
         .finally(() => setLoading(false));
     }
   }, [visible, token]);
 
   const enviar = async () => {
-    if ((destino === 'vehiculo' || destino === 'ambos') && !vehiculoId) {
-      Alert.alert('Aviso', 'Debes seleccionar un vehículo.');
-      return;
-    }
-    if ((destino === 'mgp' || destino === 'ambos') && !descripcionMgp.trim()) {
-      Alert.alert('Aviso', 'Ingresa la descripción de la planta generadora (MGP).');
+    setErrorMsg(null);
+    const necesitaVehiculo = destino === 'vehiculo' || destino === 'ambos';
+    if (necesitaVehiculo && !vehiculoId) {
+      setErrorMsg('Elige un destino válido: vehiculo, mgp o ambos.');
       return;
     }
     if (!actividad.trim()) {
-      Alert.alert('Aviso', 'Describe la actividad para la cual requieres combustible.');
+      setErrorMsg('Describe la actividad que justifica el combustible.');
       return;
     }
 
@@ -73,180 +73,186 @@ export default function NuevaSolicitudModal({ visible, onClose, token, onSuccess
         body: JSON.stringify({
           tipo_destino: destino,
           vehiculo_id: destino === 'mgp' ? null : vehiculoId,
-          descripcion_mgp: destino === 'vehiculo' ? null : descripcionMgp.trim(),
+          descripcion_mgp: destino === 'vehiculo' ? null : descripcionMgp.trim() || null,
           descripcion_actividad: actividad.trim(),
         }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.mensaje || data.message || 'Error al crear solicitud');
+      if (!res.ok) throw new Error(data.mensaje || data.message || 'Error al crear solicitud.');
 
-      Alert.alert('Éxito', 'Solicitud enviada correctamente a revisión.');
       setActividad('');
       setDescripcionMgp('');
       onSuccess();
       onClose();
     } catch (e: any) {
-      Alert.alert('Error', e.message);
+      setErrorMsg(e.message);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.overlay}>
-        <View style={styles.sheet}>
-          <ScrollView contentContainerStyle={styles.content}>
-            <View style={styles.headerRow}>
-              <Text style={styles.title}>¿Para qué necesitas combustible?</Text>
-              <TouchableOpacity onPress={onClose}>
-                <Text style={styles.closeBtn}>✕</Text>
-              </TouchableOpacity>
-            </View>
+    <Modal visible={visible} animationType="slide">
+      <View style={styles.flex}>
+        {/* Barra superior idéntica a fragment_nueva_solicitud.xml */}
+        <View style={styles.topHeader}>
+          <TouchableOpacity onPress={onClose} style={styles.backBtn}>
+            <Text style={{ fontSize: 22, color: colors.textoPrincipal }}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.topHeaderTitle}>Nueva solicitud</Text>
+        </View>
 
-            {/* Selector de Destino */}
-            <Text style={styles.label}>Destino del combustible</Text>
-            <View style={styles.destinosRow}>
-              {(['vehiculo', 'mgp', 'ambos'] as Destino[]).map((opt) => (
-                <TouchableOpacity
-                  key={opt}
-                  style={[styles.destinoChip, destino === opt && styles.destinoChipActive]}
-                  onPress={() => setDestino(opt)}
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <Text style={styles.title}>¿Para qué necesitas combustible?</Text>
+
+          <Text style={styles.label}>Destino (vehiculo, mgp o ambos)</Text>
+          <View style={styles.destinosCol}>
+            {(
+              [
+                { id: 'vehiculo', label: 'Vehículo' },
+                { id: 'mgp', label: 'Planta generadora (MGP)' },
+                { id: 'ambos', label: 'Ambos (Vehículo + MGP)' },
+              ] as const
+            ).map((opt) => (
+              <TouchableOpacity
+                key={opt.id}
+                style={[styles.destinoOption, destino === opt.id && styles.destinoOptionActive]}
+                onPress={() => setDestino(opt.id)}
+              >
+                <Text
+                  style={[
+                    styles.destinoOptionText,
+                    destino === opt.id && styles.destinoOptionTextActive,
+                  ]}
                 >
-                  <Text style={[styles.destinoChipText, destino === opt && styles.destinoChipTextActive]}>
-                    {opt === 'vehiculo' ? 'Vehículo' : opt === 'mgp' ? 'Planta (MGP)' : 'Ambos'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
-            {/* Selector de Vehículo */}
-            {(destino === 'vehiculo' || destino === 'ambos') && (
-              <>
-                <Text style={styles.label}>Selecciona el Vehículo</Text>
-                {loading ? (
-                  <ActivityIndicator color={colors.marca} style={{ marginVertical: 10 }} />
-                ) : (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.vehiculosList}>
-                    {vehiculos.map((v) => (
+          {(destino === 'vehiculo' || destino === 'ambos') && (
+            <>
+              <Text style={styles.label}>Vehículo</Text>
+              {loading ? (
+                <ActivityIndicator color={colors.marca} style={{ marginVertical: 10 }} />
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
+                  {vehiculos.map((v) => {
+                    const partes = [v.placa, v.marca, v.modelo].filter(Boolean);
+                    const etiqueta = partes.length > 0 ? partes.join(' - ') : `Vehículo #${v.id}`;
+                    const selected = vehiculoId === v.id;
+                    return (
                       <TouchableOpacity
                         key={v.id}
-                        style={[styles.vehiculoCard, vehiculoId === v.id && styles.vehiculoCardActive]}
+                        style={[styles.vehiculoChip, selected && styles.vehiculoChipActive]}
                         onPress={() => setVehiculoId(v.id)}
                       >
-                        <Text style={[styles.vehiculoPlaca, vehiculoId === v.id && styles.whiteText]}>
-                          {v.placa}
-                        </Text>
-                        <Text style={[styles.vehiculoModelo, vehiculoId === v.id && styles.whiteSubText]}>
-                          {v.marca} {v.modelo}
+                        <Text style={[styles.vehiculoText, selected && { color: colors.blanco }]}>
+                          {etiqueta}
                         </Text>
                       </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                )}
-              </>
-            )}
-
-            {/* Descripción MGP */}
-            {(destino === 'mgp' || destino === 'ambos') && (
-              <>
-                <Text style={styles.label}>Descripción de la Planta (MGP)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ej: Generador portatil de emergencia 5KW"
-                  placeholderTextColor="#9ca3af"
-                  value={descripcionMgp}
-                  onChangeText={setDescripcionMgp}
-                />
-              </>
-            )}
-
-            {/* Actividad */}
-            <Text style={styles.label}>Descripción de la actividad</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="¿Qué trabajo o recorrido realizarás?"
-              placeholderTextColor="#9ca3af"
-              multiline
-              numberOfLines={3}
-              value={actividad}
-              onChangeText={setActividad}
-            />
-
-            <TouchableOpacity style={styles.btnSubmit} onPress={enviar} disabled={submitting}>
-              {submitting ? (
-                <ActivityIndicator color={colors.blanco} />
-              ) : (
-                <Text style={styles.btnSubmitText}>Enviar solicitud</Text>
+                    );
+                  })}
+                </ScrollView>
               )}
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
+            </>
+          )}
+
+          {(destino === 'mgp' || destino === 'ambos') && (
+            <>
+              <Text style={styles.label}>Descripción de la planta generadora (MGP)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Descripción de la planta generadora (MGP)"
+                placeholderTextColor={colors.textoSecundario}
+                value={descripcionMgp}
+                onChangeText={setDescripcionMgp}
+              />
+            </>
+          )}
+
+          <Text style={styles.label}>Descripción de la actividad</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Descripción de la actividad"
+            placeholderTextColor={colors.textoSecundario}
+            multiline
+            numberOfLines={3}
+            value={actividad}
+            onChangeText={setActividad}
+          />
+
+          <TouchableOpacity
+            style={[styles.btnSubmit, submitting && { opacity: 0.7 }]}
+            onPress={enviar}
+            disabled={submitting}
+          >
+            <Text style={styles.btnSubmitText}>Enviar solicitud</Text>
+          </TouchableOpacity>
+
+          {submitting && <ActivityIndicator color={colors.marca} style={{ marginTop: 16 }} />}
+          {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
+        </ScrollView>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
-  sheet: {
-    backgroundColor: colors.blanco,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '90%',
-  },
-  content: { padding: 22 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  title: { fontSize: 20, fontWeight: '700', color: colors.textoPrincipal, flex: 1 },
-  closeBtn: { fontSize: 20, color: colors.textoSecundario, padding: 4 },
-  label: { fontSize: 13, fontWeight: '700', color: colors.textoPrincipal, marginTop: 14, marginBottom: 6 },
-  destinosRow: { flexDirection: 'row', gap: 8 },
-  destinoChip: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.borde,
+  flex: { flex: 1, backgroundColor: colors.fondo },
+  topHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.fondo,
+    backgroundColor: colors.blanco,
+    padding: 20,
   },
-  destinoChipActive: { backgroundColor: colors.marca, borderColor: colors.marca },
-  destinoChipText: { fontSize: 13, fontWeight: '600', color: colors.textoSecundario },
-  destinoChipTextActive: { color: colors.blanco, fontWeight: '700' },
-  vehiculosList: { flexDirection: 'row', marginBottom: 6 },
-  vehiculoCard: {
-    padding: 12,
+  backBtn: { marginRight: 10, padding: 4 },
+  topHeaderTitle: { fontSize: 20, fontWeight: '700', color: colors.textoPrincipal },
+  content: { padding: 20 },
+  title: { fontSize: 22, fontWeight: '700', color: colors.textoPrincipal, marginBottom: 16 },
+  label: { fontSize: 13, fontWeight: '700', color: colors.textoPrincipal, marginTop: 12, marginBottom: 6 },
+  destinosCol: { gap: 8 },
+  destinoOption: {
+    backgroundColor: colors.blanco,
+    borderWidth: 1,
+    borderColor: colors.borde,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.borde,
-    backgroundColor: colors.fondo,
-    marginRight: 8,
-    minWidth: 120,
+    padding: 13,
   },
-  vehiculoCardActive: { backgroundColor: colors.marca, borderColor: colors.marca },
-  vehiculoPlaca: { fontWeight: '800', fontSize: 14, color: colors.textoPrincipal },
-  vehiculoModelo: { fontSize: 11, color: colors.textoSecundario, marginTop: 2 },
-  whiteText: { color: colors.blanco },
-  whiteSubText: { color: '#E5DAF7' },
-  input: {
-    backgroundColor: colors.fondo,
+  destinoOptionActive: { backgroundColor: colors.marcaClaro, borderColor: colors.marca },
+  destinoOptionText: { fontSize: 14, color: colors.textoPrincipal, fontWeight: '600' },
+  destinoOptionTextActive: { color: colors.marcaOscuro, fontWeight: '700' },
+  vehiculoChip: {
+    backgroundColor: colors.blanco,
     borderWidth: 1,
     borderColor: colors.borde,
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginRight: 8,
+  },
+  vehiculoChipActive: { backgroundColor: colors.marca, borderColor: colors.marca },
+  vehiculoText: { fontSize: 13, fontWeight: '700', color: colors.textoPrincipal },
+  input: {
+    backgroundColor: colors.blanco,
+    borderWidth: 1,
+    borderColor: colors.borde,
+    borderRadius: 12,
+    padding: 13,
     fontSize: 14,
     color: colors.textoPrincipal,
   },
-  textArea: { height: 75, textAlignVertical: 'top' },
+  textArea: { minHeight: 72, textAlignVertical: 'top' },
   btnSubmit: {
     backgroundColor: colors.marca,
     height: 52,
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 22,
-    marginBottom: 10,
+    marginTop: 24,
   },
   btnSubmitText: { color: colors.blanco, fontSize: 15, fontWeight: '700' },
+  errorText: { color: colors.vencida, textAlign: 'center', marginTop: 12, fontSize: 13 },
 });
