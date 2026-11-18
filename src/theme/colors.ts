@@ -8,7 +8,6 @@ export const colors = {
   borde: '#E5E0EB',
   blanco: '#FFFFFF',
 
-  // Badges de estado
   pendiente: '#F5A623',
   pendienteFondo: '#FDF1DD',
   abierta: '#4A90D9',
@@ -18,7 +17,6 @@ export const colors = {
   vencida: '#C62828',
   vencidaFondo: '#FAE3E3',
 
-  // Advertencia cuenta regresiva 15 min
   advertenciaTexto: '#684A00',
   advertenciaTextoSecundario: '#795300',
   advertenciaFondo: '#FFF0CE',
