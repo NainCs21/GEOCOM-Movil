@@ -40,6 +40,7 @@ import com.example.apimovil.ui.common.colorDeEstado
 import com.example.apimovil.ui.common.etiquetaDeEstado
 import com.example.apimovil.ui.common.fondoBadgeDeEstado
 import com.example.apimovil.ui.common.formatoLegible
+import com.example.apimovil.ui.common.normalizarUrlApi
 import com.example.apimovil.ui.common.parseFechaIso
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -303,9 +304,10 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
         }
 
         if (target is String) {
+            val urlNormalizada = normalizarUrlApi(target)
             val token = SessionManager.token
             val glideUrl = GlideUrl(
-                target,
+                urlNormalizada,
                 LazyHeaders.Builder()
                     .addHeader("Authorization", "Bearer $token")
                     .build()
@@ -326,11 +328,12 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
         layout.addView(imageView)
 
         if (target is String) {
+            val urlNormalizada = normalizarUrlApi(target)
             val btnDescargar = MaterialButton(context).apply {
                 text = getString(R.string.descargar_foto)
                 setIconResource(android.R.drawable.ic_menu_save)
                 setOnClickListener {
-                    descargarFoto(target)
+                    descargarFoto(urlNormalizada)
                 }
             }
             layout.addView(btnDescargar)
@@ -344,6 +347,7 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
     }
 
     private fun descargarFoto(urlEvidencia: String) {
+        val urlNormalizada = normalizarUrlApi(urlEvidencia)
         val context = requireContext()
         Toast.makeText(context, "Descargando foto...", Toast.LENGTH_SHORT).show()
 
@@ -351,13 +355,14 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
             try {
                 val token = SessionManager.token
                 val request = Request.Builder()
-                    .url(urlEvidencia)
+                    .url(urlNormalizada)
                     .addHeader("Authorization", "Bearer $token")
                     .build()
                 val response = ApiClient.client.newCall(request).execute()
                 if (response.isSuccessful) {
-                    val bytes = response.body?.bytes()
-                    if (bytes != null) {
+                    val body = response.body
+                    if (body != null) {
+                        val bytes = body.bytes()
                         val filename = "evidencia_${System.currentTimeMillis()}.jpg"
                         val saved = saveImageToGalleryOrDownloads(context, bytes, filename)
                         withContext(Dispatchers.Main) {
@@ -366,6 +371,10 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
                             } else {
                                 Toast.makeText(context, "Error al guardar la foto", Toast.LENGTH_SHORT).show()
                             }
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "La respuesta no contiene datos.", Toast.LENGTH_SHORT).show()
                         }
                     }
                 } else {

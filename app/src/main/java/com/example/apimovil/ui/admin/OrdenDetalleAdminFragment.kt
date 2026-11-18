@@ -12,7 +12,6 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -21,7 +20,6 @@ import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
-import com.google.android.material.button.MaterialButton
 import com.example.apimovil.R
 import com.example.apimovil.data.ApiClient
 import com.example.apimovil.data.SessionManager
@@ -33,6 +31,8 @@ import com.example.apimovil.ui.common.colorDeEstado
 import com.example.apimovil.ui.common.etiquetaDeEstado
 import com.example.apimovil.ui.common.fondoBadgeDeEstado
 import com.example.apimovil.ui.common.mensajeDeError
+import com.example.apimovil.ui.common.normalizarUrlApi
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -175,6 +175,7 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
     }
 
     private fun mostrarDialogoVerEvidencia(urlEvidencia: String) {
+        val urlNormalizada = normalizarUrlApi(urlEvidencia)
         val context = requireContext()
         val layout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
@@ -195,7 +196,7 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
 
         val token = SessionManager.token
         val glideUrl = GlideUrl(
-            urlEvidencia,
+            urlNormalizada,
             LazyHeaders.Builder()
                 .addHeader("Authorization", "Bearer $token")
                 .build()
@@ -213,7 +214,7 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
             text = getString(R.string.descargar_foto)
             setIconResource(android.R.drawable.ic_menu_save)
             setOnClickListener {
-                descargarFoto(urlEvidencia)
+                descargarFoto(urlNormalizada)
             }
         }
         layout.addView(btnDescargar)
@@ -226,6 +227,7 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
     }
 
     private fun descargarFoto(urlEvidencia: String) {
+        val urlNormalizada = normalizarUrlApi(urlEvidencia)
         val context = requireContext()
         Toast.makeText(context, "Descargando foto...", Toast.LENGTH_SHORT).show()
 
@@ -233,13 +235,14 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
             try {
                 val token = SessionManager.token
                 val request = Request.Builder()
-                    .url(urlEvidencia)
+                    .url(urlNormalizada)
                     .addHeader("Authorization", "Bearer $token")
                     .build()
                 val response = ApiClient.client.newCall(request).execute()
                 if (response.isSuccessful) {
-                    val bytes = response.body?.bytes()
-                    if (bytes != null) {
+                    val body = response.body
+                    if (body != null) {
+                        val bytes = body.bytes()
                         val filename = "evidencia_${System.currentTimeMillis()}.jpg"
                         val saved = saveImageToGalleryOrDownloads(context, bytes, filename)
                         withContext(Dispatchers.Main) {
@@ -248,6 +251,10 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
                             } else {
                                 Toast.makeText(context, "Error al guardar la foto", Toast.LENGTH_SHORT).show()
                             }
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, "La respuesta no contiene datos.", Toast.LENGTH_SHORT).show()
                         }
                     }
                 } else {

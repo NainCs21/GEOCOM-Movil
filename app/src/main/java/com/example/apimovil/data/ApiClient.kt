@@ -13,7 +13,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 // URL base del servicio API en la nube
-private const val BASE_URL = "https://geocom-production.up.railway.app/api/"
+const val BASE_URL = "https://geocom-production.up.railway.app/api/"
 
 // Interceptor para agregar el token de autorizacion en las peticiones
 private class AuthInterceptor : Interceptor {
