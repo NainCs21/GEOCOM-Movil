@@ -35,9 +35,10 @@ interface ApiService {
     @GET("ordenes")
     suspend fun listarOrdenes(
         @Query("estado") estado: String? = null,
-
-            @Query("conductor_id") conductorId: Int? = null,
+        @Query("conductor_id") conductorId: Int? = null,
         @Query("gasolinera_id") gasolineraId: Int? = null,
+        @Query("desde") desde: String? = null,
+        @Query("hasta") hasta: String? = null,
     ): PaginaRespuesta<Orden>
 
     @GET("ordenes/{id}")

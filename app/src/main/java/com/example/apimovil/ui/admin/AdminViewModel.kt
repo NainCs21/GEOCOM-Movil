@@ -82,12 +82,24 @@ class AdminViewModel : ViewModel() {
     private val _ordenes = MutableStateFlow(UiState<List<Orden>>())
     val ordenes = _ordenes.asStateFlow()
 
-    // Carga las ordenes con filtro opcional por estado o conductor
-    fun cargarOrdenes(estado: String? = null, conductorId: Int? = null) {
+    // Carga las ordenes con filtro opcional por estado, conductor, gasolinera o rango de fechas
+    fun cargarOrdenes(
+        estado: String? = null,
+        conductorId: Int? = null,
+        gasolineraId: Int? = null,
+        desde: String? = null,
+        hasta: String? = null
+    ) {
         viewModelScope.launch {
             _ordenes.value = UiState(loading = true, data = _ordenes.value.data)
             try {
-                val pagina = ApiClient.api.listarOrdenes(estado = estado, conductorId = conductorId)
+                val pagina = ApiClient.api.listarOrdenes(
+                    estado = estado,
+                    conductorId = conductorId,
+                    gasolineraId = gasolineraId,
+                    desde = desde,
+                    hasta = hasta
+                )
                 _ordenes.value = UiState(data = pagina.data)
             } catch (e: CancellationException) {
                 throw e

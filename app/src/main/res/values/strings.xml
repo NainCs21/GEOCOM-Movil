@@ -229,4 +229,12 @@
     <string name="monto_1000">1000</string>
     <string name="monto_1500">1500</string>
     <string name="ver_solicitudes">Ver solicitudes</string>
+    <string name="filtrar_por_gasolinera">Filtrar por gasolinera</string>
+    <string name="todas_las_gasolineras">Todas las gasolineras</string>
+    <string name="rango_de_fechas">Rango de fechas</string>
+    <string name="limpiar_filtros">Limpiar filtros</string>
+    <string name="filtros">Filtros</string>
+    <string name="limpiar">Limpiar</string>
+    <string name="aplicar">Aplicar</string>
+    <string name="filtros_de_ordenes">Filtros de órdenes</string>
 </resources>
