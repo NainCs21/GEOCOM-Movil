@@ -237,4 +237,16 @@
     <string name="limpiar">Limpiar</string>
     <string name="aplicar">Aplicar</string>
     <string name="filtros_de_ordenes">Filtros de órdenes</string>
+    <string name="reporte_consumo_conductor">Reporte de consumo por conductor</string>
+    <string name="reporte_consumo_gasolinera">Reporte de consumo por gasolinera</string>
+    <string name="ordenes_completadas_periodo">Órdenes completadas del %1$s al %2$s</string>
+    <string name="ordenes_completadas_todo">Órdenes completadas, todo el periodo</string>
+    <string name="resumen_ordenes_monto">%1$d órdenes · Total: L %2$s</string>
+    <string name="no_hay_ordenes_periodo">No hay órdenes completadas en este periodo</string>
+    <string name="periodo_todo">Todo el periodo</string>
+    <string name="periodo_este_mes">Este mes</string>
+    <string name="periodo_mes_anterior">Mes anterior</string>
+    <string name="periodo_ultimos_7_dias">Últimos 7 días</string>
+    <string name="periodo_personalizado">Personalizado…</string>
+    <string name="exportar_pdf">Exportar PDF</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.example.apimovil.ui.common
 
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -24,5 +25,45 @@ fun formatoLegible(fecha: String): String {
         formato.format(parseFechaIso(fecha))
     } catch (_: Exception) {
         fecha
+    }
+}
+
+fun obtenerFechaActualString(): String {
+    return SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+}
+
+fun obtenerInicioMesString(): String {
+    val cal = Calendar.getInstance()
+    cal.set(Calendar.DAY_OF_MONTH, 1)
+    return SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.time)
+}
+
+fun obtenerMesAnteriorRango(): Pair<String, String> {
+    val cal = Calendar.getInstance()
+    cal.add(Calendar.MONTH, -1)
+    cal.set(Calendar.DAY_OF_MONTH, 1)
+    val desde = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.time)
+    cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
+    val hasta = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.time)
+    return Pair(desde, hasta)
+}
+
+fun obtenerUltimos7DiasRango(): Pair<String, String> {
+    val cal = Calendar.getInstance()
+    val hasta = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.time)
+    cal.add(Calendar.DAY_OF_YEAR, -6)
+    val desde = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.time)
+    return Pair(desde, hasta)
+}
+
+fun formatearFechaIsoShort(fechaStr: String?): String {
+    if (fechaStr.isNullOrBlank()) return ""
+    return try {
+        val parser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+        val formatter = SimpleDateFormat("dd/MM/yyyy", Locale("es", "HN"))
+        val date = parser.parse(fechaStr)
+        if (date != null) formatter.format(date) else fechaStr
+    } catch (_: Exception) {
+        fechaStr
     }
 }

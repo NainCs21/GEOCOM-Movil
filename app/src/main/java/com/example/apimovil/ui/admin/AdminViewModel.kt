@@ -4,8 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.apimovil.data.ApiClient
 import com.example.apimovil.data.models.*
-import com.example.apimovil.ui.common.UiState
-import com.example.apimovil.ui.common.mensajeDeError
+import com.example.apimovil.ui.common.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -208,17 +207,23 @@ class AdminViewModel : ViewModel() {
     }
 
     // Reportes de consumo
+    var periodoSeleccionadoEtiqueta: String = "Este mes"
+    var desdePeriodo: String? = obtenerInicioMesString()
+    var hastaPeriodo: String? = obtenerFechaActualString()
+
     private val _reporteConductor = MutableStateFlow(UiState<List<ReporteConductor>>())
     val reporteConductor = _reporteConductor.asStateFlow()
 
     private val _reporteGasolinera = MutableStateFlow(UiState<List<ReporteGasolinera>>())
     val reporteGasolinera = _reporteGasolinera.asStateFlow()
 
-    fun cargarReportePorConductor() {
+    fun cargarReportePorConductor(desde: String? = desdePeriodo, hasta: String? = hastaPeriodo) {
+        desdePeriodo = desde
+        hastaPeriodo = hasta
         viewModelScope.launch {
             _reporteConductor.value = UiState(loading = true)
             try {
-                _reporteConductor.value = UiState(data = ApiClient.api.reportePorConductor())
+                _reporteConductor.value = UiState(data = ApiClient.api.reportePorConductor(desde, hasta))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -227,11 +232,13 @@ class AdminViewModel : ViewModel() {
         }
     }
 
-    fun cargarReportePorGasolinera() {
+    fun cargarReportePorGasolinera(desde: String? = desdePeriodo, hasta: String? = hastaPeriodo) {
+        desdePeriodo = desde
+        hastaPeriodo = hasta
         viewModelScope.launch {
             _reporteGasolinera.value = UiState(loading = true)
             try {
-                _reporteGasolinera.value = UiState(data = ApiClient.api.reportePorGasolinera())
+                _reporteGasolinera.value = UiState(data = ApiClient.api.reportePorGasolinera(desde, hasta))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
