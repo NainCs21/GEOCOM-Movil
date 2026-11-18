@@ -22,59 +22,72 @@ interface Props {
 
 export default function AsignarMontoModal({ solicitud, onClose, token, onSuccess }: Props) {
   const [gasolineras, setGasolineras] = useState<any[]>([]);
+  const [vehiculos, setVehiculos] = useState<any[]>([]);
   const [gasolineraId, setGasolineraId] = useState<number | null>(null);
   const [horasVigencia, setHorasVigencia] = useState('2');
-  const [montoVehiculo, setMontoVehiculo] = useState('1000');
-  const [montoMgp, setMontoMgp] = useState('500');
+  const [montoVehiculo, setMontoVehiculo] = useState('');
+  const [montoMgp, setMontoMgp] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const tipo = solicitud?.tipo_destino || 'vehiculo';
-  const showVehiculo = tipo === 'vehiculo' || tipo === 'ambos';
-  const showMgp = tipo === 'mgp' || tipo === 'ambos';
+  const tipo = (solicitud?.tipo_destino || 'vehiculo').toLowerCase();
+  const esVehiculo = tipo === 'vehiculo' || tipo === 'ambos' || tipo.includes('vehiculo') || tipo.includes('+');
+  const esMgp = tipo === 'mgp' || tipo === 'ambos' || tipo.includes('mgp') || tipo.includes('+');
 
   useEffect(() => {
     if (solicitud) {
+      setErrorMsg(null);
+      setMontoVehiculo('');
+      setMontoMgp('');
+      setHorasVigencia('2');
       setLoading(true);
-      fetch(`${API_URL}/gasolineras`, {
-        headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
-      })
-        .then((r) => r.json())
-        .then((d) => {
-          const list = Array.isArray(d) ? d : d.data || [];
-          const activas = list.filter((g: any) => g.activo);
-          setGasolineras(activas);
-          if (activas.length > 0) setGasolineraId(activas[0].id);
+      const headers = { Accept: 'application/json', Authorization: `Bearer ${token}` };
+      Promise.all([
+        fetch(`${API_URL}/gasolineras`, { headers }).then((r) => r.json()).catch(() => []),
+        fetch(`${API_URL}/vehiculos`, { headers }).then((r) => r.json()).catch(() => []),
+      ])
+        .then(([gasData, vehData]) => {
+          const gList = (Array.isArray(gasData) ? gasData : gasData.data || []).filter((g: any) => g.activo);
+          const vList = Array.isArray(vehData) ? vehData : vehData.data || [];
+          setGasolineras(gList);
+          setVehiculos(vList);
+          if (gList.length > 0) setGasolineraId(gList[0].id);
         })
         .finally(() => setLoading(false));
     }
   }, [solicitud, token]);
 
   const totalCalculado =
-    (showVehiculo ? parseFloat(montoVehiculo) || 0 : 0) +
-    (showMgp ? parseFloat(montoMgp) || 0 : 0);
+    (esVehiculo ? parseFloat(montoVehiculo) || 0 : 0) +
+    (esMgp ? parseFloat(montoMgp) || 0 : 0);
 
   const asignarOrden = async () => {
-    if (!gasolineraId) {
-      Alert.alert('Aviso', 'Selecciona una gasolinera autorizada.');
-      return;
-    }
+    setErrorMsg(null);
     const horas = parseInt(horasVigencia);
-    if (!horas || horas < 1 || horas > 3) {
-      Alert.alert('Aviso', 'Las horas de vigencia deben ser entre 1 y 3.');
+    if (!gasolineraId || isNaN(horas) || horas < 1 || horas > 3) {
+      setErrorMsg('Elige la gasolinera e indica las horas de vigencia (1 a 3).');
       return;
     }
 
-    const detalles = [];
-    if (showVehiculo) {
-      const val = parseFloat(montoVehiculo);
-      if (!val || val <= 0) return Alert.alert('Aviso', 'Ingresa un monto válido para el vehículo.');
-      detalles.push({ tipo_destino: 'vehiculo', vehiculo_id: solicitud.vehiculo_id, monto: val });
+    const detalles: any[] = [];
+    if (esVehiculo) {
+      const m = parseFloat(montoVehiculo);
+      if (!isNaN(m) && m > 0) {
+        const targetVehiculoId = solicitud.vehiculo_id || vehiculos[0]?.id || 1;
+        detalles.push({ tipo_destino: 'vehiculo', vehiculo_id: targetVehiculoId, monto: m });
+      }
     }
-    if (showMgp) {
-      const val = parseFloat(montoMgp);
-      if (!val || val <= 0) return Alert.alert('Aviso', 'Ingresa un monto válido para el MGP.');
-      detalles.push({ tipo_destino: 'mgp', descripcion_mgp: solicitud.descripcion_mgp, monto: val });
+    if (esMgp) {
+      const m = parseFloat(montoMgp);
+      if (!isNaN(m) && m > 0) {
+        detalles.push({ tipo_destino: 'mgp', descripcion_mgp: solicitud.descripcion_mgp, monto: m });
+      }
+    }
+
+    if (detalles.length === 0) {
+      setErrorMsg('Ingresa al menos un monto.');
+      return;
     }
 
     setSubmitting(true);
@@ -90,195 +103,227 @@ export default function AsignarMontoModal({ solicitud, onClose, token, onSuccess
           solicitud_id: solicitud.id,
           gasolinera_id: gasolineraId,
           horas_vigencia: horas,
-          detalles: detalles,
+          detalles,
         }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.mensaje || data.message || 'Error al generar orden');
+      if (!res.ok) throw new Error(data.mensaje || data.message || 'Error al generar orden.');
 
-      Alert.alert('Éxito', 'Orden de combustible generada y asignada.');
       onSuccess();
       onClose();
     } catch (e: any) {
-      Alert.alert('Error', e.message);
+      setErrorMsg(e.message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const rechazarSolicitud = async () => {
-    Alert.alert('Confirmación', '¿Estás seguro de rechazar esta solicitud?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Rechazar',
-        style: 'destructive',
-        onPress: async () => {
-          setSubmitting(true);
-          try {
-            const res = await fetch(`${API_URL}/solicitudes/${solicitud.id}/rechazar`, {
-              method: 'POST',
-              headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
-            });
-            if (!res.ok) throw new Error('No se pudo rechazar la solicitud.');
-            Alert.alert('Rechazada', 'La solicitud ha sido rechazada.');
-            onSuccess();
-            onClose();
-          } catch (e: any) {
-            Alert.alert('Error', e.message);
-          } finally {
-            setSubmitting(false);
-          }
-        },
-      },
-    ]);
-  };
-
   if (!solicitud) return null;
 
+  const etiquetaDestino =
+    tipo === 'vehiculo'
+      ? 'Vehículo'
+      : tipo === 'mgp'
+      ? 'Planta generadora'
+      : 'Vehículo + Planta generadora';
+
   return (
-    <Modal visible={!!solicitud} animationType="slide" transparent>
-      <View style={styles.overlay}>
-        <View style={styles.sheet}>
-          <ScrollView contentContainerStyle={styles.content}>
-            <View style={styles.headerRow}>
-              <Text style={styles.title}>Asignar Monto</Text>
-              <TouchableOpacity onPress={onClose}><Text style={styles.closeBtn}>✕</Text></TouchableOpacity>
-            </View>
+    <Modal visible={!!solicitud} animationType="slide">
+      <View style={styles.flex}>
+        <View style={styles.topHeader}>
+          <TouchableOpacity onPress={onClose} style={styles.backBtn}>
+            <Text style={{ fontSize: 22, color: colors.textoPrincipal }}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.topHeaderTitle}>Asignar monto</Text>
+        </View>
 
-            {/* Resumen */}
-            <View style={styles.resumenCard}>
-              <Text style={styles.resumenLabel}>SOLICITANTE</Text>
-              <Text style={styles.resumenTitle}>{solicitud.conductor?.usuario?.name || 'Conductor #' + solicitud.conductor_id}</Text>
-              <Text style={styles.resumenSub}>{solicitud.descripcion_actividad}</Text>
-            </View>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {/* Resumen de la solicitud */}
+          <View style={styles.card}>
+            <Text style={styles.resumenConductor}>
+              {solicitud.conductor?.usuario?.name || `Conductor #${solicitud.conductor_id}`}
+            </Text>
+            <Text style={styles.resumenDestino}>{etiquetaDestino}</Text>
+            <Text style={styles.resumenActividad}>{solicitud.descripcion_actividad}</Text>
+          </View>
 
-            {/* Gasolinera */}
-            <Text style={styles.label}>Gasolinera Autorizada</Text>
-            {loading ? (
-              <ActivityIndicator color={colors.marca} />
-            ) : (
-              <View style={styles.pickerContainer}>
-                {gasolineras.map((g) => (
+          <Text style={styles.label}>Gasolinera</Text>
+          {loading ? (
+            <ActivityIndicator color={colors.marca} />
+          ) : (
+            <View style={{ gap: 8 }}>
+              {gasolineras.map((g) => {
+                const selected = gasolineraId === g.id;
+                const nombreCompleto = g.direccion ? `${g.nombre} (${g.direccion})` : g.nombre;
+                return (
                   <TouchableOpacity
                     key={g.id}
-                    style={[styles.gasolineraItem, gasolineraId === g.id && styles.gasolineraItemActive]}
+                    style={[styles.gasolineraItem, selected && styles.gasolineraItemActive]}
                     onPress={() => setGasolineraId(g.id)}
                   >
-                    <Text style={[styles.gasolineraName, gasolineraId === g.id && styles.whiteText]}>{g.nombre}</Text>
-                    <Text style={[styles.gasolineraDir, gasolineraId === g.id && styles.whiteSubText]}>{g.direccion}</Text>
+                    <Text style={[styles.gasolineraText, selected && styles.gasolineraTextActive]}>
+                      {nombreCompleto}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+
+          <Text style={styles.label}>Horas de vigencia (1 a 3)</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="number-pad"
+            value={horasVigencia}
+            onChangeText={setHorasVigencia}
+            placeholder="Horas de vigencia (1 a 3)"
+          />
+
+          {/* Tarjeta 01 · Vehículo */}
+          {esVehiculo && (
+            <View style={[styles.card, { marginTop: 16 }]}>
+              <Text style={styles.lineHeader}>01 · Vehículo</Text>
+              <TextInput
+                style={[styles.input, { marginTop: 10 }]}
+                placeholder="Monto para el vehículo (L)"
+                placeholderTextColor={colors.textoSecundario}
+                keyboardType="decimal-pad"
+                value={montoVehiculo}
+                onChangeText={setMontoVehiculo}
+              />
+              <View style={styles.quickRow}>
+                {['500', '1000', '1500'].map((val) => (
+                  <TouchableOpacity
+                    key={val}
+                    style={styles.quickChip}
+                    onPress={() => setMontoVehiculo(val)}
+                  >
+                    <Text style={styles.quickChipText}>{val}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
-            )}
-
-            {/* Vigencia */}
-            <Text style={styles.label}>Horas de vigencia para canje (1 a 3)</Text>
-            <View style={styles.vigenciaRow}>
-              {['1', '2', '3'].map((h) => (
-                <TouchableOpacity
-                  key={h}
-                  style={[styles.vigenciaChip, horasVigencia === h && styles.vigenciaChipActive]}
-                  onPress={() => setHorasVigencia(h)}
-                >
-                  <Text style={[styles.vigenciaText, horasVigencia === h && styles.whiteText]}>{h} {h === '1' ? 'hora' : 'horas'}</Text>
-                </TouchableOpacity>
-              ))}
             </View>
+          )}
 
-            {/* Monto Vehículo */}
-            {showVehiculo && (
-              <View style={styles.montoBlock}>
-                <Text style={styles.label}>Monto Vehículo (Lempiras)</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={montoVehiculo}
-                  onChangeText={setMontoVehiculo}
-                />
-                <View style={styles.quickButtonsRow}>
-                  {['500', '1000', '1500'].map((val) => (
-                    <TouchableOpacity key={val} style={styles.quickBtn} onPress={() => setMontoVehiculo(val)}>
-                      <Text style={styles.quickBtnText}>L. {val}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+          {/* Tarjeta 02 · MGP */}
+          {esMgp && (
+            <View style={[styles.card, { marginTop: 16 }]}>
+              <Text style={styles.lineHeader}>02 · MGP</Text>
+              <TextInput
+                style={[styles.input, { marginTop: 10 }]}
+                placeholder="Monto para la planta MGP (L)"
+                placeholderTextColor={colors.textoSecundario}
+                keyboardType="decimal-pad"
+                value={montoMgp}
+                onChangeText={setMontoMgp}
+              />
+              <View style={styles.quickRow}>
+                {['500', '1000', '1500'].map((val) => (
+                  <TouchableOpacity
+                    key={val}
+                    style={styles.quickChip}
+                    onPress={() => setMontoMgp(val)}
+                  >
+                    <Text style={styles.quickChipText}>{val}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
-            )}
-
-            {/* Monto MGP */}
-            {showMgp && (
-              <View style={styles.montoBlock}>
-                <Text style={styles.label}>Monto Planta Eléctrica / MGP (Lempiras)</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={montoMgp}
-                  onChangeText={setMontoMgp}
-                />
-                <View style={styles.quickButtonsRow}>
-                  {['500', '1000', '1500'].map((val) => (
-                    <TouchableOpacity key={val} style={styles.quickBtn} onPress={() => setMontoMgp(val)}>
-                      <Text style={styles.quickBtnText}>L. {val}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {/* Total */}
-            <View style={styles.totalBox}>
-              <Text style={styles.totalLabel}>TOTAL A AUTORIZAR</Text>
-              <Text style={styles.totalNumber}>L. {totalCalculado.toFixed(2)}</Text>
             </View>
+          )}
 
-            <TouchableOpacity style={styles.btnAssign} onPress={asignarOrden} disabled={submitting}>
-              {submitting ? <ActivityIndicator color={colors.blanco} /> : <Text style={styles.btnAssignText}>Generar y Asignar Orden</Text>}
-            </TouchableOpacity>
+          {/* Total de la solicitud */}
+          <View style={styles.totalInfoBox}>
+            <Text style={styles.totalText}>
+              Total de la solicitud · L {totalCalculado.toFixed(2)}
+            </Text>
+          </View>
 
-            <TouchableOpacity style={styles.btnReject} onPress={rechazarSolicitud} disabled={submitting}>
-              <Text style={styles.btnRejectText}>Rechazar Solicitud</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
+          <TouchableOpacity
+            style={[styles.btnAssign, submitting && { opacity: 0.7 }]}
+            onPress={asignarOrden}
+            disabled={submitting}
+          >
+            <Text style={styles.btnAssignText}>Asignar monto y generar orden</Text>
+          </TouchableOpacity>
+
+          {submitting && <ActivityIndicator color={colors.marca} style={{ marginTop: 16 }} />}
+          {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
+        </ScrollView>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: colors.blanco, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '92%' },
-  content: { padding: 22 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  title: { fontSize: 20, fontWeight: '700', color: colors.textoPrincipal },
-  closeBtn: { fontSize: 20, color: colors.textoSecundario },
-  resumenCard: { backgroundColor: colors.fondo, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.borde },
-  resumenLabel: { fontSize: 10, fontWeight: '800', color: colors.marca, letterSpacing: 0.5 },
-  resumenTitle: { fontSize: 16, fontWeight: '700', color: colors.textoPrincipal, marginTop: 2 },
-  resumenSub: { fontSize: 12, color: colors.textoSecundario, marginTop: 4 },
-  label: { fontSize: 13, fontWeight: '700', color: colors.textoPrincipal, marginTop: 14, marginBottom: 6 },
-  pickerContainer: { gap: 6 },
-  gasolineraItem: { padding: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.borde, backgroundColor: colors.fondo },
-  gasolineraItemActive: { backgroundColor: colors.marca, borderColor: colors.marca },
-  gasolineraName: { fontWeight: '700', fontSize: 14, color: colors.textoPrincipal },
-  gasolineraDir: { fontSize: 11, color: colors.textoSecundario, marginTop: 2 },
-  vigenciaRow: { flexDirection: 'row', gap: 8 },
-  vigenciaChip: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: colors.borde, alignItems: 'center', backgroundColor: colors.fondo },
-  vigenciaChipActive: { backgroundColor: colors.marca, borderColor: colors.marca },
-  vigenciaText: { fontSize: 13, fontWeight: '700', color: colors.textoSecundario },
-  montoBlock: { marginTop: 6 },
-  input: { backgroundColor: colors.fondo, borderWidth: 1, borderColor: colors.borde, borderRadius: 10, padding: 12, fontSize: 15, fontWeight: '700', color: colors.textoPrincipal },
-  quickButtonsRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
-  quickBtn: { flex: 1, paddingVertical: 6, backgroundColor: colors.marcaClaro, borderRadius: 8, alignItems: 'center' },
-  quickBtnText: { color: colors.marcaOscuro, fontWeight: '700', fontSize: 12 },
-  totalBox: { backgroundColor: colors.marcaClaro, padding: 16, borderRadius: 14, alignItems: 'center', marginTop: 18 },
-  totalLabel: { fontSize: 11, fontWeight: '800', color: colors.marcaOscuro, letterSpacing: 0.5 },
-  totalNumber: { fontSize: 26, fontWeight: '900', color: colors.marcaOscuro, marginTop: 2 },
-  btnAssign: { backgroundColor: colors.marca, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', marginTop: 18 },
+  flex: { flex: 1, backgroundColor: colors.fondo },
+  topHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.blanco,
+    padding: 20,
+  },
+  backBtn: { marginRight: 10, padding: 4 },
+  topHeaderTitle: { fontSize: 20, fontWeight: '700', color: colors.textoPrincipal },
+  content: { padding: 20 },
+  card: {
+    backgroundColor: colors.blanco,
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: colors.borde,
+  },
+  resumenConductor: { fontSize: 17, fontWeight: '700', color: colors.textoPrincipal },
+  resumenDestino: { fontSize: 13, fontWeight: '700', color: colors.marca, marginTop: 6 },
+  resumenActividad: { fontSize: 14, color: colors.textoSecundario, marginTop: 6 },
+  label: { fontSize: 13, fontWeight: '700', color: colors.textoPrincipal, marginTop: 16, marginBottom: 6 },
+  gasolineraItem: {
+    backgroundColor: colors.blanco,
+    borderRadius: 12,
+    padding: 13,
+    borderWidth: 1,
+    borderColor: colors.borde,
+  },
+  gasolineraItemActive: { backgroundColor: colors.marcaClaro, borderColor: colors.marca },
+  gasolineraText: { fontSize: 14, color: colors.textoPrincipal, fontWeight: '600' },
+  gasolineraTextActive: { color: colors.marcaOscuro, fontWeight: '700' },
+  input: {
+    backgroundColor: colors.blanco,
+    borderWidth: 1,
+    borderColor: colors.borde,
+    borderRadius: 12,
+    padding: 13,
+    fontSize: 15,
+    color: colors.textoPrincipal,
+  },
+  lineHeader: { fontSize: 15, fontWeight: '700', color: colors.textoPrincipal },
+  quickRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  quickChip: {
+    flex: 1,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.borde,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.blanco,
+  },
+  quickChipText: { fontSize: 12, fontWeight: '700', color: colors.marca },
+  totalInfoBox: {
+    backgroundColor: colors.marcaClaro,
+    borderRadius: 16,
+    padding: 18,
+    marginTop: 16,
+  },
+  totalText: { fontSize: 20, fontWeight: '700', color: colors.marcaOscuro },
+  btnAssign: {
+    backgroundColor: colors.marca,
+    height: 52,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+  },
   btnAssignText: { color: colors.blanco, fontWeight: '700', fontSize: 15 },
-  btnReject: { height: 44, justifyContent: 'center', alignItems: 'center', marginTop: 6 },
-  btnRejectText: { color: colors.vencida, fontWeight: '700', fontSize: 14 },
-  whiteText: { color: colors.blanco },
-  whiteSubText: { color: '#E5DAF7' },
+  errorText: { color: colors.vencida, textAlign: 'center', marginTop: 12, fontSize: 13 },
 });
