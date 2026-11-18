@@ -3,10 +3,13 @@ package com.example.apimovil.ui.admin
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.example.apimovil.R
 import com.example.apimovil.data.SessionManager
 import com.example.apimovil.databinding.FragmentPerfilAdminBinding
+import kotlinx.coroutines.launch
 
 class PerfilAdminFragment : Fragment(R.layout.fragment_perfil_admin) {
 
@@ -23,8 +26,14 @@ class PerfilAdminFragment : Fragment(R.layout.fragment_perfil_admin) {
 
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
         binding.btnCerrarSesion.setOnClickListener {
-            SessionManager.cerrarSesion()
-            findNavController().navigate(R.id.loginFragment)
+            binding.btnCerrarSesion.isEnabled = false
+            viewLifecycleOwner.lifecycleScope.launch {
+                SessionManager.cerrarSesionRemotaYLocal()
+                val navOptions = NavOptions.Builder()
+                    .setPopUpTo(R.id.nav_graph, true)
+                    .build()
+                findNavController().navigate(R.id.loginFragment, null, navOptions)
+            }
         }
     }
 

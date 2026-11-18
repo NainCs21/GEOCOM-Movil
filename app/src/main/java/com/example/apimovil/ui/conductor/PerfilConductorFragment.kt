@@ -3,10 +3,13 @@ package com.example.apimovil.ui.conductor
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.example.apimovil.R
 import com.example.apimovil.data.SessionManager
 import com.example.apimovil.databinding.FragmentPerfilConductorBinding
+import kotlinx.coroutines.launch
 
 class PerfilConductorFragment : Fragment(R.layout.fragment_perfil_conductor) {
 
@@ -20,8 +23,14 @@ class PerfilConductorFragment : Fragment(R.layout.fragment_perfil_conductor) {
         binding.textCorreo.text = SessionManager.correo ?: ""
 
         binding.btnCerrarSesion.setOnClickListener {
-            SessionManager.cerrarSesion()
-            findNavController().navigate(R.id.loginFragment)
+            binding.btnCerrarSesion.isEnabled = false
+            viewLifecycleOwner.lifecycleScope.launch {
+                SessionManager.cerrarSesionRemotaYLocal()
+                val navOptions = NavOptions.Builder()
+                    .setPopUpTo(R.id.nav_graph, true)
+                    .build()
+                findNavController().navigate(R.id.loginFragment, null, navOptions)
+            }
         }
     }
 

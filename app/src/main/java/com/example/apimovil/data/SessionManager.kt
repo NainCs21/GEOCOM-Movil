@@ -31,6 +31,16 @@ object SessionManager {
             .apply()
     }
 
+    // Llama al endpoint POST /logout del servidor y luego borra la sesion local
+    suspend fun cerrarSesionRemotaYLocal() {
+        try {
+            ApiClient.api.logout()
+        } catch (_: Exception) {
+            // Si falla por red o token expirado, igual se limpia la sesion local
+        }
+        cerrarSesion()
+    }
+
     // Limpia los datos almacenados al cerrar sesion
     fun cerrarSesion() {
         prefs.edit().clear().apply()
