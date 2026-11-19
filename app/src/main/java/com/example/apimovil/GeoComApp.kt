@@ -7,6 +7,12 @@ import com.example.apimovil.data.notificaciones.Notificador
 import com.example.apimovil.data.notificaciones.programarSincronizacionNotificaciones
 
 class GeoComApp : Application() {
+
+    companion object {
+        @Volatile
+        var arranqueEnFrio: Boolean = true
+    }
+
     override fun onCreate() {
         super.onCreate()
         SessionManager.init(this)

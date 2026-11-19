@@ -126,6 +126,8 @@
     <string name="marcar_todas_leidas">Marcar todas leídas</string>
     <string name="orden_completada_notif">%1$s completó su carga en %2$s.</string>
     <string name="orden_vencida_notif">%1$s no completó la orden %2$s dentro del tiempo de vigencia.</string>
+    <string name="notif_resumen_titulo">Notificaciones nuevas</string>
+    <string name="notif_resumen_cuerpo">Tienes %1$d notificaciones nuevas</string>
 
     <!-- Perfil admin/supervisor -->
     <string name="correo_de_acceso">%1$s</string>

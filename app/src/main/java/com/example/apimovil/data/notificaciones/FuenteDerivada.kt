@@ -4,34 +4,39 @@ import com.example.apimovil.data.ApiClient
 import com.example.apimovil.data.models.Orden
 import com.example.apimovil.data.models.Solicitud
 import com.example.apimovil.ui.common.formatoLegible
+import com.example.apimovil.ui.common.obtenerHace3DiasString
 import com.example.apimovil.ui.common.parseFechaIsoMillis
 import java.util.Locale
 
 class FuenteDerivada : FuenteNotificaciones {
     override suspend fun obtenerEventos(): List<EventoNotificacion> {
+        val limite3DiasMs = System.currentTimeMillis() - (3L * 24 * 3600 * 1000L)
+
         val solicitudes = mutableListOf<Solicitud>()
         var page = 1
-        var lastPage: Int
-        try {
-            do {
-                val resp = ApiClient.api.listarSolicitudes(page = page)
-                solicitudes.addAll(resp.data)
-                lastPage = resp.last_page ?: 1
-                page++
-            } while (page <= lastPage)
-        } catch (_: Exception) {}
+        var lastPage = 1
+        do {
+            val resp = ApiClient.api.listarSolicitudes(page = page)
+            solicitudes.addAll(resp.data)
+            lastPage = resp.last_page ?: 1
+
+            val todosViejos = resp.data.isNotEmpty() && resp.data.all {
+                parseFechaIsoMillis(it.created_at) < limite3DiasMs
+            }
+            if (todosViejos) break
+            page++
+        } while (page <= lastPage)
 
         val ordenes = mutableListOf<Orden>()
+        val fechaHace3Dias = obtenerHace3DiasString()
         page = 1
         lastPage = 1
-        try {
-            do {
-                val resp = ApiClient.api.listarOrdenes(page = page)
-                ordenes.addAll(resp.data)
-                lastPage = resp.last_page ?: 1
-                page++
-            } while (page <= lastPage)
-        } catch (_: Exception) {}
+        do {
+            val resp = ApiClient.api.listarOrdenes(desde = fechaHace3Dias, page = page)
+            ordenes.addAll(resp.data)
+            lastPage = resp.last_page ?: 1
+            page++
+        } while (page <= lastPage)
 
         return derivarEventos(solicitudes, ordenes)
     }
@@ -97,14 +102,19 @@ fun derivarEventos(solicitudes: List<Solicitud>, ordenes: List<Orden>): List<Eve
         }
 
         // 4. orden_abierta
-        if (!ord.fecha_apertura.isNullOrBlank() && !ord.vence_apertura.isNullOrBlank()) {
-            val horaVence = formatoLegible(ord.vence_apertura)
+        if (!ord.fecha_apertura.isNullOrBlank()) {
+            val horaVence = if (!ord.vence_apertura.isNullOrBlank()) formatoLegible(ord.vence_apertura) else ""
+            val cuerpoTexto = if (horaVence.isNotBlank()) {
+                "$conductorNombre abrió la orden ${ord.numero_orden} en $gasolineraNombre. Tiene hasta las $horaVence para subir las evidencias"
+            } else {
+                "$conductorNombre abrió la orden ${ord.numero_orden} en $gasolineraNombre"
+            }
             lista.add(
                 EventoNotificacion(
                     id = "orden_abierta_${ord.id}",
                     tipo = "orden_abierta",
                     titulo = "Orden abierta",
-                    cuerpo = "$conductorNombre abrió la orden ${ord.numero_orden} en $gasolineraNombre. Tiene hasta las $horaVence para subir las evidencias",
+                    cuerpo = cuerpoTexto,
                     fechaMillis = parseFechaIsoMillis(ord.fecha_apertura),
                     destino = "orden",
                     ordenId = ord.id,

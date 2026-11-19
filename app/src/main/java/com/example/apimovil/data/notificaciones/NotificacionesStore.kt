@@ -22,14 +22,65 @@ object NotificacionesStore {
     private val _noLeidas = MutableStateFlow(0)
     val noLeidas: StateFlow<Int> = _noLeidas.asStateFlow()
 
+    private val vistosMap = mutableMapOf<String, Long>()
+    private var currentBaseline: Boolean = false
+
     fun init(context: Context) {
-        prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (!::prefs.isInitialized) {
+            prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        }
     }
 
     private fun getKey(usuarioId: Int): String = "usuario_$usuarioId"
+    private fun getVistosKey(usuarioId: Int): String = "vistos_$usuarioId"
+    private fun getBaselineKey(usuarioId: Int): String = "baseline_$usuarioId"
+
+    fun tieneBaseline(usuarioId: Int): Boolean {
+        if ((usuarioId == -1) || !::prefs.isInitialized) return false
+        if (usuarioId == currentUsuarioId) return currentBaseline
+        return prefs.getBoolean(getBaselineKey(usuarioId), false)
+    }
+
+    fun marcarBaseline(usuarioId: Int) {
+        if ((usuarioId == -1) || !::prefs.isInitialized) return
+        currentBaseline = true
+        try {
+            prefs.edit { putBoolean(getBaselineKey(usuarioId), true) }
+        } catch (_: Exception) {}
+    }
 
     fun cargarPara(usuarioId: Int) {
+        if (usuarioId == -1) return
         currentUsuarioId = usuarioId
+        if (!::prefs.isInitialized) return
+
+        currentBaseline = prefs.getBoolean(getBaselineKey(usuarioId), false)
+
+        vistosMap.clear()
+        val jsonVistos = prefs.getString(getVistosKey(usuarioId), null)
+        if (!jsonVistos.isNullOrBlank()) {
+            try {
+                val type = object : TypeToken<Map<String, Long>>() {}.type
+                val parsed: Map<String, Long>? = gson.fromJson(jsonVistos, type)
+                parsed?.let { vistosMap.putAll(it) }
+            } catch (_: Exception) {}
+        }
+
+        val ahora = System.currentTimeMillis()
+        val limite90Dias = ahora - (90L * 24 * 3600 * 1000L)
+        val iterator = vistosMap.entries.iterator()
+        var sePodo = false
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            if (entry.value < limite90Dias) {
+                iterator.remove()
+                sePodo = true
+            }
+        }
+        if (sePodo && ::prefs.isInitialized) {
+            persistirVistos(usuarioId)
+        }
+
         val json = prefs.getString(getKey(usuarioId), null)
         val list = if (json.isNullOrBlank()) {
             emptyList()
@@ -46,8 +97,28 @@ object NotificacionesStore {
         _noLeidas.value = sorted.count { !it.leida }
     }
 
+    fun esEventoNuevo(evento: EventoNotificacion, ahora: Long): Boolean {
+        val limite90Dias = ahora - (90L * 24 * 3600 * 1000L)
+        return (!vistosMap.containsKey(evento.id)) && (evento.fechaMillis >= limite90Dias)
+    }
+
+    fun registrarVistos(nuevosVistos: Map<String, Long>) {
+        if (currentUsuarioId == -1 || nuevosVistos.isEmpty()) return
+        vistosMap.putAll(nuevosVistos)
+        if (::prefs.isInitialized) {
+            persistirVistos(currentUsuarioId)
+        }
+    }
+
+    private fun persistirVistos(usuarioId: Int) {
+        try {
+            val json = gson.toJson(vistosMap)
+            prefs.edit { putString(getVistosKey(usuarioId), json) }
+        } catch (_: Exception) {}
+    }
+
     fun agregarNuevas(eventos: List<EventoNotificacion>, leidasDefault: Boolean): List<NotificacionApp> {
-        if (currentUsuarioId == -1) return emptyList()
+        if (currentUsuarioId == -1 || eventos.isEmpty()) return emptyList()
         val existing = _notificaciones.value.toMutableList()
         val existingIds = existing.map { it.id }.toSet()
 
@@ -73,7 +144,9 @@ object NotificacionesStore {
             val sorted = existing.sortedByDescending { it.fechaMillis }.take(200)
             _notificaciones.value = sorted
             _noLeidas.value = sorted.count { !it.leida }
-            persistir(currentUsuarioId, sorted)
+            if (::prefs.isInitialized) {
+                persistir(currentUsuarioId, sorted)
+            }
         }
         return nuevas
     }
@@ -85,7 +158,9 @@ object NotificacionesStore {
         }
         _notificaciones.value = list
         _noLeidas.value = list.count { !it.leida }
-        persistir(currentUsuarioId, list)
+        if (::prefs.isInitialized) {
+            persistir(currentUsuarioId, list)
+        }
     }
 
     fun marcarTodasLeidas() {
@@ -93,7 +168,9 @@ object NotificacionesStore {
         val list = _notificaciones.value.map { it.copy(leida = true) }
         _notificaciones.value = list
         _noLeidas.value = 0
-        persistir(currentUsuarioId, list)
+        if (::prefs.isInitialized) {
+            persistir(currentUsuarioId, list)
+        }
     }
 
     private fun persistir(usuarioId: Int, list: List<NotificacionApp>) {

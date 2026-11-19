@@ -7,16 +7,30 @@ import java.util.Locale
 import java.util.TimeZone
 
 /**
- * Laravel serializa sus datetime como ISO 8601 en UTC con microsegundos,
- * ej. "2026-11-11T09:12:00.000000Z". SimpleDateFormat solo entiende
- * milisegundos (3 dígitos), así que se recortan los microsegundos antes
- * de parsear.
+ * Normaliza y parsea fechas recibidas de la API (ISO 8601 UTC o MySQL Datetime).
  */
 fun parseFechaIso(fecha: String): Date {
-    val normalizada = fecha.replace(Regex("\\.(\\d{3})\\d*Z$"), ".$1Z")
-    val formato = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US)
-    formato.timeZone = TimeZone.getTimeZone("UTC")
-    return formato.parse(normalizada) ?: Date()
+    if (fecha.isBlank()) return Date()
+
+    val normalizada = fecha.trim().replace(Regex("\\.(\\d{3})\\d*Z?$"), ".$1Z")
+
+    val patrones = arrayOf(
+        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd",
+    )
+
+    for (patron in patrones) {
+        try {
+            val sdf = SimpleDateFormat(patron, Locale.US)
+            sdf.timeZone = TimeZone.getTimeZone("UTC")
+            val date = sdf.parse(if (patron.contains("'Z'")) normalizada else fecha.trim())
+            if (date != null) return date
+        } catch (_: Exception) {}
+    }
+    return Date()
 }
 
 fun parseFechaIsoMillis(fecha: String?): Long {
@@ -39,6 +53,12 @@ fun formatoLegible(fecha: String): String {
 
 fun obtenerFechaActualString(): String {
     return SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+}
+
+fun obtenerHace3DiasString(): String {
+    val cal = Calendar.getInstance()
+    cal.add(Calendar.DAY_OF_YEAR, -3)
+    return SimpleDateFormat("yyyy-MM-dd", Locale.US).format(cal.time)
 }
 
 fun obtenerInicioMesString(): String {

@@ -7,7 +7,7 @@ import android.content.SharedPreferences
 object SessionManager {
 
     // El valor definitivo esta pendiente de confirmar con el cliente (RNF-20)
-    const val INACTIVIDAD_MINUTOS = 30
+    const val INACTIVIDAD_HORAS = 8
 
     private const val PREFS = "api_movil_sesion"
     private const val KEY_TOKEN = "token"
@@ -44,7 +44,7 @@ object SessionManager {
         }
     }
 
-    // Comprueba si ha superado el tiempo limite de inactividad
+    // Comprueba si ha superado el tiempo limite de inactividad (8 horas sin usar la app)
     fun haExpiradoInactividad(): Boolean {
         if (!haySesion) return false
         val ultima = prefs.getLong(KEY_ULTIMA_ACTIVIDAD, 0L)
@@ -53,7 +53,7 @@ object SessionManager {
             return false
         }
         val transcurridoMs = System.currentTimeMillis() - ultima
-        val limiteMs = INACTIVIDAD_MINUTOS * 60 * 1000L
+        val limiteMs = INACTIVIDAD_HORAS * 60 * 60 * 1000L
         return transcurridoMs > limiteMs
     }
 

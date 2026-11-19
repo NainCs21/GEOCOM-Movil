@@ -13,9 +13,22 @@ import java.util.concurrent.TimeUnit
 
 class SincronizarNotificacionesWorker(
     context: Context,
-    params: WorkerParameters
+    params: WorkerParameters,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
+        SessionManager.init(applicationContext)
+
+        if (SessionManager.haySesion && SessionManager.haExpiradoInactividad()) {
+            SessionManager.guardarMensajeSalida("Tu sesión se cerró por inactividad.")
+            SessionManager.cerrarSesionRemotaYLocal()
+            cancelarSincronizacionNotificaciones(applicationContext)
+            return Result.success()
+        }
+
+        if (!SessionManager.haySesion || !SessionManager.puedeConsultar) {
+            return Result.success()
+        }
+
         return try {
             NotificacionesRepository.sincronizar(applicationContext)
             Result.success()
@@ -37,7 +50,7 @@ fun programarSincronizacionNotificaciones(context: Context) {
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             "geocom_sync_notif",
             ExistingPeriodicWorkPolicy.KEEP,
-            request
+            request,
         )
     } catch (_: Exception) {}
 }

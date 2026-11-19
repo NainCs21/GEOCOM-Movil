@@ -39,12 +39,16 @@ class MainActivity : AppCompatActivity() {
         val navHost = supportFragmentManager.findFragmentById(R.id.navHostFragment) as NavHostFragment
         val navController: NavController = navHost.navController
 
-        // Si ya hay sesión guardada, nos saltamos el login directo al panel que corresponda.
+        val esArranqueEnFrio = GeoComApp.arranqueEnFrio
+        GeoComApp.arranqueEnFrio = false
+
         if (SessionManager.haySesion) {
-            val destino = if (SessionManager.esConductor) R.id.homeConductorFragment else R.id.homeAdminFragment
-            val graph = navController.navInflater.inflate(R.navigation.nav_graph)
-            graph.setStartDestination(destino)
-            navController.graph = graph
+            if (esArranqueEnFrio) {
+                val destino = if (SessionManager.esConductor) R.id.homeConductorFragment else R.id.homeAdminFragment
+                val graph = navController.navInflater.inflate(R.navigation.nav_graph)
+                graph.setStartDestination(destino)
+                navController.graph = graph
+            }
 
             if (SessionManager.puedeConsultar) {
                 programarSincronizacionNotificaciones(this)
@@ -56,28 +60,20 @@ class MainActivity : AppCompatActivity() {
             cancelarSincronizacionNotificaciones(this)
         }
 
-        // POST_NOTIFICATIONS permission for API 33+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (SessionManager.haySesion && SessionManager.puedeConsultar) {
-                if (ContextCompat.checkSelfPermission(
-                        this,
-                        android.Manifest.permission.POST_NOTIFICATIONS
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    ActivityCompat.requestPermissions(
-                        this,
-                        arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
-                        1001
-                    )
-                }
-            }
-        }
-
+        verificarYPedirPermisoNotificaciones()
         handleNotificationIntent(intent, navController)
 
-        // Observar eventos globales de sesion (expirada por 401 o inactividad) y chequeo periodico
+        // Observar eventos globales de sesion y chequeo periodico de notificaciones e inactividad
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    while (true) {
+                        if (SessionManager.haySesion && SessionManager.puedeConsultar) {
+                            NotificacionesRepository.sincronizar(this@MainActivity)
+                        }
+                        delay(10_000L) // Chequeo de notificaciones cada 10 segundos en primer plano
+                    }
+                }
                 launch {
                     SesionEventos.sesionExpirada.collect { mensaje ->
                         SessionManager.guardarMensajeSalida(mensaje)
@@ -94,7 +90,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 launch {
                     while (true) {
-                        delay(30_000L) // Chequeo periodico cada 30 segundos
+                        delay(30_000L) // Chequeo periodico de inactividad
                         verificarInactividadYSalir()
                     }
                 }
@@ -141,6 +137,9 @@ class MainActivity : AppCompatActivity() {
                 "solicitudes" -> {
                     navController.navigate(R.id.solicitudesPendientesFragment)
                 }
+                "notificaciones" -> {
+                    navController.navigate(R.id.notificacionesFragment)
+                }
             }
         } catch (_: Exception) {}
     }
@@ -155,6 +154,41 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         verificarInactividadYSalir()
+        if (SessionManager.haySesion) {
+            SessionManager.actualizarUltimaActividad()
+        }
+        verificarYPedirPermisoNotificaciones()
+        if (SessionManager.haySesion && SessionManager.puedeConsultar) {
+            programarSincronizacionNotificaciones(this)
+            lifecycleScope.launch {
+                NotificacionesRepository.sincronizar(this@MainActivity)
+            }
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (SessionManager.haySesion) {
+            SessionManager.actualizarUltimaActividad()
+        }
+    }
+
+    private fun verificarYPedirPermisoNotificaciones() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (SessionManager.haySesion && SessionManager.puedeConsultar) {
+                if (ContextCompat.checkSelfPermission(
+                        this,
+                        android.Manifest.permission.POST_NOTIFICATIONS,
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                        1001,
+                    )
+                }
+            }
+        }
     }
 
     private fun verificarInactividadYSalir() {
