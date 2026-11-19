@@ -8,7 +8,6 @@ import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.example.apimovil.R
 import com.example.apimovil.data.SessionManager
-import com.example.apimovil.data.notificaciones.NotificacionesForegroundService
 import com.example.apimovil.data.notificaciones.cancelarSincronizacionNotificaciones
 import com.example.apimovil.databinding.FragmentPerfilConductorBinding
 import kotlinx.coroutines.launch
@@ -28,9 +27,7 @@ class PerfilConductorFragment : Fragment(R.layout.fragment_perfil_conductor) {
             binding.btnCerrarSesion.isEnabled = false
             viewLifecycleOwner.lifecycleScope.launch {
                 SessionManager.cerrarSesionRemotaYLocal()
-                val appContext = requireContext().applicationContext
-                NotificacionesForegroundService.detener(appContext)
-                cancelarSincronizacionNotificaciones(appContext)
+                cancelarSincronizacionNotificaciones(requireContext().applicationContext)
                 val navOptions = NavOptions.Builder()
                     .setPopUpTo(R.id.nav_graph, true)
                     .build()

@@ -61,10 +61,8 @@ class MainActivity : AppCompatActivity() {
                     SessionManager.actualizarUsuario(usuario.nombre, usuario.correo, usuario.rol)
                     if (usuario.rol != rolAnterior) {
                         if (SessionManager.puedeConsultar) {
-                            NotificacionesForegroundService.iniciar(this@MainActivity)
                             programarSincronizacionNotificaciones(this@MainActivity)
                         } else {
-                            NotificacionesForegroundService.detener(this@MainActivity)
                             cancelarSincronizacionNotificaciones(this@MainActivity)
                         }
                         if (esArranqueEnFrio) {
