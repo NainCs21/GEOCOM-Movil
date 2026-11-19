@@ -1,5 +1,6 @@
 package com.example.apimovil.data
 
+import android.util.Log
 import com.example.apimovil.BuildConfig
 import com.example.apimovil.data.models.Gasolinera
 import com.google.gson.GsonBuilder
@@ -40,6 +41,7 @@ private class SessionExpiredInterceptor : Interceptor {
         if (response.code == 401 && SessionManager.haySesion) {
             val path = original.url.encodedPath
             if (!path.endsWith("/login") && !path.endsWith("/logout") && !path.endsWith("/verificar-contrasena")) {
+                Log.w("GeoComSync", "401 en ${original.url.encodedPath}: se cierra la sesión local")
                 SessionManager.cerrarSesion()
                 runBlocking {
                     SesionEventos.notificarSesionExpirada("Tu sesión expiró. Inicia sesión de nuevo.")

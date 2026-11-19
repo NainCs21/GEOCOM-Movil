@@ -16,6 +16,7 @@ import com.example.apimovil.R
 object Notificador {
     const val CHANNEL_EVENTOS = "geocom_eventos"
     const val CHANNEL_EVIDENCIAS = "geocom_evidencias"
+    const val CHANNEL_SERVICIO = "geocom_servicio"
 
     var isNotificacionesScreenActive = false
 
@@ -39,8 +40,17 @@ object Notificador {
                 description = "Notificaciones cuando se suben evidencias fotográficas"
             }
 
+            val channelServicio = NotificationChannel(
+                CHANNEL_SERVICIO,
+                "Servicio de notificaciones en segundo plano",
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = "Mantiene la sincronización de solicitudes y órdenes en segundo plano"
+            }
+
             notificationManager.createNotificationChannel(channelEventos)
             notificationManager.createNotificationChannel(channelEvidencias)
+            notificationManager.createNotificationChannel(channelServicio)
         }
     }
 

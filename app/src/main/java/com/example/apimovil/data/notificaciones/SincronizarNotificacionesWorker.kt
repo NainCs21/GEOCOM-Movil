@@ -1,6 +1,7 @@
 package com.example.apimovil.data.notificaciones
 
 import android.content.Context
+import android.util.Log
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -18,14 +19,22 @@ class SincronizarNotificacionesWorker(
     override suspend fun doWork(): Result {
         SessionManager.init(applicationContext)
 
-        if (!SessionManager.haySesion || !SessionManager.puedeConsultar) {
+        val haySesion = SessionManager.haySesion
+        val rol = SessionManager.rol
+        val usuarioId = SessionManager.usuarioId
+        Log.i("GeoComSync", "doWork iniciado: haySesion=$haySesion, rol=$rol, usuarioId=$usuarioId")
+
+        if (!haySesion || !SessionManager.puedeConsultar) {
+            Log.w("GeoComSync", "doWork salida temprana: haySesion=$haySesion, puedeConsultar=${SessionManager.puedeConsultar}")
             return Result.success()
         }
 
         return try {
             NotificacionesRepository.sincronizar(applicationContext)
+            Log.i("GeoComSync", "doWork completado con éxito")
             Result.success()
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w("GeoComSync", "doWork falló con excepción", e)
             Result.success()
         }
     }
@@ -42,14 +51,20 @@ fun programarSincronizacionNotificaciones(context: Context) {
     try {
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             "geocom_sync_notif",
-            ExistingPeriodicWorkPolicy.KEEP,
+            ExistingPeriodicWorkPolicy.UPDATE,
             request,
         )
-    } catch (_: Exception) {}
+        Log.i("GeoComSync", "Sincronización de notificaciones programada")
+    } catch (e: Exception) {
+        Log.w("GeoComSync", "Error al programar sincronización de notificaciones", e)
+    }
 }
 
 fun cancelarSincronizacionNotificaciones(context: Context) {
     try {
         WorkManager.getInstance(context).cancelUniqueWork("geocom_sync_notif")
-    } catch (_: Exception) {}
+        Log.i("GeoComSync", "Sincronización de notificaciones cancelada")
+    } catch (e: Exception) {
+        Log.w("GeoComSync", "Error al cancelar sincronización de notificaciones", e)
+    }
 }

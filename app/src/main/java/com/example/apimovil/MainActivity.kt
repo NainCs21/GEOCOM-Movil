@@ -17,6 +17,7 @@ import androidx.navigation.fragment.NavHostFragment
 import com.example.apimovil.data.ApiClient
 import com.example.apimovil.data.SessionManager
 import com.example.apimovil.data.SesionEventos
+import com.example.apimovil.data.notificaciones.NotificacionesForegroundService
 import com.example.apimovil.data.notificaciones.NotificacionesRepository
 import com.example.apimovil.data.notificaciones.NotificacionesStore
 import com.example.apimovil.data.notificaciones.cancelarSincronizacionNotificaciones
@@ -58,11 +59,20 @@ class MainActivity : AppCompatActivity() {
                     val usuario = ApiClient.api.yo()
                     val rolAnterior = SessionManager.rol
                     SessionManager.actualizarUsuario(usuario.nombre, usuario.correo, usuario.rol)
-                    if (usuario.rol != rolAnterior && esArranqueEnFrio) {
-                        val nuevoDestino = if (SessionManager.esConductor) R.id.homeConductorFragment else R.id.homeAdminFragment
-                        val graph = navController.navInflater.inflate(R.navigation.nav_graph)
-                        graph.setStartDestination(nuevoDestino)
-                        navController.graph = graph
+                    if (usuario.rol != rolAnterior) {
+                        if (SessionManager.puedeConsultar) {
+                            NotificacionesForegroundService.iniciar(this@MainActivity)
+                            programarSincronizacionNotificaciones(this@MainActivity)
+                        } else {
+                            NotificacionesForegroundService.detener(this@MainActivity)
+                            cancelarSincronizacionNotificaciones(this@MainActivity)
+                        }
+                        if (esArranqueEnFrio) {
+                            val nuevoDestino = if (SessionManager.esConductor) R.id.homeConductorFragment else R.id.homeAdminFragment
+                            val graph = navController.navInflater.inflate(R.navigation.nav_graph)
+                            graph.setStartDestination(nuevoDestino)
+                            navController.graph = graph
+                        }
                     }
                 } catch (_: IOException) {
                     // Offline mode, maintain session
@@ -72,13 +82,12 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (SessionManager.puedeConsultar) {
+                NotificacionesForegroundService.iniciar(this)
                 programarSincronizacionNotificaciones(this)
                 lifecycleScope.launch {
                     NotificacionesRepository.sincronizar(this@MainActivity)
                 }
             }
-        } else {
-            cancelarSincronizacionNotificaciones(this)
         }
 
         verificarYPedirPermisoNotificaciones()
@@ -98,6 +107,7 @@ class MainActivity : AppCompatActivity() {
                 launch {
                     SesionEventos.sesionExpirada.collect { mensaje ->
                         SessionManager.guardarMensajeSalida(mensaje)
+                        NotificacionesForegroundService.detener(this@MainActivity)
                         cancelarSincronizacionNotificaciones(this@MainActivity)
                         val currentDest = navController.currentDestination?.id
                         if (currentDest != null && currentDest != R.id.loginFragment) {
@@ -163,6 +173,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         verificarYPedirPermisoNotificaciones()
         if (SessionManager.haySesion && SessionManager.puedeConsultar) {
+            NotificacionesForegroundService.iniciar(this)
             programarSincronizacionNotificaciones(this)
             lifecycleScope.launch {
                 NotificacionesRepository.sincronizar(this@MainActivity)

@@ -1,6 +1,7 @@
 package com.example.apimovil.data.notificaciones
 
 import android.content.Context
+import android.util.Log
 import com.example.apimovil.data.SessionManager
 import kotlinx.coroutines.sync.Mutex
 
@@ -21,9 +22,12 @@ object NotificacionesRepository {
             NotificacionesStore.init(context)
             NotificacionesStore.cargarPara(usuarioId)
 
+            val storeActual = NotificacionesStore.notificaciones.value
             val eventos = fuente.obtenerEventos()
             val ahora = System.currentTimeMillis()
             val tieneBaseline = NotificacionesStore.tieneBaseline(usuarioId)
+
+            var nuevas: List<NotificacionApp> = emptyList()
 
             if (!tieneBaseline) {
                 val vistosMap = eventos.associateBy({ it.id }, { it.fechaMillis })
@@ -31,7 +35,7 @@ object NotificacionesRepository {
 
                 val limite24h = ahora - (24 * 3600 * 1000L)
                 val eventos24h = eventos.filter { it.fechaMillis >= limite24h }
-                NotificacionesStore.agregarNuevas(eventos24h, leidasDefault = true)
+                nuevas = NotificacionesStore.agregarNuevas(eventos24h, leidasDefault = true)
 
                 NotificacionesStore.marcarBaseline(usuarioId)
             } else {
@@ -41,6 +45,7 @@ object NotificacionesRepository {
                     NotificacionesStore.registrarVistos(vistosNuevos)
 
                     val agregadas = NotificacionesStore.agregarNuevas(eventosNuevos, leidasDefault = false)
+                    nuevas = agregadas
                     if (agregadas.isNotEmpty()) {
                         if (agregadas.size > 5) {
                             Notificador.mostrarResumen(context, agregadas.size)
@@ -61,8 +66,10 @@ object NotificacionesRepository {
                     }
                 }
             }
-        } catch (_: Exception) {
-            // Si falla cualquier llamada de red, sale sin modificar el estado
+
+            Log.i("GeoComSync", "eventos=${eventos.size} nuevos=${nuevas.size} baseline=${storeActual.isEmpty()}")
+        } catch (e: Exception) {
+            Log.w("GeoComSync", "sincronizar falló", e)
         } finally {
             mutex.unlock()
         }
