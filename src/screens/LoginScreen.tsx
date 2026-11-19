@@ -19,6 +19,7 @@ interface Props {
   setPassword: (v: string) => void;
   onLogin: () => void;
   loading: boolean;
+  sessionMessage?: string | null;
 }
 
 export default function LoginScreen({
@@ -28,6 +29,7 @@ export default function LoginScreen({
   setPassword,
   onLogin,
   loading,
+  sessionMessage,
 }: Props) {
   const [verPass, setVerPass] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -47,7 +49,6 @@ export default function LoginScreen({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        {/* Encabezado de marca */}
         <View style={styles.brandHeader}>
           <Text style={styles.brandIcon}>⛽</Text>
           <View style={{ marginLeft: 12 }}>
@@ -56,12 +57,17 @@ export default function LoginScreen({
           </View>
         </View>
 
-        {/* Tarjeta Hero */}
         <View style={styles.heroCard}>
           <Text style={styles.heroOverline}>ADMINISTRACIÓN MÓVIL</Text>
           <Text style={styles.heroTitle}>{'Control de combustible.\nDesde tu móvil.'}</Text>
           <Text style={styles.heroSubtitle}>Asigna, consulta y gestiona en un solo lugar.</Text>
         </View>
+
+        {sessionMessage && (
+          <View style={styles.sessionBanner}>
+            <Text style={styles.sessionBannerText}>{sessionMessage}</Text>
+          </View>
+        )}
 
         <Text style={styles.loginTitle}>Inicia sesión</Text>
 
@@ -124,7 +130,14 @@ const styles = StyleSheet.create({
   heroOverline: { color: colors.marcaClaro, fontWeight: '700', fontSize: 11 },
   heroTitle: { color: colors.blanco, fontSize: 22, fontWeight: '700', lineHeight: 28, marginTop: 8 },
   heroSubtitle: { color: colors.marcaClaro, fontSize: 13, marginTop: 8 },
-  loginTitle: { fontSize: 22, fontWeight: '700', color: colors.textoPrincipal, marginTop: 28 },
+  sessionBanner: {
+    backgroundColor: colors.vencidaFondo,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 16,
+  },
+  sessionBannerText: { color: colors.vencida, fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  loginTitle: { fontSize: 22, fontWeight: '700', color: colors.textoPrincipal, marginTop: 24 },
   input: {
     backgroundColor: colors.blanco,
     borderWidth: 1,

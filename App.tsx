@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SafeAreaView,
   StatusBar,
@@ -6,6 +6,7 @@ import {
   View,
   Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from './src/api/config';
 import { colors } from './src/theme/colors';
 
@@ -25,8 +26,10 @@ import NotificacionesScreen from './src/screens/NotificacionesScreen';
 import NuevaSolicitudModal from './src/screens/NuevaSolicitudModal';
 import AsignarMontoModal from './src/screens/AsignarMontoModal';
 import EscanearQrModal from './src/screens/EscanearQrModal';
+import InstruccionEvidenciaModal from './src/screens/InstruccionEvidenciaModal';
 
 import BottomNav from './src/components/BottomNav';
+import { sincronizarNotificaciones } from './src/utils/notificaciones';
 
 export default function App() {
   const [token, setToken] = useState<string | null>(null);
@@ -42,13 +45,75 @@ export default function App() {
   const [solicitudParaAsignar, setSolicitudParaAsignar] = useState<any | null>(null);
   const [escanearQrVisible, setEscanearQrVisible] = useState(false);
 
+  const [instruccionVisible, setInstruccionVisible] = useState(false);
+  const [instruccionData, setInstruccionData] = useState<{ id: number; tipo: string } | null>(null);
+  const [fotoCapturada, setFotoCapturada] = useState<any | null>(null);
+
   const [correo, setCorreo] = useState('cmendoza@empresa.com');
   const [password, setPassword] = useState('password');
+
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [sessionMessage, setSessionMessage] = useState<string | null>(null);
+
+  // Persistencia de sesión en arranque en frío + validación GET /yo
+  useEffect(() => {
+    AsyncStorage.getItem('api_movil_sesion').then((val) => {
+      if (val) {
+        const parsed = JSON.parse(val);
+        setToken(parsed.token);
+        setUser(parsed.usuario);
+
+        fetch(`${API_URL}/yo`, {
+          headers: { Accept: 'application/json', Authorization: `Bearer ${parsed.token}` },
+        })
+          .then((r) => {
+            if (r.status === 401) throw new Error('sesion_expirada');
+            return r.json();
+          })
+          .then((data) => {
+            if (data.id) {
+              const updatedUser = { ...parsed.usuario, ...data };
+              setUser(updatedUser);
+              AsyncStorage.setItem(
+                'api_movil_sesion',
+                JSON.stringify({ token: parsed.token, usuario: updatedUser })
+              );
+            }
+          })
+          .catch((e) => {
+            if (e.message === 'sesion_expirada') {
+              handleLogoutLocal('Tu sesión expiró. Inicia sesión de nuevo.');
+            }
+          });
+      }
+    });
+  }, []);
+
+  // Sincronización periódica de notificaciones cada 10s para Admin y Supervisor
+  useEffect(() => {
+    if (!token || !user || user.rol === 'conductor') return;
+
+    const interval = setInterval(async () => {
+      try {
+        const result = await sincronizarNotificaciones(token, user.id);
+        setUnreadCount(result.filter((n) => !n.leida).length);
+      } catch {}
+    }, 10000);
+
+    sincronizarNotificaciones(token, user.id)
+      .then((result) => {
+        setUnreadCount(result.filter((n) => !n.leida).length);
+      })
+      .catch(() => {});
+
+    return () => clearInterval(interval);
+  }, [token, user]);
 
   const triggerRefresh = () => setRefreshKey((k) => k + 1);
 
   const handleLogin = async () => {
     setLoading(true);
+    setSessionMessage(null);
     try {
       const res = await fetch(`${API_URL}/login`, {
         method: 'POST',
@@ -64,6 +129,10 @@ export default function App() {
 
       setToken(data.token);
       setUser(data.usuario);
+      AsyncStorage.setItem(
+        'api_movil_sesion',
+        JSON.stringify({ token: data.token, usuario: data.usuario })
+      );
       setCurrentScreen('home');
       setSelectedOrdenId(null);
       setSelectedOrden(null);
@@ -74,6 +143,17 @@ export default function App() {
     }
   };
 
+  const handleLogoutLocal = (msg?: string) => {
+    setToken(null);
+    setUser(null);
+    setCurrentScreen('home');
+    setSelectedOrdenId(null);
+    setSelectedOrden(null);
+    setUnreadCount(0);
+    AsyncStorage.removeItem('api_movil_sesion');
+    if (msg) setSessionMessage(msg);
+  };
+
   const handleLogout = async () => {
     if (token) {
       fetch(`${API_URL}/logout`, {
@@ -81,11 +161,7 @@ export default function App() {
         headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
       }).catch(() => {});
     }
-    setToken(null);
-    setUser(null);
-    setCurrentScreen('home');
-    setSelectedOrdenId(null);
-    setSelectedOrden(null);
+    handleLogoutLocal();
   };
 
   const isSupervisor = user?.rol === 'contabilidad';
@@ -113,12 +189,15 @@ export default function App() {
         return (
           <NotificacionesScreen
             token={token!}
+            user={user}
             showBack={!isSupervisor}
             onBack={() => setCurrentScreen(user?.rol === 'admin' ? 'mas' : 'home')}
             onOpenOrder={(id) => {
               setSelectedOrden(null);
               setSelectedOrdenId(id);
             }}
+            onOpenSolicitudes={() => setCurrentScreen('solicitudes')}
+            onNotificacionesUpdate={(c) => setUnreadCount(c)}
           />
         );
       case 'historial':
@@ -146,8 +225,9 @@ export default function App() {
     (currentScreen === 'notificaciones' && !isSupervisor);
 
   return (
-    <SafeAreaView style={styles.container}>
-        <StatusBar barStyle={token ? 'light-content' : 'dark-content'} />
+    <SafeAreaView style={[styles.container, token ? { backgroundColor: colors.marca } : undefined]}>
+      <StatusBar barStyle={token ? 'light-content' : 'dark-content'} />
+
       {!token ? (
         <LoginScreen
           correo={correo}
@@ -156,9 +236,10 @@ export default function App() {
           setPassword={setPassword}
           onLogin={handleLogin}
           loading={loading}
+          sessionMessage={sessionMessage}
         />
       ) : (
-        <View style={styles.flex}>
+        <View style={[styles.flex, { backgroundColor: colors.fondo }]}>
           <View style={styles.flex}>
             {selectedOrdenId ? (
               <OrdenDetalleScreen
@@ -172,6 +253,12 @@ export default function App() {
                   triggerRefresh();
                 }}
                 onOpenQr={() => setEscanearQrVisible(true)}
+                onAbrirInstruccion={(detalleId, tipo) => {
+                  setInstruccionData({ id: detalleId, tipo });
+                  setInstruccionVisible(true);
+                }}
+                fotoCapturadaPendiente={fotoCapturada}
+                limpiarFotoCapturada={() => setFotoCapturada(null)}
               />
             ) : (
               renderVistaSecundaria() || (
@@ -180,6 +267,7 @@ export default function App() {
                     <HomeScreen
                       key={`home-${refreshKey}`}
                       user={user}
+                      unreadCount={unreadCount}
                       setScreen={setCurrentScreen}
                       token={token}
                       onOpenOrder={(id) => {
@@ -206,6 +294,7 @@ export default function App() {
                         setSelectedOrden(null);
                         setSelectedOrdenId(id);
                       }}
+                      onBack={() => setCurrentScreen('home')}
                     />
                   )}
                   {currentScreen === 'catalogos' && (
@@ -215,7 +304,9 @@ export default function App() {
                       onBack={() => setCurrentScreen('home')}
                     />
                   )}
-                  {currentScreen === 'mas' && <MasScreen setScreen={setCurrentScreen} />}
+                  {currentScreen === 'mas' && (
+                    <MasScreen unreadCount={unreadCount} setScreen={setCurrentScreen} />
+                  )}
                   {currentScreen === 'perfil' && (
                     <PerfilScreen
                       user={user}
@@ -254,8 +345,30 @@ export default function App() {
             }}
           />
 
+          {instruccionData && (
+            <InstruccionEvidenciaModal
+              visible={instruccionVisible}
+              detalleId={instruccionData.id}
+              tipo={instruccionData.tipo}
+              onClose={() => {
+                setInstruccionVisible(false);
+                setInstruccionData(null);
+              }}
+              onContinue={(foto) => {
+                setFotoCapturada(foto);
+                setInstruccionVisible(false);
+                setInstruccionData(null);
+              }}
+            />
+          )}
+
           {!ocultarBottomNav && (
-            <BottomNav currentScreen={currentScreen} setScreen={setCurrentScreen} rol={user?.rol} />
+            <BottomNav
+              currentScreen={currentScreen}
+              setScreen={setCurrentScreen}
+              rol={user?.rol}
+              unreadCount={unreadCount}
+            />
           )}
         </View>
       )}

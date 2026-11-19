@@ -15,6 +15,7 @@ import { formatoLegible, parseFechaIso } from '../utils/fechas';
 interface Props {
   user: any;
   token: string;
+  unreadCount?: number;
   setScreen: (s: string) => void;
   onOpenOrder: (id: number) => void;
   onOpenNuevaSolicitud: () => void;
@@ -23,6 +24,7 @@ interface Props {
 export default function HomeScreen({
   user,
   token,
+  unreadCount = 0,
   setScreen,
   onOpenOrder,
   onOpenNuevaSolicitud,
@@ -103,14 +105,11 @@ export default function HomeScreen({
     }
   };
 
-  // ==================== VISTA CONDUCTOR ====================
   if (esConductor) {
     return (
       <View style={styles.flex}>
         <View style={styles.topHeader}>
-          <Text style={[styles.topHeaderTitle, { flex: 1 }]}>
-            Hola, {user?.nombre || ''}
-          </Text>
+          <Text style={[styles.topHeaderTitle, { flex: 1 }]}>Hola, {user?.nombre || ''}</Text>
           <TouchableOpacity onPress={() => setScreen('historial')} style={styles.iconBtn}>
             <Text style={{ fontSize: 19, color: colors.blanco }}>🕒</Text>
           </TouchableOpacity>
@@ -152,7 +151,6 @@ export default function HomeScreen({
           }
         />
 
-        {/* FAB Nueva Solicitud */}
         <TouchableOpacity style={styles.fab} onPress={onOpenNuevaSolicitud} activeOpacity={0.85}>
           <Text style={styles.fabIcon}>＋</Text>
         </TouchableOpacity>
@@ -160,7 +158,6 @@ export default function HomeScreen({
     );
   }
 
-  // ==================== VISTA ADMIN / SUPERVISOR ====================
   const abiertas = ordenes.filter((o) => o.estado === 'abierta').length;
   const completadas = ordenes.filter((o) => o.estado === 'completada').length;
   const vencidas = ordenes.filter((o) => o.estado === 'vencida').length;
@@ -197,6 +194,13 @@ export default function HomeScreen({
         </View>
         <TouchableOpacity onPress={() => setScreen('notificaciones')} style={styles.iconBtn}>
           <Text style={{ fontSize: 19, color: colors.blanco }}>🔔</Text>
+          {unreadCount > 0 && (
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText}>
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -207,7 +211,6 @@ export default function HomeScreen({
         <Text style={styles.fechaText}>{fechaHoy}</Text>
         <Text style={styles.saludoText}>Buen día, {user?.nombre || ''}</Text>
 
-        {/* Tarjeta Solicitudes pendientes */}
         <View style={styles.card}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Text style={styles.bigCount}>{pendientesCount}</Text>
@@ -216,17 +219,13 @@ export default function HomeScreen({
               <Text style={styles.cardSub}>Esperan asignación de monto</Text>
             </View>
           </View>
-          <TouchableOpacity
-            style={styles.btnTonalFull}
-            onPress={() => setScreen('solicitudes')}
-          >
+          <TouchableOpacity style={styles.btnTonalFull} onPress={() => setScreen('solicitudes')}>
             <Text style={styles.btnTonalText}>
               {esAdmin ? 'Asignar montos  →' : 'Ver solicitudes'}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* 3 Indicadores de estado */}
         <View style={styles.kpiRow}>
           <View style={styles.kpiCard}>
             <Text style={[styles.kpiNum, { color: colors.abierta }]}>{abiertas}</Text>
@@ -298,6 +297,19 @@ const styles = StyleSheet.create({
   topHeaderTitle: { fontSize: 18, fontWeight: '700', color: colors.blanco },
   rolSubtitle: { fontSize: 11, fontWeight: '700', color: colors.marcaClaro },
   iconBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  bellBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    backgroundColor: colors.vencida,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bellBadgeText: { color: colors.blanco, fontSize: 10, fontWeight: '700' },
   fechaText: {
     fontSize: 12,
     fontWeight: '700',

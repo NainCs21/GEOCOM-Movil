@@ -19,11 +19,12 @@ import { formatearFechaIsoShort, normalizarTexto } from '../utils/fechas';
 interface Props {
   token: string;
   onOpenOrder: (id: number) => void;
+  onBack?: () => void;
 }
 
 const ESTADOS = ['Todos los estados', 'pendiente', 'abierta', 'completada', 'vencida', 'rehabilitada'];
 
-export default function OrdenesScreen({ token, onOpenOrder }: Props) {
+export default function OrdenesScreen({ token, onOpenOrder, onBack }: Props) {
   const [ordenes, setOrdenes] = useState<any[]>([]);
   const [conductores, setConductores] = useState<any[]>([]);
   const [gasolineras, setGasolineras] = useState<any[]>([]);
@@ -144,6 +145,11 @@ export default function OrdenesScreen({ token, onOpenOrder }: Props) {
   return (
     <View style={styles.flex}>
       <View style={styles.topHeader}>
+        {onBack && (
+          <TouchableOpacity onPress={onBack} style={styles.backBtn}>
+            <Text style={{ fontSize: 22, color: colors.blanco }}>←</Text>
+          </TouchableOpacity>
+        )}
         <Text style={styles.topHeaderTitle}>Órdenes</Text>
       </View>
 
@@ -412,6 +418,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
+  backBtn: { marginRight: 8, padding: 4 },
   topHeaderTitle: { fontSize: 18, fontWeight: '700', color: colors.blanco },
   filterBar: {
     flexDirection: 'row',

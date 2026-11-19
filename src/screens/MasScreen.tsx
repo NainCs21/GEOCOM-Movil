@@ -4,15 +4,17 @@ import { colors } from '../theme/colors';
 
 interface Props {
   setScreen: (s: string) => void;
+  unreadCount?: number;
 }
 
-export default function MasScreen({ setScreen }: Props) {
+export default function MasScreen({ setScreen, unreadCount = 0 }: Props) {
   const opciones = [
     {
       id: 'notificaciones',
       icon: '🔔',
       titulo: 'Notificaciones',
       subtitulo: 'Avisos de órdenes asignadas, completadas y vencidas.',
+      badge: true,
     },
     {
       id: 'reportes',
@@ -49,6 +51,13 @@ export default function MasScreen({ setScreen }: Props) {
           >
             <View style={styles.iconBox}>
               <Text style={{ fontSize: 18 }}>{op.icon}</Text>
+              {op.badge && unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
+                </View>
+              )}
             </View>
             <View style={{ flex: 1, marginLeft: 12 }}>
               <Text style={styles.titulo}>{op.titulo}</Text>
@@ -87,6 +96,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: colors.vencida,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.blanco,
+  },
+  badgeText: { color: colors.blanco, fontSize: 9, fontWeight: '700' },
   titulo: { fontSize: 15, fontWeight: '700', color: colors.textoPrincipal },
   subtitulo: { fontSize: 13, color: colors.textoSecundario, marginTop: 2 },
 });

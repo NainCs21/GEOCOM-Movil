@@ -2,10 +2,16 @@ import { API_URL } from '../api/config';
 
 export function parseFechaIso(fecha?: string | null): Date {
   if (!fecha) return new Date();
-  const limpia = fecha.includes('T') ? fecha : fecha.replace(' ', 'T') + 'Z';
-  const normalizada = limpia.replace(/\.(\d{3})\d*Z$/, '.$1Z');
+  const limpia = fecha.trim().includes('T') ? fecha.trim() : fecha.trim().replace(' ', 'T') + 'Z';
+  const normalizada = limpia.replace(/\.(\d{3})\d*Z?$/, '.$1Z');
   const parsed = new Date(normalizada);
   return isNaN(parsed.getTime()) ? new Date() : parsed;
+}
+
+export function parseFechaIsoMillis(fecha?: string | null): number {
+  if (!fecha) return 0;
+  const t = parseFechaIso(fecha).getTime();
+  return isNaN(t) ? 0 : t;
 }
 
 export function formatoLegible(fecha?: string | null): string {
@@ -27,6 +33,12 @@ export function formatoLegible(fecha?: string | null): string {
 
 export function obtenerFechaActualString(): string {
   const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export function obtenerHace3DiasString(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 3);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 

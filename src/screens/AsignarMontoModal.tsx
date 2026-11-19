@@ -8,7 +8,8 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { API_URL } from '../api/config';
 import { colors } from '../theme/colors';
@@ -31,8 +32,15 @@ export default function AsignarMontoModal({ solicitud, onClose, token, onSuccess
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [verifyingPass, setVerifyingPass] = useState(false);
+  const [passError, setPassError] = useState<string | null>(null);
+  const [detallesPendientes, setDetallesPendientes] = useState<any[]>([]);
+
   const tipo = (solicitud?.tipo_destino || 'vehiculo').toLowerCase();
-  const esVehiculo = tipo === 'vehiculo' || tipo === 'ambos' || tipo.includes('vehiculo') || tipo.includes('+');
+  const esVehiculo =
+    tipo === 'vehiculo' || tipo === 'ambos' || tipo.includes('vehiculo') || tipo.includes('+');
   const esMgp = tipo === 'mgp' || tipo === 'ambos' || tipo.includes('mgp') || tipo.includes('+');
 
   useEffect(() => {
@@ -48,7 +56,9 @@ export default function AsignarMontoModal({ solicitud, onClose, token, onSuccess
         fetch(`${API_URL}/vehiculos`, { headers }).then((r) => r.json()).catch(() => []),
       ])
         .then(([gasData, vehData]) => {
-          const gList = (Array.isArray(gasData) ? gasData : gasData.data || []).filter((g: any) => g.activo);
+          const gList = (Array.isArray(gasData) ? gasData : gasData.data || []).filter(
+            (g: any) => g.activo
+          );
           const vList = Array.isArray(vehData) ? vehData : vehData.data || [];
           setGasolineras(gList);
           setVehiculos(vList);
@@ -62,9 +72,9 @@ export default function AsignarMontoModal({ solicitud, onClose, token, onSuccess
     (esVehiculo ? parseFloat(montoVehiculo) || 0 : 0) +
     (esMgp ? parseFloat(montoMgp) || 0 : 0);
 
-  const asignarOrden = async () => {
+  const validarYAbrirConfirmacion = () => {
     setErrorMsg(null);
-    const horas = parseInt(horasVigencia);
+    const horas = parseInt(horasVigencia, 10);
     if (!gasolineraId || isNaN(horas) || horas < 1 || horas > 3) {
       setErrorMsg('Elige la gasolinera e indica las horas de vigencia (1 a 3).');
       return;
@@ -90,8 +100,57 @@ export default function AsignarMontoModal({ solicitud, onClose, token, onSuccess
       return;
     }
 
+    setDetallesPendientes(detalles);
+    setAdminPassword('');
+    setPassError(null);
+    setConfirmModalVisible(true);
+  };
+
+  const verificarYCrearOrden = async () => {
+    if (!adminPassword.trim()) {
+      setPassError('Ingresa tu contraseña.');
+      return;
+    }
+    setPassError(null);
+    setVerifyingPass(true);
+
+    try {
+      const verifyRes = await fetch(`${API_URL}/verificar-contrasena`, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ contrasena: adminPassword }),
+      });
+
+      const verifyData = await verifyRes.json().catch(() => ({}));
+
+      if (!verifyRes.ok) {
+        if (verifyRes.status === 401) throw new Error('Contraseña incorrecta.');
+        if (verifyRes.status === 403) throw new Error('Tu cuenta no tiene un rol activo.');
+        throw new Error(verifyData.mensaje || verifyData.message || 'Contraseña incorrecta.');
+      }
+
+      if (!verifyData.permitido) {
+        throw new Error(verifyData.mensaje || 'Contraseña incorrecta.');
+      }
+
+      setConfirmModalVisible(false);
+      await crearOrdenConfirmada();
+    } catch (e: any) {
+      setPassError(e.message);
+      setAdminPassword('');
+    } finally {
+      setVerifyingPass(false);
+    }
+  };
+
+  const crearOrdenConfirmada = async () => {
     setSubmitting(true);
     try {
+      const horas = parseInt(horasVigencia, 10);
       const res = await fetch(`${API_URL}/ordenes`, {
         method: 'POST',
         headers: {
@@ -103,7 +162,7 @@ export default function AsignarMontoModal({ solicitud, onClose, token, onSuccess
           solicitud_id: solicitud.id,
           gasolinera_id: gasolineraId,
           horas_vigencia: horas,
-          detalles,
+          detalles: detallesPendientes,
         }),
       });
 
@@ -130,16 +189,18 @@ export default function AsignarMontoModal({ solicitud, onClose, token, onSuccess
 
   return (
     <Modal visible={!!solicitud} animationType="slide">
-      <View style={styles.flex}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <View style={styles.topHeader}>
           <TouchableOpacity onPress={onClose} style={styles.backBtn}>
-            <Text style={{ fontSize: 22, color: colors.textoPrincipal }}>←</Text>
+            <Text style={{ fontSize: 22, color: colors.blanco }}>←</Text>
           </TouchableOpacity>
           <Text style={styles.topHeaderTitle}>Asignar monto</Text>
         </View>
 
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          {/* Resumen de la solicitud */}
           <View style={styles.card}>
             <Text style={styles.resumenConductor}>
               {solicitud.conductor?.usuario?.name || `Conductor #${solicitud.conductor_id}`}
@@ -180,12 +241,11 @@ export default function AsignarMontoModal({ solicitud, onClose, token, onSuccess
             placeholder="Horas de vigencia (1 a 3)"
           />
 
-          {/* Tarjeta 01 · Vehículo */}
           {esVehiculo && (
             <View style={[styles.card, { marginTop: 16 }]}>
               <Text style={styles.lineHeader}>01 · Vehículo</Text>
               <TextInput
-                style={[styles.input, { marginTop: 10 }]}
+                style={[styles.input, { marginTop: 8 }]}
                 placeholder="Monto para el vehículo (L)"
                 placeholderTextColor={colors.textoSecundario}
                 keyboardType="decimal-pad"
@@ -206,12 +266,11 @@ export default function AsignarMontoModal({ solicitud, onClose, token, onSuccess
             </View>
           )}
 
-          {/* Tarjeta 02 · MGP */}
           {esMgp && (
             <View style={[styles.card, { marginTop: 16 }]}>
               <Text style={styles.lineHeader}>02 · MGP</Text>
               <TextInput
-                style={[styles.input, { marginTop: 10 }]}
+                style={[styles.input, { marginTop: 8 }]}
                 placeholder="Monto para la planta MGP (L)"
                 placeholderTextColor={colors.textoSecundario}
                 keyboardType="decimal-pad"
@@ -232,7 +291,6 @@ export default function AsignarMontoModal({ solicitud, onClose, token, onSuccess
             </View>
           )}
 
-          {/* Total de la solicitud */}
           <View style={styles.totalInfoBox}>
             <Text style={styles.totalText}>
               Total de la solicitud · L {totalCalculado.toFixed(2)}
@@ -241,7 +299,7 @@ export default function AsignarMontoModal({ solicitud, onClose, token, onSuccess
 
           <TouchableOpacity
             style={[styles.btnAssign, submitting && { opacity: 0.7 }]}
-            onPress={asignarOrden}
+            onPress={validarYAbrirConfirmacion}
             disabled={submitting}
           >
             <Text style={styles.btnAssignText}>Asignar monto y generar orden</Text>
@@ -250,7 +308,51 @@ export default function AsignarMontoModal({ solicitud, onClose, token, onSuccess
           {submitting && <ActivityIndicator color={colors.marca} style={{ marginTop: 16 }} />}
           {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
         </ScrollView>
-      </View>
+
+        <Modal visible={confirmModalVisible} transparent animationType="fade">
+          <KeyboardAvoidingView
+            style={styles.dialogOverlay}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
+            <View style={styles.dialogCard}>
+              <Text style={styles.dialogTitle}>Confirmar contraseña</Text>
+              <Text style={styles.dialogMsg}>
+                Ingresa tu contraseña para autorizar la asignación de la orden.
+              </Text>
+
+              <TextInput
+                style={[styles.input, { marginTop: 16 }]}
+                placeholder="Contraseña"
+                placeholderTextColor={colors.textoSecundario}
+                secureTextEntry
+                value={adminPassword}
+                onChangeText={setAdminPassword}
+                editable={!verifyingPass}
+              />
+
+              {verifyingPass && <ActivityIndicator color={colors.marca} style={{ marginTop: 12 }} />}
+              {passError && <Text style={styles.errorText}>{passError}</Text>}
+
+              <View style={styles.dialogActions}>
+                <TouchableOpacity
+                  style={styles.dialogCancelBtn}
+                  onPress={() => setConfirmModalVisible(false)}
+                  disabled={verifyingPass}
+                >
+                  <Text style={styles.dialogCancelText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.dialogOkBtn}
+                  onPress={verificarYCrearOrden}
+                  disabled={verifyingPass}
+                >
+                  <Text style={styles.dialogOkText}>Aceptar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -260,22 +362,23 @@ const styles = StyleSheet.create({
   topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.blanco,
-    padding: 20,
+    backgroundColor: colors.marca,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  backBtn: { marginRight: 10, padding: 4 },
-  topHeaderTitle: { fontSize: 20, fontWeight: '700', color: colors.textoPrincipal },
-  content: { padding: 20 },
+  backBtn: { marginRight: 8, padding: 4 },
+  topHeaderTitle: { fontSize: 18, fontWeight: '700', color: colors.blanco },
+  content: { padding: 20, paddingBottom: 40 },
   card: {
     backgroundColor: colors.blanco,
     borderRadius: 16,
-    padding: 18,
+    padding: 16,
     borderWidth: 1,
     borderColor: colors.borde,
   },
-  resumenConductor: { fontSize: 17, fontWeight: '700', color: colors.textoPrincipal },
-  resumenDestino: { fontSize: 13, fontWeight: '700', color: colors.marca, marginTop: 6 },
-  resumenActividad: { fontSize: 14, color: colors.textoSecundario, marginTop: 6 },
+  resumenConductor: { fontSize: 16, fontWeight: '700', color: colors.textoPrincipal },
+  resumenDestino: { fontSize: 13, fontWeight: '700', color: colors.marca, marginTop: 4 },
+  resumenActividad: { fontSize: 13, color: colors.textoSecundario, marginTop: 4 },
   label: { fontSize: 13, fontWeight: '700', color: colors.textoPrincipal, marginTop: 16, marginBottom: 6 },
   gasolineraItem: {
     backgroundColor: colors.blanco,
@@ -301,29 +404,52 @@ const styles = StyleSheet.create({
   quickChip: {
     flex: 1,
     height: 36,
-    borderRadius: 18,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.borde,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.blanco,
   },
-  quickChipText: { fontSize: 12, fontWeight: '700', color: colors.marca },
+  quickChipText: { fontSize: 11, fontWeight: '700', color: colors.marca },
   totalInfoBox: {
     backgroundColor: colors.marcaClaro,
     borderRadius: 16,
-    padding: 18,
+    padding: 16,
     marginTop: 16,
   },
-  totalText: { fontSize: 20, fontWeight: '700', color: colors.marcaOscuro },
+  totalText: { fontSize: 18, fontWeight: '700', color: colors.marcaOscuro },
   btnAssign: {
     backgroundColor: colors.marca,
-    height: 52,
-    borderRadius: 28,
+    height: 50,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 20,
   },
   btnAssignText: { color: colors.blanco, fontWeight: '700', fontSize: 15 },
-  errorText: { color: colors.vencida, textAlign: 'center', marginTop: 12, fontSize: 13 },
+  errorText: { color: colors.vencida, textAlign: 'center', marginTop: 10, fontSize: 13 },
+  dialogOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  dialogCard: {
+    backgroundColor: colors.blanco,
+    borderRadius: 16,
+    padding: 20,
+  },
+  dialogTitle: { fontSize: 18, fontWeight: '700', color: colors.textoPrincipal },
+  dialogMsg: { fontSize: 14, color: colors.textoPrincipal, marginTop: 8 },
+  dialogActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 18 },
+  dialogCancelBtn: { paddingHorizontal: 14, paddingVertical: 10 },
+  dialogCancelText: { color: colors.textoSecundario, fontWeight: '700', fontSize: 14 },
+  dialogOkBtn: {
+    backgroundColor: colors.marca,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  dialogOkText: { color: colors.blanco, fontWeight: '700', fontSize: 14 },
 });

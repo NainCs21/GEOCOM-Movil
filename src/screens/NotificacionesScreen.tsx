@@ -1,90 +1,128 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { API_URL } from '../api/config';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+} from 'react-native';
 import { colors } from '../theme/colors';
+import { formatoLegible } from '../utils/fechas';
+import {
+  NotificacionApp,
+  sincronizarNotificaciones,
+  marcarNotificacionLeida,
+  marcarTodasNotificacionesLeidas,
+} from '../utils/notificaciones';
 
 interface Props {
   token: string;
-  onBack?: () => void;
+  user: any;
+  onBack: () => void;
   showBack?: boolean;
   onOpenOrder: (id: number) => void;
+  onOpenSolicitudes: () => void;
+  onNotificacionesUpdate?: (count: number) => void;
 }
 
-export default function NotificacionesScreen({ token, onBack, showBack = true, onOpenOrder }: Props) {
-  const [items, setItems] = useState<any[]>([]);
+export default function NotificacionesScreen({
+  token,
+  user,
+  onBack,
+  showBack = true,
+  onOpenOrder,
+  onOpenSolicitudes,
+  onNotificacionesUpdate,
+}: Props) {
+  const [items, setItems] = useState<NotificacionApp[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const cargarNotificaciones = async () => {
+  const cargar = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/ordenes`, {
-        headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      const ordenes = Array.isArray(data) ? data : data.data || [];
-
-      const relevantes = ordenes
-        .filter((o: any) => o.estado === 'completada' || o.estado === 'vencida')
-        .sort((a: any, b: any) => {
-          const fa = a.fecha_completada || a.vence_apertura || a.fecha_asignacion || '';
-          const fb = b.fecha_completada || b.vence_apertura || b.fecha_asignacion || '';
-          return fb.localeCompare(fa);
-        })
-        .slice(0, 30);
-
-      setItems(relevantes);
-    } catch (e) {}
-    setLoading(false);
-  };
+      const listas = await sincronizarNotificaciones(token, user.id);
+      setItems(listas);
+      const noLeidas = listas.filter((n) => !n.leida).length;
+      if (onNotificacionesUpdate) onNotificacionesUpdate(noLeidas);
+    } catch {
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, user.id, onNotificacionesUpdate]);
 
   useEffect(() => {
-    cargarNotificaciones();
-  }, [token]);
+    cargar();
+  }, [cargar]);
+
+  const handleMarcarTodas = async () => {
+    const act = await marcarTodasNotificacionesLeidas(user.id);
+    setItems(act);
+    if (onNotificacionesUpdate) onNotificacionesUpdate(0);
+  };
+
+  const handlePress = async (item: NotificacionApp) => {
+    if (!item.leida) {
+      const act = await marcarNotificacionLeida(user.id, item.id);
+      setItems(act);
+      const noLeidas = act.filter((n) => !n.leida).length;
+      if (onNotificacionesUpdate) onNotificacionesUpdate(noLeidas);
+    }
+
+    if (item.destino === 'orden' && item.ordenId) {
+      onOpenOrder(item.ordenId);
+    } else if (item.destino === 'solicitudes') {
+      onOpenSolicitudes();
+    }
+  };
 
   return (
     <View style={styles.flex}>
       <View style={styles.topHeader}>
-        {showBack && onBack && (
+        {showBack && (
           <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-            <Text style={{ fontSize: 22, color: colors.textoPrincipal }}>←</Text>
+            <Text style={{ fontSize: 22, color: colors.blanco }}>←</Text>
           </TouchableOpacity>
         )}
         <Text style={styles.topHeaderTitle}>Notificaciones</Text>
+        <TouchableOpacity style={styles.btnMarcar} onPress={handleMarcarTodas}>
+          <Text style={styles.btnMarcarText}>Marcar leídas</Text>
+        </TouchableOpacity>
       </View>
 
       <FlatList
         data={items}
-        keyExtractor={(item) => item.id.toString()}
-        onRefresh={cargarNotificaciones}
-        refreshing={loading}
-        contentContainerStyle={styles.list}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 88 }}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={cargar} />}
         renderItem={({ item }) => {
-          const esCompletada = item.estado === 'completada';
-          const conductorNombre = item.conductor?.usuario?.name || `Conductor #${item.conductor_id}`;
-          const titulo = esCompletada
-            ? `COMPLETADA · ${item.numero_orden}`
-            : `VENCIDA · ${item.numero_orden}`;
-          const cuerpo = esCompletada
-            ? `${conductorNombre} completó su carga en ${item.gasolinera?.nombre || 'la gasolinera'}.`
-            : `${conductorNombre} no completó la orden ${item.numero_orden} dentro del tiempo de vigencia.`;
-          const hora = (esCompletada ? item.fecha_completada : item.vence_apertura)?.substring(0, 16) || '';
-
+          const isUnread = !item.leida;
           return (
-            <TouchableOpacity style={styles.cardItem} onPress={() => onOpenOrder(item.id)}>
-              <View style={styles.rowBetween}>
-                <Text style={styles.title}>{titulo}</Text>
-                <Text style={styles.hora}>{hora}</Text>
+            <TouchableOpacity
+              style={[styles.card, isUnread && styles.cardUnread]}
+              onPress={() => handlePress(item)}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.titulo, isUnread && styles.tituloUnread, { flex: 1 }]}>
+                  {item.titulo}
+                </Text>
+                <Text style={styles.hora}>
+                  {formatoLegible(new Date(item.fechaMillis).toISOString())}
+                </Text>
               </View>
-              <Text style={styles.cuerpo}>{cuerpo}</Text>
+              <Text style={styles.cuerpo}>{item.cuerpo}</Text>
             </TouchableOpacity>
           );
         }}
         ListEmptyComponent={
-          !loading ? <Text style={styles.emptyText}>No hay notificaciones por ahora.</Text> : undefined
+          !loading ? (
+            <Text style={styles.emptyText}>No hay notificaciones por ahora.</Text>
+          ) : undefined
         }
       />
 
-      <Text style={styles.footerNota}>
+      <Text style={styles.footerNote}>
         Se generan a partir de tus órdenes completadas y vencidas recientes.
       </Text>
     </View>
@@ -96,29 +134,35 @@ const styles = StyleSheet.create({
   topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.blanco,
-    padding: 20,
+    backgroundColor: colors.marca,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  backBtn: { marginRight: 10, padding: 4 },
-  topHeaderTitle: { fontSize: 20, fontWeight: '700', color: colors.textoPrincipal },
-  list: { padding: 20 },
-  cardItem: {
+  backBtn: { marginRight: 8, padding: 4 },
+  topHeaderTitle: { flex: 1, fontSize: 18, fontWeight: '700', color: colors.blanco },
+  btnMarcar: { padding: 8 },
+  btnMarcarText: { color: colors.blanco, fontSize: 13, fontWeight: '700' },
+  card: {
     backgroundColor: colors.blanco,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
     borderColor: colors.borde,
-    marginBottom: 12,
+    marginBottom: 10,
   },
-  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontSize: 15, fontWeight: '700', color: colors.textoPrincipal, flex: 1 },
-  hora: { fontSize: 12, color: colors.textoSecundario },
-  cuerpo: { fontSize: 13, color: colors.textoSecundario, marginTop: 4 },
-  emptyText: { textAlign: 'center', color: colors.textoSecundario, marginTop: 40 },
-  footerNota: {
-    fontSize: 12,
-    color: colors.textoSecundario,
+  cardUnread: {
+    backgroundColor: colors.marcaClaro,
+    borderColor: colors.marcaClaro,
+  },
+  titulo: { fontSize: 14, color: colors.textoPrincipal },
+  tituloUnread: { fontWeight: '700' },
+  hora: { fontSize: 11, color: colors.textoSecundario },
+  cuerpo: { fontSize: 13, color: colors.textoSecundario, marginTop: 6 },
+  emptyText: { textAlign: 'center', color: colors.textoSecundario, marginTop: 60 },
+  footerNote: {
     textAlign: 'center',
+    color: colors.textoSecundario,
+    fontSize: 12,
     padding: 16,
   },
 });

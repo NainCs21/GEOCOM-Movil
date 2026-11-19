@@ -11,13 +11,15 @@ import {
   Modal,
   TextInput,
   Share,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 // @ts-ignore
 import * as FileSystem from 'expo-file-system/legacy';
 import { API_URL } from '../api/config';
 import { colors } from '../theme/colors';
-import { formatoLegible, parseFechaIso } from '../utils/fechas';
+import { formatoLegible, normalizarUrlApi, parseFechaIso } from '../utils/fechas';
 
 interface Props {
   ordenId: number;
@@ -26,6 +28,9 @@ interface Props {
   user: any;
   onBack: () => void;
   onOpenQr: () => void;
+  onAbrirInstruccion?: (detalleId: number, tipo: string) => void;
+  fotoCapturadaPendiente?: any | null;
+  limpiarFotoCapturada?: () => void;
 }
 
 export default function OrdenDetalleScreen({
@@ -35,6 +40,9 @@ export default function OrdenDetalleScreen({
   user,
   onBack,
   onOpenQr,
+  onAbrirInstruccion,
+  fotoCapturadaPendiente,
+  limpiarFotoCapturada,
 }: Props) {
   const [orden, setOrden] = useState<any | null>(ordenData || null);
   const [loading, setLoading] = useState(false);
@@ -42,12 +50,10 @@ export default function OrdenDetalleScreen({
   const [minutosRestantes, setMinutosRestantes] = useState<string>('--:--');
   const [fotosLocales, setFotosLocales] = useState<Record<string, string>>({});
 
-  // Visor de foto con descarga
   const [fotoModalVisible, setFotoModalVisible] = useState(false);
   const [fotoTargetSeleccionada, setFotoTargetSeleccionada] = useState<string | null>(null);
   const [descargando, setDescargando] = useState(false);
 
-  // Justificación entrega tardía (estado === 'rehabilitada')
   const [justifModalVisible, setJustifModalVisible] = useState(false);
   const [justifTexto, setJustifTexto] = useState('');
   const [pendienteCaptura, setPendienteCaptura] = useState<{
@@ -96,47 +102,71 @@ export default function OrdenDetalleScreen({
     }
   }, [orden]);
 
+  useEffect(() => {
+    if (fotoCapturadaPendiente && pendienteCaptura) {
+      subirFotoRecibida(
+        fotoCapturadaPendiente,
+        pendienteCaptura.detalleId,
+        pendienteCaptura.tipo,
+        justifTexto
+      );
+    }
+  }, [fotoCapturadaPendiente]);
+
   const iniciarCaptura = (detalleId: number, tipoFoto: string) => {
+    setPendienteCaptura({ detalleId, tipo: tipoFoto });
     if (orden?.estado === 'rehabilitada') {
-      setPendienteCaptura({ detalleId, tipo: tipoFoto });
       setJustifTexto('');
       setJustifModalVisible(true);
     } else {
-      tomarYSubirFoto(detalleId, tipoFoto, null);
+      setJustifTexto('');
+      if (onAbrirInstruccion) {
+        onAbrirInstruccion(detalleId, tipoFoto);
+      }
     }
   };
 
-  const tomarYSubirFoto = async (
+  const subirFotoRecibida = async (
+    fotoOriginal: any,
     detalleId: number,
     tipoFoto: string,
     justificacion: string | null
   ) => {
+    if (limpiarFotoCapturada) limpiarFotoCapturada();
+    setActionLoading(true);
+
+    let uriParaSubir = fotoOriginal.uri;
     try {
-      const permission = await ImagePicker.requestCameraPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert('Permiso Denegado', 'Se requiere acceso a la cámara para capturar evidencia.');
-        return;
-      }
-
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        quality: 0.7,
+      const maxSide = Math.max(fotoOriginal.width || 0, fotoOriginal.height || 0);
+      const actions =
+        maxSide > 1600
+          ? [
+              {
+                resize:
+                  (fotoOriginal.width || 0) >= (fotoOriginal.height || 0)
+                    ? { width: 1600 }
+                    : { height: 1600 },
+              },
+            ]
+          : [];
+      const manipResult = await ImageManipulator.manipulateAsync(fotoOriginal.uri, actions, {
+        compress: 0.75,
+        format: ImageManipulator.SaveFormat.JPEG,
       });
+      uriParaSubir = manipResult.uri;
+    } catch {
+      uriParaSubir = fotoOriginal.uri;
+    }
 
-      if (result.canceled || !result.assets || result.assets.length === 0) return;
+    const parameters: Record<string, string> = { tipo: tipoFoto };
+    if (justificacion && justificacion.trim()) {
+      parameters.justificacion = justificacion.trim();
+    }
 
-      const fotoLocal = result.assets[0];
-      setActionLoading(true);
-
-      const parameters: Record<string, string> = { tipo: tipoFoto };
-      if (justificacion && justificacion.trim()) {
-        parameters.justificacion = justificacion.trim();
-      }
-
+    try {
       const uploadResponse = await FileSystem.uploadAsync(
         `${API_URL}/detalle-ordenes/${detalleId}/evidencia`,
-        fotoLocal.uri,
+        uriParaSubir,
         {
           httpMethod: 'POST',
           uploadType: ((FileSystem as any).FileSystemUploadType?.MULTIPART ?? 1) as any,
@@ -151,11 +181,11 @@ export default function OrdenDetalleScreen({
 
       const json = JSON.parse(uploadResponse.body);
 
-      // Igual que ConductorViewModel.kt: si el backend dice que ese tipo ya fue subido, refresca orden
       if (uploadResponse.status === 422) {
         const msg = json.mensaje || json.message || '';
         if (msg.toLowerCase().includes('ya fue subido')) {
           await fetchOrden();
+          setPendienteCaptura(null);
           return;
         }
       }
@@ -168,26 +198,31 @@ export default function OrdenDetalleScreen({
 
       setFotosLocales((prev) => ({
         ...prev,
-        [`${detalleId}_${tipoFoto}`]: fotoLocal.uri,
+        [`${detalleId}_${tipoFoto}`]: uriParaSubir,
       }));
+
+      Alert.alert('Éxito', '¡Evidencia subida con éxito!');
 
       if (json.id) {
         setOrden(json);
       } else {
         await fetchOrden();
       }
+      setPendienteCaptura(null);
     } catch (err: any) {
       Alert.alert('Error al subir evidencia', err.message);
+      setPendienteCaptura(null);
     } finally {
       setActionLoading(false);
     }
   };
 
   const descargarFoto = async (urlEvidencia: string) => {
+    const urlNorm = normalizarUrlApi(urlEvidencia);
     setDescargando(true);
     try {
       const destino = `${FileSystem.cacheDirectory}evidencia_${Date.now()}.jpg`;
-      const res = await FileSystem.downloadAsync(urlEvidencia, destino, {
+      const res = await FileSystem.downloadAsync(urlNorm, destino, {
         headers: { Authorization: `Bearer ${token}` },
       });
       await Share.share({ url: res.uri });
@@ -235,7 +270,6 @@ export default function OrdenDetalleScreen({
   const lineas = orden.detalles || [];
   const montoTotal = lineas.reduce((acc: number, l: any) => acc + (parseFloat(l.monto) || 0), 0);
 
-  // Verifica si las 4 evidencias de todas las líneas están completas (igual que OrdenDetalleFragment.kt)
   const todasLineasCompletas =
     lineas.length > 0 &&
     lineas.every((l: any) => {
@@ -268,7 +302,11 @@ export default function OrdenDetalleScreen({
       case 'completado_tardio':
         return { bg: colors.vencidaFondo, text: colors.vencida, label: 'COMPLETADO TARDÍO' };
       default:
-        return { bg: colors.pendienteFondo, text: colors.pendiente, label: (orden.estado || '').toUpperCase() };
+        return {
+          bg: colors.pendienteFondo,
+          text: colors.pendiente,
+          label: (orden.estado || '').toUpperCase(),
+        };
     }
   };
 
@@ -278,7 +316,7 @@ export default function OrdenDetalleScreen({
     <View style={styles.flex}>
       <View style={styles.topHeader}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Text style={{ fontSize: 22, color: colors.textoPrincipal }}>←</Text>
+          <Text style={{ fontSize: 22, color: colors.blanco }}>←</Text>
         </TouchableOpacity>
         <Text style={styles.topHeaderTitle}>Detalle de la orden</Text>
       </View>
@@ -289,7 +327,13 @@ export default function OrdenDetalleScreen({
           <Text style={[styles.badgeText, { color: badge.text }]}>{badge.label}</Text>
         </View>
 
-        {/* ORDEN PROTEGIDA (Conductor + Pendiente) */}
+        {actionLoading && (
+          <View style={styles.uploadingBanner}>
+            <ActivityIndicator color={colors.marca} />
+            <Text style={styles.uploadingText}>Subiendo evidencia...</Text>
+          </View>
+        )}
+
         {isPendiente && isConductor && (
           <View style={styles.protectedCard}>
             <Text style={{ fontSize: 48, marginBottom: 10 }}>🔒</Text>
@@ -306,7 +350,6 @@ export default function OrdenDetalleScreen({
           </View>
         )}
 
-        {/* DETALLE REVELADO */}
         {(!isPendiente || !isConductor) && (
           <>
             {isOpen && isConductor && (
@@ -343,14 +386,15 @@ export default function OrdenDetalleScreen({
                   ? linea.vehiculo?.placa || 'Vehículo'
                   : linea.descripcion_mgp || 'Planta generadora';
 
-                // Mapeo exacto de linea.evidencias[]
                 const evidenciasMap: Record<string, any> = {};
                 (linea.evidencias || []).forEach((ev: any) => {
                   evidenciasMap[ev.tipo] = ev;
                 });
 
-                const getTarget = (tipo: string): string | null =>
-                  evidenciasMap[tipo]?.url || fotosLocales[`${linea.id}_${tipo}`] || null;
+                const getTarget = (tipo: string): string | null => {
+                  const raw = evidenciasMap[tipo]?.url || fotosLocales[`${linea.id}_${tipo}`] || null;
+                  return raw ? normalizarUrlApi(raw) : null;
+                };
 
                 const filasEvidencia = [
                   { key: 'bomba', label: '1. Bomba (cantidad llenada)', esTableroMgp: false },
@@ -454,9 +498,12 @@ export default function OrdenDetalleScreen({
         )}
       </ScrollView>
 
-      {/* Modal Justificación de Entrega Tardía */}
+      {/* Modal Justificación de entrega tardía */}
       <Modal visible={justifModalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Justificación de entrega tardía</Text>
             <TextInput
@@ -481,8 +528,8 @@ export default function OrdenDetalleScreen({
                     return;
                   }
                   setJustifModalVisible(false);
-                  if (pendienteCaptura) {
-                    tomarYSubirFoto(pendienteCaptura.detalleId, pendienteCaptura.tipo, justifTexto);
+                  if (pendienteCaptura && onAbrirInstruccion) {
+                    onAbrirInstruccion(pendienteCaptura.detalleId, pendienteCaptura.tipo);
                   }
                 }}
               >
@@ -490,7 +537,7 @@ export default function OrdenDetalleScreen({
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Modal Visor y Descarga de Evidencia */}
@@ -541,15 +588,16 @@ export default function OrdenDetalleScreen({
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.fondo },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  container: { padding: 20 },
+  container: { padding: 20, paddingBottom: 40 },
   topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.blanco,
-    padding: 20,
+    backgroundColor: colors.marca,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  backBtn: { marginRight: 10, padding: 4 },
-  topHeaderTitle: { fontSize: 20, fontWeight: '700', color: colors.textoPrincipal },
+  backBtn: { marginRight: 8, padding: 4 },
+  topHeaderTitle: { fontSize: 18, fontWeight: '700', color: colors.blanco },
   orderNumber: { fontSize: 20, fontWeight: '700', color: colors.textoPrincipal },
   badge: {
     paddingHorizontal: 12,
@@ -559,6 +607,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   badgeText: { fontSize: 12, fontWeight: '700' },
+  uploadingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.marcaClaro,
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 12,
+    gap: 10,
+  },
+  uploadingText: { color: colors.marcaOscuro, fontWeight: '700', fontSize: 13 },
   protectedCard: {
     backgroundColor: colors.blanco,
     borderRadius: 16,
