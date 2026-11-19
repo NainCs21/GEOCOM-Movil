@@ -254,7 +254,7 @@
     <string name="conductor_numero">Conductor #%1$d</string>
     <string name="planta_generadora">Planta generadora (MGP)</string>
     <string name="total_de_la_solicitud">Total de la solicitud: L %1$.2f</string>
-    <string name="monto_y_descripcion">Monto y descripción requeridos</string>
+    <string name="monto_y_descripcion">L %1$.2f · %2$s</string>
     <string name="inactivo">Inactivo</string>
     <string name="ver_codigo_qr">Ver código QR</string>
     <string name="cargo">Cargo</string>
@@ -265,11 +265,11 @@
     <string name="codigo_qr">Código QR</string>
     <string name="orden_completada_mensaje">Esta orden ya fue completada exitosamente.</string>
     <string name="orden_vencida_mensaje">Esta orden ha vencido y ya no puede ser utilizada.</string>
-    <string name="monto_lempiras">Monto (Lempiras)</string>
+    <string name="monto_lempiras">Monto autorizado: L %1$.2f</string>
     <string name="gasolinera_por_definir">Gasolinera por definir</string>
     <string name="hace_n_min">Hace %1$d min</string>
     <string name="hace_n_h">Hace %1$d h</string>
-    <string name="solicitud_codigo">Solicitud #%1$s</string>
+    <string name="solicitud_codigo">Solicitud #%1$d</string>
     <string name="plazo_de_retiro">Plazo de retiro: %1$s</string>
     <string name="confirmar">Confirmar</string>
     <string name="editar_solicitud">Editar solicitud</string>

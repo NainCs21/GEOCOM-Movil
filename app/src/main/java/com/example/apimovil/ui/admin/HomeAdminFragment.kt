@@ -22,6 +22,7 @@ import com.example.apimovil.ui.common.esCompletada
 import com.example.apimovil.data.notificaciones.NotificacionesStore
 import com.google.android.material.badge.BadgeDrawable
 import com.google.android.material.badge.BadgeUtils
+import com.google.android.material.badge.ExperimentalBadgeUtils
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -35,6 +36,7 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
     private var _binding: FragmentHomeAdminBinding? = null
     private val binding get() = _binding!!
 
+    @OptIn(ExperimentalBadgeUtils::class)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentHomeAdminBinding.bind(view)
 
