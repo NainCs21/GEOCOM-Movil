@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   SafeAreaView,
   StatusBar,
   StyleSheet,
   View,
   Alert,
+  AppState,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import { API_URL } from './src/api/config';
 import { colors } from './src/theme/colors';
 
@@ -29,7 +31,18 @@ import EscanearQrModal from './src/screens/EscanearQrModal';
 import InstruccionEvidenciaModal from './src/screens/InstruccionEvidenciaModal';
 
 import BottomNav from './src/components/BottomNav';
-import { sincronizarNotificaciones } from './src/utils/notificaciones';
+import {
+  marcarNotificacionLeida,
+  sincronizarNotificaciones,
+} from './src/utils/notificaciones';
+import {
+  actualizarBadgeSistema,
+  pedirPermisoNotificaciones,
+} from './src/utils/notificador';
+import {
+  cancelarSincronizacionBackground,
+  programarSincronizacionBackground,
+} from './src/utils/backgroundNotifTask';
 
 export default function App() {
   const [token, setToken] = useState<string | null>(null);
@@ -54,6 +67,34 @@ export default function App() {
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [sessionMessage, setSessionMessage] = useState<string | null>(null);
+
+  // Navegar al tocar una notificación nativa de iPhone
+  const manejarToqueNotificacion = useCallback(
+    async (data: any, currentToken: string | null, currentUser: any) => {
+      if (!data || !currentToken || !currentUser || currentUser.rol === 'conductor') return;
+
+      const notifId = data.notif_id as string | undefined;
+      const destino = data.notif_destino as string | undefined;
+      const ordenId = data.notif_orden_id as number | undefined;
+
+      if (notifId) {
+        const updated = await marcarNotificacionLeida(currentUser.id, notifId);
+        setUnreadCount(updated.filter((n) => !n.leida).length);
+      }
+
+      if (destino === 'orden' && ordenId) {
+        setSelectedOrden(null);
+        setSelectedOrdenId(ordenId);
+      } else if (destino === 'solicitudes') {
+        setSelectedOrdenId(null);
+        setCurrentScreen('solicitudes');
+      } else if (destino === 'notificaciones') {
+        setSelectedOrdenId(null);
+        setCurrentScreen('notificaciones');
+      }
+    },
+    []
+  );
 
   // Persistencia de sesión en arranque en frío + validación GET /yo
   useEffect(() => {
@@ -89,25 +130,53 @@ export default function App() {
     });
   }, []);
 
-  // Sincronización periódica de notificaciones cada 10s para Admin y Supervisor
+  // Permisos nativos, tarea background, AppState y polling cada 10s para Admin/Supervisor
   useEffect(() => {
-    if (!token || !user || user.rol === 'conductor') return;
+    if (!token || !user || user.rol === 'conductor') {
+      cancelarSincronizacionBackground();
+      return;
+    }
 
-    const interval = setInterval(async () => {
+    pedirPermisoNotificaciones();
+    programarSincronizacionBackground();
+
+    const ejecutarSync = async () => {
       try {
         const result = await sincronizarNotificaciones(token, user.id);
         setUnreadCount(result.filter((n) => !n.leida).length);
       } catch {}
-    }, 10000);
+    };
 
-    sincronizarNotificaciones(token, user.id)
-      .then((result) => {
-        setUnreadCount(result.filter((n) => !n.leida).length);
-      })
-      .catch(() => {});
+    ejecutarSync();
+    const interval = setInterval(ejecutarSync, 10000);
 
-    return () => clearInterval(interval);
-  }, [token, user]);
+    // Sincronizar también cada vez que el usuario regresa la app al frente
+    const appStateSub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        ejecutarSync();
+      }
+    });
+
+    // Listener cuando el usuario toca el banner nativo de iOS
+    const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data;
+      manejarToqueNotificacion(data, token, user);
+    });
+
+    // Revisar si la app se abrió desde una notificación en frío
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) {
+        const data = response.notification.request.content.data;
+        manejarToqueNotificacion(data, token, user);
+      }
+    });
+
+    return () => {
+      clearInterval(interval);
+      appStateSub.remove();
+      responseSub.remove();
+    };
+  }, [token, user, manejarToqueNotificacion]);
 
   const triggerRefresh = () => setRefreshKey((k) => k + 1);
 
@@ -150,6 +219,8 @@ export default function App() {
     setSelectedOrdenId(null);
     setSelectedOrden(null);
     setUnreadCount(0);
+    actualizarBadgeSistema(0);
+    cancelarSincronizacionBackground();
     AsyncStorage.removeItem('api_movil_sesion');
     if (msg) setSessionMessage(msg);
   };

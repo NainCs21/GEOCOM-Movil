@@ -1,6 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../api/config';
 import { formatoLegible, obtenerHace3DiasString, parseFechaIsoMillis } from './fechas';
+import {
+  actualizarBadgeSistema,
+  mostrarNotificacionNativa,
+  mostrarResumenNativo,
+} from './notificador';
 
 export interface NotificacionApp {
   id: string;
@@ -151,6 +156,7 @@ export async function marcarNotificacionLeida(
   const actual = await obtenerNotificacionesGuardadas(usuarioId);
   const updated = actual.map((n) => (n.id === notifId ? { ...n, leida: true } : n));
   await AsyncStorage.setItem(KEY_LISTA(usuarioId), JSON.stringify(updated));
+  await actualizarBadgeSistema(updated.filter((n) => !n.leida).length);
   return updated;
 }
 
@@ -160,6 +166,7 @@ export async function marcarTodasNotificacionesLeidas(
   const actual = await obtenerNotificacionesGuardadas(usuarioId);
   const updated = actual.map((n) => ({ ...n, leida: true }));
   await AsyncStorage.setItem(KEY_LISTA(usuarioId), JSON.stringify(updated));
+  await actualizarBadgeSistema(0);
   return updated;
 }
 
@@ -230,6 +237,7 @@ export async function sincronizarNotificaciones(
       await AsyncStorage.setItem(KEY_VISTOS(usuarioId), JSON.stringify(vistosMap));
       await AsyncStorage.setItem(KEY_LISTA(usuarioId), JSON.stringify(merged));
       await AsyncStorage.setItem(KEY_BASELINE(usuarioId), 'true');
+      await actualizarBadgeSistema(merged.filter((n) => !n.leida).length);
       return merged;
     } else {
       const nuevosEventos = eventos.filter(
@@ -247,6 +255,17 @@ export async function sincronizarNotificaciones(
 
         await AsyncStorage.setItem(KEY_VISTOS(usuarioId), JSON.stringify(vistosMap));
         await AsyncStorage.setItem(KEY_LISTA(usuarioId), JSON.stringify(merged));
+        await actualizarBadgeSistema(merged.filter((n) => !n.leida).length);
+
+        // Disparar notificaciones nativas de iPhone (igual que NotificacionesRepository.kt)
+        if (nuevasNotifs.length > 5) {
+          await mostrarResumenNativo(nuevasNotifs.length);
+        } else {
+          for (const nueva of nuevasNotifs) {
+            await mostrarNotificacionNativa(nueva);
+          }
+        }
+
         return merged;
       }
       return existentes;

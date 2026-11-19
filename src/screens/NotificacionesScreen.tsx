@@ -15,6 +15,7 @@ import {
   marcarNotificacionLeida,
   marcarTodasNotificacionesLeidas,
 } from '../utils/notificaciones';
+import { setNotificacionesScreenActive } from '../utils/notificador';
 
 interface Props {
   token: string;
@@ -55,6 +56,14 @@ export default function NotificacionesScreen({
   useEffect(() => {
     cargar();
   }, [cargar]);
+
+  // Evita mostrar banners nativos mientras esta pantalla está abierta en primer plano
+  useEffect(() => {
+    setNotificacionesScreenActive(true);
+    return () => {
+      setNotificacionesScreenActive(false);
+    };
+  }, []);
 
   const handleMarcarTodas = async () => {
     const act = await marcarTodasNotificacionesLeidas(user.id);
