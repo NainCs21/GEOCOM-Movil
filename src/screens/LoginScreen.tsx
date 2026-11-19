@@ -7,6 +7,8 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { colors } from '../theme/colors';
 
@@ -40,84 +42,89 @@ export default function LoginScreen({
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-      {/* Encabezado de marca */}
-      <View style={styles.brandHeader}>
-        <Text style={styles.brandIcon}>⛽</Text>
-        <View style={{ marginLeft: 12 }}>
-          <Text style={styles.appName}>Órdenes de Combustible</Text>
-          <Text style={styles.secureLabel}>ACCESO SEGURO</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.fondo }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        {/* Encabezado de marca */}
+        <View style={styles.brandHeader}>
+          <Text style={styles.brandIcon}>⛽</Text>
+          <View style={{ marginLeft: 12 }}>
+            <Text style={styles.appName}>Órdenes de Combustible</Text>
+            <Text style={styles.secureLabel}>Acceso seguro</Text>
+          </View>
         </View>
-      </View>
 
-      {/* Tarjeta Hero (bg_tarjeta_hero.xml) */}
-      <View style={styles.heroCard}>
-        <Text style={styles.heroOverline}>ADMINISTRACIÓN MÓVIL</Text>
-        <Text style={styles.heroTitle}>{'Control de combustible.\nDesde tu móvil.'}</Text>
-        <Text style={styles.heroSubtitle}>Asigna, consulta y gestiona en un solo lugar.</Text>
-      </View>
+        {/* Tarjeta Hero */}
+        <View style={styles.heroCard}>
+          <Text style={styles.heroOverline}>ADMINISTRACIÓN MÓVIL</Text>
+          <Text style={styles.heroTitle}>{'Control de combustible.\nDesde tu móvil.'}</Text>
+          <Text style={styles.heroSubtitle}>Asigna, consulta y gestiona en un solo lugar.</Text>
+        </View>
 
-      <Text style={styles.loginTitle}>Inicia sesión</Text>
+        <Text style={styles.loginTitle}>Inicia sesión</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Correo electrónico"
-        placeholderTextColor={colors.textoSecundario}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={correo}
-        onChangeText={setCorreo}
-      />
-
-      <View style={styles.passWrapper}>
         <TextInput
-          style={styles.passInput}
-          placeholder="Contraseña"
+          style={styles.input}
+          placeholder="Correo electrónico"
           placeholderTextColor={colors.textoSecundario}
-          secureTextEntry={!verPass}
-          value={password}
-          onChangeText={setPassword}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={correo}
+          onChangeText={setCorreo}
         />
-        <TouchableOpacity onPress={() => setVerPass(!verPass)} style={styles.eyeBtn}>
-          <Text style={styles.eyeText}>{verPass ? '🙈' : '👁'}</Text>
+
+        <View style={styles.passWrapper}>
+          <TextInput
+            style={styles.passInput}
+            placeholder="Contraseña"
+            placeholderTextColor={colors.textoSecundario}
+            secureTextEntry={!verPass}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity onPress={() => setVerPass(!verPass)} style={styles.eyeBtn}>
+            <Text style={styles.eyeText}>{verPass ? '🙈' : '👁'}</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+
+        <TouchableOpacity
+          style={[styles.btnIngresar, loading && { opacity: 0.7 }]}
+          onPress={handlePress}
+          disabled={loading}
+        >
+          <Text style={styles.btnIngresarText}>Ingresar</Text>
         </TouchableOpacity>
-      </View>
 
-      <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+        {loading && <ActivityIndicator color={colors.marca} style={{ marginTop: 16 }} />}
 
-      <Text style={styles.exclusiveText}>Acceso exclusivo para personal autorizado.</Text>
+        {localError && <Text style={styles.errorText}>{localError}</Text>}
 
-      <TouchableOpacity
-        style={[styles.btnIngresar, loading && { opacity: 0.7 }]}
-        onPress={handlePress}
-        disabled={loading}
-      >
-        <Text style={styles.btnIngresarText}>Ingresar</Text>
-      </TouchableOpacity>
-
-      {loading && <ActivityIndicator color={colors.marca} style={{ marginTop: 16 }} />}
-
-      {localError && <Text style={styles.errorText}>{localError}</Text>}
-    </ScrollView>
+        <Text style={styles.exclusiveText}>Acceso exclusivo para personal autorizado.</Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flexGrow: 1, backgroundColor: colors.fondo, padding: 20 },
-  brandHeader: { flexDirection: 'row', alignItems: 'center', marginTop: 12 },
-  brandIcon: { fontSize: 24 },
-  appName: { fontSize: 21, fontWeight: '700', color: colors.textoPrincipal },
-  secureLabel: { fontSize: 10, fontWeight: '700', color: colors.marca },
+  scroll: { flexGrow: 1, backgroundColor: colors.fondo, padding: 24 },
+  brandHeader: { flexDirection: 'row', alignItems: 'center', marginTop: 16 },
+  brandIcon: { fontSize: 26 },
+  appName: { fontSize: 20, fontWeight: '700', color: colors.textoPrincipal },
+  secureLabel: { fontSize: 11, fontWeight: '700', color: colors.marca },
   heroCard: {
     backgroundColor: colors.marcaOscuro,
     borderRadius: 16,
-    padding: 24,
-    marginTop: 20,
+    padding: 20,
+    marginTop: 24,
   },
-  heroOverline: { color: '#D8C9F4', fontWeight: '700', fontSize: 11 },
-  heroTitle: { color: colors.blanco, fontSize: 26, fontWeight: '700', lineHeight: 32, marginTop: 10 },
-  heroSubtitle: { color: '#E5DAF7', fontSize: 14, marginTop: 10 },
-  loginTitle: { fontSize: 24, fontWeight: '700', color: colors.textoPrincipal, marginTop: 24 },
+  heroOverline: { color: colors.marcaClaro, fontWeight: '700', fontSize: 11 },
+  heroTitle: { color: colors.blanco, fontSize: 22, fontWeight: '700', lineHeight: 28, marginTop: 8 },
+  heroSubtitle: { color: colors.marcaClaro, fontSize: 13, marginTop: 8 },
+  loginTitle: { fontSize: 22, fontWeight: '700', color: colors.textoPrincipal, marginTop: 28 },
   input: {
     backgroundColor: colors.blanco,
     borderWidth: 1,
@@ -149,23 +156,23 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     color: colors.marca,
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: 13,
     marginTop: 12,
   },
+  btnIngresar: {
+    backgroundColor: colors.marca,
+    height: 50,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  btnIngresarText: { color: colors.blanco, fontSize: 15, fontWeight: '700' },
+  errorText: { color: colors.vencida, textAlign: 'center', marginTop: 12, fontSize: 13 },
   exclusiveText: {
     textAlign: 'center',
     color: colors.textoSecundario,
     fontSize: 12,
-    marginTop: 16,
+    marginTop: 24,
   },
-  btnIngresar: {
-    backgroundColor: colors.marca,
-    height: 52,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  btnIngresarText: { color: colors.blanco, fontSize: 15, fontWeight: '700' },
-  errorText: { color: colors.vencida, textAlign: 'center', marginTop: 12, fontSize: 13 },
 });

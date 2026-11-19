@@ -8,7 +8,8 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { API_URL } from '../api/config';
 import { colors } from '../theme/colors';
@@ -94,11 +95,13 @@ export default function NuevaSolicitudModal({ visible, onClose, token, onSuccess
 
   return (
     <Modal visible={visible} animationType="slide">
-      <View style={styles.flex}>
-        {/* Barra superior idéntica a fragment_nueva_solicitud.xml */}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <View style={styles.topHeader}>
           <TouchableOpacity onPress={onClose} style={styles.backBtn}>
-            <Text style={{ fontSize: 22, color: colors.textoPrincipal }}>←</Text>
+            <Text style={{ fontSize: 22, color: colors.blanco }}>←</Text>
           </TouchableOpacity>
           <Text style={styles.topHeaderTitle}>Nueva solicitud</Text>
         </View>
@@ -195,7 +198,7 @@ export default function NuevaSolicitudModal({ visible, onClose, token, onSuccess
           {submitting && <ActivityIndicator color={colors.marca} style={{ marginTop: 16 }} />}
           {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -205,13 +208,14 @@ const styles = StyleSheet.create({
   topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.blanco,
-    padding: 20,
+    backgroundColor: colors.marca,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  backBtn: { marginRight: 10, padding: 4 },
-  topHeaderTitle: { fontSize: 20, fontWeight: '700', color: colors.textoPrincipal },
-  content: { padding: 20 },
-  title: { fontSize: 22, fontWeight: '700', color: colors.textoPrincipal, marginBottom: 16 },
+  backBtn: { marginRight: 8, padding: 4 },
+  topHeaderTitle: { fontSize: 18, fontWeight: '700', color: colors.blanco },
+  content: { padding: 20, paddingBottom: 40 },
+  title: { fontSize: 20, fontWeight: '700', color: colors.textoPrincipal, marginBottom: 20 },
   label: { fontSize: 13, fontWeight: '700', color: colors.textoPrincipal, marginTop: 12, marginBottom: 6 },
   destinosCol: { gap: 8 },
   destinoOption: {
@@ -247,8 +251,8 @@ const styles = StyleSheet.create({
   textArea: { minHeight: 72, textAlignVertical: 'top' },
   btnSubmit: {
     backgroundColor: colors.marca,
-    height: 52,
-    borderRadius: 28,
+    height: 50,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 24,

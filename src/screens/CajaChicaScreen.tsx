@@ -1,58 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
+  StyleSheet,
+  ScrollView,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  StyleSheet,
   ActivityIndicator,
-  Alert,
-  RefreshControl,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { API_URL } from '../api/config';
 import { colors } from '../theme/colors';
+import { obtenerFechaActualString } from '../utils/fechas';
 
 interface Props {
   token: string;
-  user?: any;
+  user: any;
   onBack: () => void;
 }
 
 export default function CajaChicaScreen({ token, user, onBack }: Props) {
-  const isAdmin = user?.rol === 'admin';
-  const [historial, setHistorial] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-
+  const [registros, setRegistros] = useState<any[]>([]);
   const [conductorId, setConductorId] = useState('');
   const [monto, setMonto] = useState('');
   const [descripcion, setDescripcion] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const fetchCajaChica = async () => {
+  const esAdmin = user?.rol === 'admin';
+
+  const cargar = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/caja-chica`, {
         headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
-      setHistorial(Array.isArray(data) ? data : data.data || []);
-    } catch (e) {}
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchCajaChica();
+      const json = await res.json();
+      setRegistros(Array.isArray(json) ? json : json.data || []);
+    } catch {
+      setRegistros([]);
+    } finally {
+      setLoading(false);
+    }
   }, [token]);
 
-  const registrarMonto = async () => {
-    if (!monto || !descripcion.trim()) {
-      Alert.alert('Aviso', 'Completa el monto y la descripción.');
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+
+  const registrar = async () => {
+    setErrorMsg(null);
+    const m = parseFloat(monto);
+    if (isNaN(m) || !descripcion.trim()) {
+      setErrorMsg('Completa el monto y la descripción.');
       return;
     }
 
     setSaving(true);
     try {
+      const cid = conductorId.trim() ? parseInt(conductorId.trim(), 10) : null;
       const res = await fetch(`${API_URL}/caja-chica`, {
         method: 'POST',
         headers: {
@@ -61,98 +69,98 @@ export default function CajaChicaScreen({ token, user, onBack }: Props) {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          conductor_id: conductorId ? parseInt(conductorId) : null,
-          monto: parseFloat(monto),
+          conductor_id: isNaN(cid as number) ? null : cid,
+          monto: m,
           descripcion: descripcion.trim(),
-          fecha_entrega: new Date().toISOString().split('T')[0],
+          fecha_entrega: obtenerFechaActualString(),
         }),
       });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.mensaje || json.message || 'No se pudo registrar.');
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.mensaje || data.message || 'Error al registrar.');
-
+      setConductorId('');
       setMonto('');
       setDescripcion('');
-      setConductorId('');
-      fetchCajaChica();
-    } catch (err: any) {
-      Alert.alert('Error', err.message);
+      cargar();
+    } catch (e: any) {
+      setErrorMsg(e.message);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <View style={styles.flex}>
+    <KeyboardAvoidingView
+      style={styles.flex}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View style={styles.topHeader}>
         <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-          <Text style={{ fontSize: 22, color: colors.textoPrincipal }}>←</Text>
+          <Text style={{ fontSize: 22, color: colors.blanco }}>←</Text>
         </TouchableOpacity>
         <Text style={styles.topHeaderTitle}>Caja chica</Text>
       </View>
 
-      <ScrollView
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchCajaChica} />}
-      >
-        {/* Solo visible para Administrador (igual que CajaChicaFragment.kt) */}
-        {isAdmin && (
-          <View style={styles.cardRegistro}>
-            <Text style={styles.sectionTitle}>Registrar caja chica</Text>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+        {esAdmin && (
+          <View style={styles.formCard}>
+            <Text style={styles.cardTitle}>Registrar caja chica</Text>
 
             <TextInput
               style={styles.input}
               placeholder="Id del conductor (opcional)"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textoSecundario}
+              keyboardType="number-pad"
               value={conductorId}
               onChangeText={setConductorId}
-              keyboardType="number-pad"
             />
 
             <TextInput
               style={styles.input}
               placeholder="Monto (L)"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textoSecundario}
+              keyboardType="decimal-pad"
               value={monto}
               onChangeText={setMonto}
-              keyboardType="decimal-pad"
             />
 
             <TextInput
               style={styles.input}
               placeholder="Descripción"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textoSecundario}
               value={descripcion}
               onChangeText={setDescripcion}
             />
 
-            <TouchableOpacity style={styles.btnPrimary} onPress={registrarMonto} disabled={saving}>
-              {saving ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.btnPrimaryText}>Registrar</Text>
-              )}
+            <TouchableOpacity
+              style={[styles.btnRegistrar, saving && { opacity: 0.7 }]}
+              onPress={registrar}
+              disabled={saving}
+            >
+              <Text style={styles.btnRegistrarText}>Registrar</Text>
             </TouchableOpacity>
+
+            {saving && <ActivityIndicator color={colors.marca} style={{ marginTop: 10 }} />}
+            {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
           </View>
         )}
 
-        <View style={styles.listContainer}>
-          {historial.map((item) => (
-            <View key={item.id} style={styles.cardItem}>
-              <Text style={styles.itemTitle}>
+        {loading && <ActivityIndicator color={colors.marca} style={{ marginVertical: 16 }} />}
+
+        <View style={{ paddingHorizontal: 16 }}>
+          {registros.map((item) => (
+            <View key={item.id} style={styles.rowCard}>
+              <Text style={styles.rowTitle}>
                 {item.conductor?.usuario?.name || `Conductor #${item.conductor_id || 0}`}
               </Text>
-              <Text style={styles.itemSubtitle}>
+              <Text style={styles.rowSub}>
                 L {Number(item.monto).toFixed(2)} · {item.descripcion}
               </Text>
             </View>
           ))}
-
-          {!loading && historial.length === 0 && (
-            <Text style={styles.emptyText}>No hay registros de caja chica.</Text>
-          )}
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -161,41 +169,42 @@ const styles = StyleSheet.create({
   topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.blanco,
-    padding: 20,
+    backgroundColor: colors.marca,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  backBtn: { marginRight: 10, padding: 4 },
-  topHeaderTitle: { fontSize: 20, fontWeight: '700', color: colors.textoPrincipal },
-  cardRegistro: {
+  backBtn: { marginRight: 8, padding: 4 },
+  topHeaderTitle: { fontSize: 18, fontWeight: '700', color: colors.blanco },
+  formCard: {
     backgroundColor: colors.blanco,
     borderRadius: 16,
-    padding: 18,
+    padding: 16,
+    margin: 16,
     borderWidth: 1,
     borderColor: colors.borde,
-    margin: 20,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textoPrincipal, marginBottom: 12 },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.textoPrincipal, marginBottom: 4 },
   input: {
-    backgroundColor: colors.fondo,
+    backgroundColor: colors.blanco,
     borderWidth: 1,
     borderColor: colors.borde,
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 12,
     fontSize: 14,
     color: colors.textoPrincipal,
-    marginBottom: 10,
+    marginTop: 10,
   },
-  btnPrimary: {
+  btnRegistrar: {
     backgroundColor: colors.marca,
     height: 48,
-    borderRadius: 24,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 6,
+    marginTop: 16,
   },
-  btnPrimaryText: { color: colors.blanco, fontSize: 14, fontWeight: '700' },
-  listContainer: { paddingHorizontal: 20, paddingBottom: 20, marginTop: 10 },
-  cardItem: {
+  btnRegistrarText: { color: colors.blanco, fontWeight: '700', fontSize: 15 },
+  errorText: { color: colors.vencida, textAlign: 'center', marginTop: 8, fontSize: 13 },
+  rowCard: {
     backgroundColor: colors.blanco,
     borderRadius: 16,
     padding: 16,
@@ -203,7 +212,6 @@ const styles = StyleSheet.create({
     borderColor: colors.borde,
     marginBottom: 10,
   },
-  itemTitle: { fontSize: 16, fontWeight: '700', color: colors.textoPrincipal },
-  itemSubtitle: { fontSize: 13, color: colors.textoSecundario, marginTop: 2 },
-  emptyText: { textAlign: 'center', color: colors.textoSecundario, marginTop: 30 },
+  rowTitle: { fontSize: 16, fontWeight: '700', color: colors.textoPrincipal },
+  rowSub: { fontSize: 13, color: colors.textoSecundario, marginTop: 2 },
 });
