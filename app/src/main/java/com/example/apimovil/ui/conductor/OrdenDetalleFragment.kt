@@ -61,32 +61,6 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
     private var contador: CountDownTimer? = null
     private var ordenActual: Orden? = null
 
-    private var detalleIdPendienteDeFoto: Int? = null
-    private var tipoFotoPendiente: String? = null // "bomba", "tablero", "tanque", "factura"
-    private var justificacionTardanza: String? = null
-    private var archivoFotoTemporal: File? = null
-
-    // Mapa para rastrear las URIs locales de las fotos tomadas: "${detalleId}_$tipo" -> Uri
-    private val fotosLocales = mutableMapOf<String, Uri>()
-
-    private val lanzadorCamara = registerForActivityResult(ActivityResultContracts.TakePicture()) { exito ->
-        val detalleId = detalleIdPendienteDeFoto
-        val tipo = tipoFotoPendiente ?: "bomba"
-        val justif = justificacionTardanza
-        val archivo = archivoFotoTemporal
-        if (exito && detalleId != null && archivo != null) {
-            fotosLocales["${detalleId}_$tipo"] = Uri.fromFile(archivo)
-            val ordenId = ordenActual?.id
-            model.subirEvidencia(detalleId, tipo, justif, archivo, ordenId)
-        }
-    }
-
-    private val lanzadorPermisoCamara = registerForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
-        if (concedido) {
-            abrirCamaraParaDetalle(detalleIdPendienteDeFoto)
-        }
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentOrdenDetalleBinding.bind(view)
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
@@ -223,13 +197,12 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
         val evidenciasMap = linea.evidencias.associateBy { it.tipo }
 
         fun isSubido(tipo: String): Boolean {
-            return evidenciasMap.containsKey(tipo) || fotosLocales.containsKey("${linea.id}_$tipo")
+            return evidenciasMap.containsKey(tipo)
         }
 
         fun getUrlOrUri(tipo: String): Any? {
             val ev = evidenciasMap[tipo]
-            if (ev?.url != null) return ev.url
-            return fotosLocales["${linea.id}_$tipo"]
+            return ev?.url
         }
 
         val bombaSubida = isSubido("bomba")
@@ -446,43 +419,23 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
                         Toast.makeText(context, "Debes ingresar una justificación.", Toast.LENGTH_SHORT).show()
                         return@setPositiveButton
                     }
-                    justificacionTardanza = justif
-                    detalleIdPendienteDeFoto = detalleId
-                    tipoFotoPendiente = tipo
-                    verificarPermisoYTomarFoto()
+                    irAInstruccion(detalleId, tipo, justif)
                 }
                 .setNegativeButton(R.string.cancelar, null)
                 .show()
         } else {
-            justificacionTardanza = null
-            detalleIdPendienteDeFoto = detalleId
-            tipoFotoPendiente = tipo
-            verificarPermisoYTomarFoto()
+            irAInstruccion(detalleId, tipo, null)
         }
     }
 
-    private fun verificarPermisoYTomarFoto() {
-        val tienePermiso = ContextCompat.checkSelfPermission(
-            requireContext(), Manifest.permission.CAMERA
-        ) == PackageManager.PERMISSION_GRANTED
-
-        if (tienePermiso) {
-            abrirCamaraParaDetalle(detalleIdPendienteDeFoto)
-        } else {
-            lanzadorPermisoCamara.launch(Manifest.permission.CAMERA)
+    private fun irAInstruccion(detalleId: Int, tipo: String, justificacion: String?) {
+        val bundle = Bundle().apply {
+            putInt("detalleId", detalleId)
+            putInt("ordenId", ordenActual?.id ?: -1)
+            putString("tipo", tipo)
+            putString("justificacionTardanza", justificacion)
         }
-    }
-
-    private fun abrirCamaraParaDetalle(detalleId: Int?) {
-        if (detalleId == null) return
-        val archivo = File.createTempFile("evidencia_${tipoFotoPendiente}_${detalleId}_", ".jpg", requireContext().cacheDir)
-        archivoFotoTemporal = archivo
-        val uri: Uri = FileProvider.getUriForFile(
-            requireContext(),
-            "${requireContext().packageName}.fileprovider",
-            archivo
-        )
-        lanzadorCamara.launch(uri)
+        findNavController().navigate(R.id.instruccionEvidenciaFragment, bundle)
     }
 
     private fun iniciarContador(venceAperturaIso: String?) {

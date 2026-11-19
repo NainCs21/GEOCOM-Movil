@@ -98,4 +98,9 @@
         android:name="com.example.apimovil.ui.admin.PerfilAdminFragment"
         android:label="Mi perfil" />
 
+    <fragment
+        android:id="@+id/instruccionEvidenciaFragment"
+        android:name="com.example.apimovil.ui.conductor.InstruccionEvidenciaFragment"
+        android:label="Instrucciones de evidencia" />
+
 </navigation>
