@@ -1,36 +1,61 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { colors } from '../theme/colors';
 
 interface Props {
-  setScreen: (screen: string) => void;
+  setScreen: (s: string) => void;
 }
 
 export default function MasScreen({ setScreen }: Props) {
+  const opciones = [
+    {
+      id: 'notificaciones',
+      icon: '🔔',
+      titulo: 'Notificaciones',
+      subtitulo: 'Avisos de órdenes asignadas, completadas y vencidas.',
+    },
+    {
+      id: 'reportes',
+      icon: '📊',
+      titulo: 'Reportes',
+      subtitulo: 'Consumo por conductor y por gasolinera.',
+    },
+    {
+      id: 'caja_chica',
+      icon: '💵',
+      titulo: 'Caja chica',
+      subtitulo: 'Registro de entregas para trabajos foráneos.',
+    },
+    {
+      id: 'perfil',
+      icon: '👤',
+      titulo: 'Mi perfil',
+      subtitulo: 'Tus datos y cierre de sesión.',
+    },
+  ];
+
   return (
     <View style={styles.flex}>
-      <Text style={styles.title}>Más opciones</Text>
-      
-      <ScrollView contentContainerStyle={styles.container}>
-        <TouchableOpacity style={styles.card} onPress={() => setScreen('notificaciones')}>
-          <Text style={styles.cardTitle}>Notificaciones</Text>
-          <Text style={styles.cardSub}>Avisos y alertas del sistema</Text>
-        </TouchableOpacity>
+      <View style={styles.topHeader}>
+        <Text style={styles.topHeaderTitle}>Más opciones</Text>
+      </View>
 
-        <TouchableOpacity style={styles.card} onPress={() => setScreen('reportes')}>
-          <Text style={styles.cardTitle}>Reportes</Text>
-          <Text style={styles.cardSub}>Métricas de consumo e indicadores</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.card} onPress={() => setScreen('caja_chica')}>
-          <Text style={styles.cardTitle}>Caja Chica</Text>
-          <Text style={styles.cardSub}>Registro de viáticos y trabajos foráneos</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.card} onPress={() => setScreen('perfil')}>
-          <Text style={styles.cardTitle}>Mi Perfil</Text>
-          <Text style={styles.cardSub}>Datos de cuenta y configuración</Text>
-        </TouchableOpacity>
+      <ScrollView contentContainerStyle={{ padding: 20 }}>
+        {opciones.map((op) => (
+          <TouchableOpacity
+            key={op.id}
+            style={styles.card}
+            onPress={() => setScreen(op.id)}
+          >
+            <View style={styles.iconBox}>
+              <Text style={{ fontSize: 18 }}>{op.icon}</Text>
+            </View>
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={styles.titulo}>{op.titulo}</Text>
+              <Text style={styles.subtitulo}>{op.subtitulo}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
     </View>
   );
@@ -38,16 +63,30 @@ export default function MasScreen({ setScreen }: Props) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.fondo },
-  title: { fontSize: 24, fontWeight: '700', color: colors.textoPrincipal, padding: 20 },
-  container: { paddingHorizontal: 20 },
+  topHeader: {
+    backgroundColor: colors.marca,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  topHeaderTitle: { fontSize: 18, fontWeight: '700', color: colors.blanco },
   card: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: colors.blanco,
     borderRadius: 16,
-    padding: 18,
+    padding: 12,
     borderWidth: 1,
     borderColor: colors.borde,
     marginBottom: 12,
   },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.textoPrincipal },
-  cardSub: { fontSize: 13, color: colors.textoSecundario, marginTop: 4 },
+  iconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: colors.marcaClaro,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  titulo: { fontSize: 15, fontWeight: '700', color: colors.textoPrincipal },
+  subtitulo: { fontSize: 13, color: colors.textoSecundario, marginTop: 2 },
 });

@@ -70,7 +70,6 @@ export default function EscanearQrModal({ visible, onClose, token, onScanned }: 
         return;
       }
 
-      // Si la orden ya fue abierta por otro fotograma, abrirla sin error
       const ordRes = await fetch(`${API_URL}/ordenes`, {
         headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
       });
@@ -92,7 +91,6 @@ export default function EscanearQrModal({ visible, onClose, token, onScanned }: 
     } catch (e: any) {
       setMensajeError(e.message);
       setLoading(false);
-      // Reanudar cámara tras 1.5s para permitir reintentar sin bloquear la vista
       setTimeout(() => {
         isScanningRef.current = false;
       }, 1500);
@@ -104,10 +102,9 @@ export default function EscanearQrModal({ visible, onClose, token, onScanned }: 
   return (
     <Modal visible={visible} animationType="slide">
       <View style={styles.flex}>
-        {/* Barra superior blanca (fragment_escanear_qr.xml) */}
         <View style={styles.topHeader}>
           <TouchableOpacity onPress={handleCerrar} style={styles.backBtn}>
-            <Text style={{ fontSize: 22, color: colors.textoPrincipal }}>←</Text>
+            <Text style={{ fontSize: 22, color: colors.blanco }}>←</Text>
           </TouchableOpacity>
           <Text style={styles.topHeaderTitle}>Escanear QR</Text>
         </View>
@@ -159,11 +156,12 @@ const styles = StyleSheet.create({
   topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.blanco,
-    padding: 20,
+    backgroundColor: colors.marca,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  backBtn: { marginRight: 10, padding: 4 },
-  topHeaderTitle: { fontSize: 20, fontWeight: '700', color: colors.textoPrincipal },
+  backBtn: { marginRight: 8, padding: 4 },
+  topHeaderTitle: { fontSize: 18, fontWeight: '700', color: colors.blanco },
   body: { padding: 24, alignItems: 'center' },
   title: {
     fontSize: 20,

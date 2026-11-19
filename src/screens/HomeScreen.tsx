@@ -1,245 +1,284 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
+  FlatList,
   RefreshControl,
 } from 'react-native';
 import { API_URL } from '../api/config';
 import { colors } from '../theme/colors';
+import { formatoLegible, parseFechaIso } from '../utils/fechas';
 
 interface Props {
   user: any;
-  setScreen: (screen: string) => void;
   token: string;
+  setScreen: (s: string) => void;
   onOpenOrder: (id: number) => void;
   onOpenNuevaSolicitud: () => void;
 }
 
 export default function HomeScreen({
   user,
-  setScreen,
   token,
+  setScreen,
   onOpenOrder,
   onOpenNuevaSolicitud,
 }: Props) {
-  const isConductor = user?.rol === 'conductor';
-  const isAdmin = user?.rol === 'admin';
   const [ordenes, setOrdenes] = useState<any[]>([]);
-  const [solicitudes, setSolicitudes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [pendientesCount, setPendientesCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const cargarDatos = () => {
+  const esConductor = user?.rol === 'conductor';
+  const esAdmin = user?.rol === 'admin';
+
+  const cargarDatos = useCallback(async () => {
+    setRefreshing(true);
     const headers = { Accept: 'application/json', Authorization: `Bearer ${token}` };
-    setLoading(true);
-    Promise.all([
-      fetch(`${API_URL}/ordenes`, { headers }).then((r) => r.json()).catch(() => []),
-      !isConductor
-        ? fetch(`${API_URL}/solicitudes`, { headers }).then((r) => r.json()).catch(() => [])
-        : Promise.resolve([]),
-    ])
-      .then(([ordData, solData]) => {
-        setOrdenes(Array.isArray(ordData) ? ordData : ordData.data || []);
-        setSolicitudes(Array.isArray(solData) ? solData : solData.data || []);
-      })
-      .finally(() => setLoading(false));
-  };
+    try {
+      if (esConductor) {
+        const res = await fetch(`${API_URL}/ordenes`, { headers });
+        const json = await res.json();
+        const lista = Array.isArray(json) ? json : json.data || [];
+        setOrdenes(lista.filter((o: any) => (o.estado || '').toLowerCase() !== 'completada'));
+      } else {
+        const [solRes, ordRes] = await Promise.all([
+          fetch(`${API_URL}/solicitudes`, { headers }).then((r) => r.json()).catch(() => []),
+          fetch(`${API_URL}/ordenes`, { headers }).then((r) => r.json()).catch(() => []),
+        ]);
+        const solList = Array.isArray(solRes) ? solRes : solRes.data || [];
+        const ordList = Array.isArray(ordRes) ? ordRes : ordRes.data || [];
+        setPendientesCount(solList.filter((s: any) => s.estado === 'pendiente').length);
+        setOrdenes(ordList);
+      }
+    } catch {
+      // Silencioso en recarga
+    } finally {
+      setRefreshing(false);
+    }
+  }, [esConductor, token]);
 
   useEffect(() => {
     cargarDatos();
-  }, [token]);
+  }, [cargarDatos]);
 
-  const getBadgeStyle = (estado: string) => {
-    switch (estado?.toLowerCase()) {
+  const etiquetaEstado = (est: string) => {
+    switch (est) {
+      case 'pendiente':
+        return 'PENDIENTE';
       case 'abierta':
-        return { bg: colors.abiertaFondo, text: colors.abierta, label: 'ABIERTA' };
+        return 'ABIERTA';
       case 'completada':
-        return { bg: colors.completadaFondo, text: colors.completada, label: 'COMPLETADA' };
+        return 'COMPLETADA';
       case 'vencida':
-        return { bg: colors.vencidaFondo, text: colors.vencida, label: 'VENCIDA' };
+        return 'VENCIDA';
       case 'rehabilitada':
-        return { bg: colors.abiertaFondo, text: colors.marca, label: 'REHABILITADA' };
+        return 'REHABILITADA';
       case 'tardio':
       case 'completado_tardio':
-        return { bg: colors.vencidaFondo, text: colors.vencida, label: 'COMPLETADO TARDÍO' };
+        return 'COMPLETADO TARDÍO';
       default:
-        return { bg: colors.pendienteFondo, text: colors.pendiente, label: 'PENDIENTE' };
+        return (est || '').toUpperCase();
     }
   };
 
-  // ==================== VISTA CONDUCTOR (fragment_home_conductor.xml) ====================
-  if (isConductor) {
-    // Igual que HomeConductorFragment.kt: filtra las que no son "completada"
-    const ordenesActivas = ordenes.filter((o) => o.estado?.toLowerCase() !== 'completada');
+  const colorBadge = (est: string) => {
+    switch (est) {
+      case 'pendiente':
+        return { bg: colors.pendienteFondo, fg: colors.pendiente };
+      case 'abierta':
+        return { bg: colors.abiertaFondo, fg: colors.abierta };
+      case 'completada':
+        return { bg: colors.completadaFondo, fg: colors.completada };
+      case 'vencida':
+      case 'tardio':
+      case 'completado_tardio':
+        return { bg: colors.vencidaFondo, fg: colors.vencida };
+      case 'rehabilitada':
+        return { bg: colors.abiertaFondo, fg: colors.marca };
+      default:
+        return { bg: colors.pendienteFondo, fg: colors.pendiente };
+    }
+  };
 
+  // ==================== VISTA CONDUCTOR ====================
+  if (esConductor) {
     return (
       <View style={styles.flex}>
-        <View style={styles.conductorHeader}>
-          <Text style={styles.conductorSaludo}>Hola, {user?.nombre || ''}</Text>
-          <View style={styles.rowCenter}>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => setScreen('historial')}>
-              <Text style={styles.iconText}>🕒</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => setScreen('perfil')}>
-              <Text style={styles.iconText}>👤</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <ScrollView
-          contentContainerStyle={styles.listContainer}
-          refreshControl={<RefreshControl refreshing={loading} onRefresh={cargarDatos} />}
-        >
-          {ordenesActivas.map((item) => {
-            const badge = getBadgeStyle(item.estado);
-            return (
-              <TouchableOpacity key={item.id} style={styles.card} onPress={() => onOpenOrder(item.id)}>
-                <View style={styles.cardHeader}>
-                  <Text style={styles.cardTitle}>Orden #{item.numero_orden}</Text>
-                  <View style={[styles.badge, { backgroundColor: badge.bg }]}>
-                    <Text style={[styles.badgeText, { color: badge.text }]}>{badge.label}</Text>
-                  </View>
-                </View>
-                <Text style={styles.cardSub}>
-                  {item.gasolinera?.nombre || 'Gasolinera por definir'}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-
-          {!loading && ordenesActivas.length === 0 && (
-            <Text style={styles.emptyText}>Todavía no tienes órdenes.</Text>
-          )}
-        </ScrollView>
-
-        <View style={styles.bottomDock}>
-          <TouchableOpacity style={styles.btnPrimaryPill} onPress={onOpenNuevaSolicitud}>
-            <Text style={styles.btnPrimaryPillText}>＋ Nueva solicitud</Text>
+        <View style={styles.topHeader}>
+          <Text style={[styles.topHeaderTitle, { flex: 1 }]}>
+            Hola, {user?.nombre || ''}
+          </Text>
+          <TouchableOpacity onPress={() => setScreen('historial')} style={styles.iconBtn}>
+            <Text style={{ fontSize: 19, color: colors.blanco }}>🕒</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setScreen('perfil')}
+            style={[styles.iconBtn, { marginLeft: 4 }]}
+          >
+            <Text style={{ fontSize: 19, color: colors.blanco }}>👤</Text>
           </TouchableOpacity>
         </View>
+
+        <FlatList
+          data={ordenes}
+          keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 88 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={cargarDatos} />}
+          renderItem={({ item }) => {
+            const b = colorBadge(item.estado);
+            return (
+              <TouchableOpacity style={styles.orderCard} onPress={() => onOpenOrder(item.id)}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.orderNum}>Orden #{item.numero_orden}</Text>
+                  <Text style={styles.stationName}>
+                    {item.gasolinera?.nombre || 'Gasolinera por definir'}
+                  </Text>
+                </View>
+                <View style={[styles.badge, { backgroundColor: b.bg }]}>
+                  <Text style={[styles.badgeText, { color: b.fg }]}>
+                    {etiquetaEstado(item.estado)}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
+          ListEmptyComponent={
+            !refreshing ? (
+              <Text style={styles.emptyText}>Todavía no tienes órdenes.</Text>
+            ) : undefined
+          }
+        />
+
+        {/* FAB Nueva Solicitud */}
+        <TouchableOpacity style={styles.fab} onPress={onOpenNuevaSolicitud} activeOpacity={0.85}>
+          <Text style={styles.fabIcon}>＋</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
-  // ==================== VISTA ADMINISTRADOR / SUPERVISOR (fragment_home_admin.xml) ====================
-  const pendientesCount = solicitudes.filter((s) => s.estado === 'pendiente').length;
-  const abiertasCount = ordenes.filter((o) => o.estado === 'abierta').length;
-  const completadasCount = ordenes.filter((o) => o.estado === 'completada').length;
-  const vencidasCount = ordenes.filter((o) => o.estado === 'vencida').length;
+  // ==================== VISTA ADMIN / SUPERVISOR ====================
+  const abiertas = ordenes.filter((o) => o.estado === 'abierta').length;
+  const completadas = ordenes.filter((o) => o.estado === 'completada').length;
+  const vencidas = ordenes.filter((o) => o.estado === 'vencida').length;
 
-  const proximaOrden = ordenes
+  const proxima = ordenes
     .filter((o) => o.estado === 'abierta' && o.vence_apertura)
     .sort(
       (a, b) =>
-        new Date(a.vence_apertura.replace(' ', 'T')).getTime() -
-        new Date(b.vence_apertura.replace(' ', 'T')).getTime()
+        parseFechaIso(a.vence_apertura).getTime() - parseFechaIso(b.vence_apertura).getTime()
     )[0];
 
-  const minutosRestantesProxima = proximaOrden
+  const minutosRestantes = proxima
     ? Math.max(
         0,
-        Math.floor(
-          (new Date(proximaOrden.vence_apertura.replace(' ', 'T')).getTime() - Date.now()) / 60000
-        )
+        Math.floor((parseFechaIso(proxima.vence_apertura).getTime() - Date.now()) / 60000)
       )
     : 0;
 
   const fechaHoy = new Date()
-    .toLocaleDateString('es-HN', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' })
+    .toLocaleDateString('es-HN', {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    })
     .toUpperCase();
 
   return (
     <View style={styles.flex}>
-      {/* Barra superior */}
       <View style={styles.topHeader}>
-        <View style={styles.rowCenter}>
-          <Text style={{ fontSize: 22, marginRight: 12 }}>⛽</Text>
-          <View>
-            <Text style={styles.topHeaderTitle}>Inicio</Text>
-            <Text style={styles.topHeaderRole}>
-              {isAdmin ? 'ADMINISTRADOR' : 'SUPERVISOR'}
-            </Text>
-          </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.topHeaderTitle}>Inicio</Text>
+          <Text style={styles.rolSubtitle}>{esAdmin ? 'Administrador' : 'Supervisor'}</Text>
         </View>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => setScreen('notificaciones')}>
-          <Text style={styles.iconText}>🔔</Text>
+        <TouchableOpacity onPress={() => setScreen('notificaciones')} style={styles.iconBtn}>
+          <Text style={{ fontSize: 19, color: colors.blanco }}>🔔</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.container}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={cargarDatos} />}
+        contentContainerStyle={{ padding: 20, paddingBottom: 32 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={cargarDatos} />}
       >
-        <Text style={styles.dateLabel}>{fechaHoy}</Text>
-        <Text style={styles.welcomeTitle}>Buen día, {user?.nombre || ''}</Text>
+        <Text style={styles.fechaText}>{fechaHoy}</Text>
+        <Text style={styles.saludoText}>Buen día, {user?.nombre || ''}</Text>
 
-        {/* Tarjeta Solicitudes por asignar */}
+        {/* Tarjeta Solicitudes pendientes */}
         <View style={styles.card}>
-          <View style={styles.rowCenter}>
-            <Text style={styles.bigNumber}>{pendientesCount}</Text>
-            <View style={{ marginLeft: 16, flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.bigCount}>{pendientesCount}</Text>
+            <View style={{ flex: 1, marginLeft: 16 }}>
               <Text style={styles.cardTitle}>Solicitudes pendientes</Text>
               <Text style={styles.cardSub}>Esperan asignación de monto</Text>
             </View>
           </View>
           <TouchableOpacity
-            style={styles.btnLightPill}
+            style={styles.btnTonalFull}
             onPress={() => setScreen('solicitudes')}
           >
-            <Text style={styles.btnLightPillText}>Asignar montos →</Text>
+            <Text style={styles.btnTonalText}>
+              {esAdmin ? 'Asignar montos  →' : 'Ver solicitudes'}
+            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* 3 Indicadores del día */}
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: colors.abierta }]}>{abiertasCount}</Text>
-            <Text style={styles.statLabel}>ABIERTA</Text>
+        {/* 3 Indicadores de estado */}
+        <View style={styles.kpiRow}>
+          <View style={styles.kpiCard}>
+            <Text style={[styles.kpiNum, { color: colors.abierta }]}>{abiertas}</Text>
+            <Text style={styles.kpiLabel}>ABIERTA</Text>
           </View>
-          <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: colors.completada }]}>{completadasCount}</Text>
-            <Text style={styles.statLabel}>COMPLETADA</Text>
+          <View style={styles.kpiCard}>
+            <Text style={[styles.kpiNum, { color: colors.completada }]}>{completadas}</Text>
+            <Text style={styles.kpiLabel}>COMPLETADA</Text>
           </View>
-          <View style={styles.statBox}>
-            <Text style={[styles.statNumber, { color: colors.vencida }]}>{vencidasCount}</Text>
-            <Text style={styles.statLabel}>VENCIDA</Text>
+          <View style={styles.kpiCard}>
+            <Text style={[styles.kpiNum, { color: colors.vencida }]}>{vencidas}</Text>
+            <Text style={styles.kpiLabel}>VENCIDA</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionSubLabel}>Órdenes del día · vigencia de 15 min</Text>
+        <Text style={styles.sectionCaption}>Órdenes del día · vigencia de 15 min</Text>
 
-        {/* Orden próxima a vencer */}
-        {proximaOrden && (
+        {proxima && (
           <View style={styles.warningCard}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.warningTitle}>{proximaOrden.numero_orden}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={[styles.cardTitle, { flex: 1 }]}>{proxima.numero_orden}</Text>
               <View style={[styles.badge, { backgroundColor: colors.abiertaFondo }]}>
                 <Text style={[styles.badgeText, { color: colors.abierta }]}>ABIERTA</Text>
               </View>
             </View>
             <Text style={styles.warningDetail}>
-              {proximaOrden.gasolinera?.nombre || 'Gasolinera'} · Vence a las{' '}
-              {proximaOrden.vence_apertura?.substring(11, 16)}
+              {proxima.gasolinera?.nombre || ''} · Vence a las{' '}
+              {formatoLegible(proxima.vence_apertura)}
             </Text>
-            <View style={styles.warningFooter}>
-              <Text style={styles.warningTimer}>Quedan {minutosRestantesProxima} min</Text>
-              <TouchableOpacity onPress={() => onOpenOrder(proximaOrden.id)}>
-                <Text style={styles.linkText}>Ver orden →</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
+              <Text style={styles.warningMin}>Quedan {minutosRestantes} min</Text>
+              <TouchableOpacity onPress={() => onOpenOrder(proxima.id)}>
+                <Text style={styles.verOrdenLink}>Ver orden →</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
 
         <Text style={styles.sectionTitle}>Accesos rápidos</Text>
-        <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.outlineBtn} onPress={() => setScreen('caja_chica')}>
-            <Text style={styles.outlineBtnText}>＋ Caja chica</Text>
+
+        <View style={styles.quickRow}>
+          <TouchableOpacity
+            style={styles.quickTonalBtn}
+            onPress={() => setScreen('caja_chica')}
+          >
+            <Text style={styles.btnTonalText}>＋ Caja chica</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.outlineBtn} onPress={() => setScreen('catalogos')}>
-            <Text style={styles.outlineBtnText}>Catálogos →</Text>
+          <TouchableOpacity
+            style={styles.quickTonalBtn}
+            onPress={() => setScreen('catalogos')}
+          >
+            <Text style={styles.btnTonalText}>Catálogos</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -249,51 +288,45 @@ export default function HomeScreen({
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.fondo },
-  container: { padding: 20 },
-  listContainer: { paddingHorizontal: 20, paddingBottom: 20 },
-  conductorHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-  },
-  conductorSaludo: { fontSize: 20, fontWeight: '700', color: colors.textoPrincipal, flex: 1 },
-  iconBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center', marginLeft: 4 },
-  iconText: { fontSize: 20 },
   topHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.blanco,
-    padding: 20,
+    backgroundColor: colors.marca,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  topHeaderTitle: { fontSize: 21, fontWeight: '700', color: colors.textoPrincipal },
-  topHeaderRole: { fontSize: 11, fontWeight: '700', color: colors.marca },
-  rowCenter: { flexDirection: 'row', alignItems: 'center' },
-  dateLabel: { fontSize: 12, fontWeight: '700', color: colors.textoSecundario, letterSpacing: 0.8 },
-  welcomeTitle: { fontSize: 24, fontWeight: '700', color: colors.textoPrincipal, marginTop: 4 },
+  topHeaderTitle: { fontSize: 18, fontWeight: '700', color: colors.blanco },
+  rolSubtitle: { fontSize: 11, fontWeight: '700', color: colors.marcaClaro },
+  iconBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  fechaText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textoSecundario,
+    letterSpacing: 0.5,
+  },
+  saludoText: { fontSize: 22, fontWeight: '700', color: colors.textoPrincipal, marginTop: 4 },
   card: {
     backgroundColor: colors.blanco,
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
     borderWidth: 1,
     borderColor: colors.borde,
     marginTop: 16,
   },
-  bigNumber: { fontSize: 40, fontWeight: '700', color: colors.marca },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.textoPrincipal },
-  cardSub: { fontSize: 13, color: colors.textoSecundario, marginTop: 4 },
-  btnLightPill: {
+  bigCount: { fontSize: 36, fontWeight: '700', color: colors.marca },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: colors.textoPrincipal },
+  cardSub: { fontSize: 12, color: colors.textoSecundario, marginTop: 2 },
+  btnTonalFull: {
     backgroundColor: colors.marcaClaro,
     height: 44,
-    borderRadius: 22,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 12,
   },
-  btnLightPillText: { color: colors.marcaOscuro, fontWeight: '700', fontSize: 14 },
-  statsRow: { flexDirection: 'row', gap: 12, marginTop: 16 },
-  statBox: {
+  btnTonalText: { color: colors.marcaOscuro, fontSize: 14, fontWeight: '700' },
+  kpiRow: { flexDirection: 'row', gap: 8, marginTop: 16 },
+  kpiCard: {
     flex: 1,
     backgroundColor: colors.blanco,
     borderRadius: 16,
@@ -301,49 +334,58 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borde,
   },
-  statNumber: { fontSize: 24, fontWeight: '700' },
-  statLabel: { fontSize: 11, color: colors.textoSecundario, marginTop: 2, fontWeight: '600' },
-  sectionSubLabel: { fontSize: 13, color: colors.textoSecundario, marginTop: 20 },
+  kpiNum: { fontSize: 22, fontWeight: '700' },
+  kpiLabel: { fontSize: 11, color: colors.textoSecundario, marginTop: 2 },
+  sectionCaption: { fontSize: 12, color: colors.textoSecundario, marginTop: 20 },
   warningCard: {
     backgroundColor: colors.advertenciaFondo,
-    borderRadius: 20,
-    padding: 17,
+    borderRadius: 16,
+    padding: 16,
     marginTop: 8,
   },
-  warningTitle: { fontSize: 15, fontWeight: '700', color: colors.textoPrincipal },
   warningDetail: { fontSize: 13, color: colors.advertenciaTextoSecundario, marginTop: 8 },
-  warningFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  warningTimer: { fontSize: 14, fontWeight: '700', color: colors.advertenciaTexto },
-  linkText: { color: colors.marca, fontWeight: '700', fontSize: 14 },
+  warningMin: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.advertenciaTexto },
+  verOrdenLink: { fontSize: 14, fontWeight: '700', color: colors.marca },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textoPrincipal, marginTop: 20 },
-  actionRow: { flexDirection: 'row', gap: 12, marginTop: 10, marginBottom: 8 },
-  outlineBtn: {
+  quickRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  quickTonalBtn: {
     flex: 1,
-    height: 44,
-    borderRadius: 22,
+    height: 56,
+    backgroundColor: colors.marcaClaro,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  orderCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.blanco,
+    borderRadius: 16,
+    padding: 16,
     borderWidth: 1,
     borderColor: colors.borde,
-    backgroundColor: colors.blanco,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: 10,
   },
-  outlineBtnText: { color: colors.marca, fontWeight: '700', fontSize: 13 },
-  bottomDock: { backgroundColor: colors.blanco, padding: 20 },
-  btnPrimaryPill: {
-    backgroundColor: colors.marca,
-    height: 52,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  btnPrimaryPillText: { color: colors.blanco, fontSize: 15, fontWeight: '700' },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  badge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12 },
+  orderNum: { fontSize: 16, fontWeight: '700', color: colors.textoPrincipal },
+  stationName: { fontSize: 13, color: colors.textoSecundario, marginTop: 2 },
+  badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
   badgeText: { fontSize: 11, fontWeight: '700' },
-  emptyText: { textAlign: 'center', color: colors.textoSecundario, marginTop: 60 },
+  emptyText: { textAlign: 'center', color: colors.textoSecundario, marginTop: 80, fontSize: 14 },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.marca,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 6,
+  },
+  fabIcon: { color: colors.blanco, fontSize: 28, fontWeight: '600', lineHeight: 30 },
 });

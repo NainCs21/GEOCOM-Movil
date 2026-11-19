@@ -35,11 +35,9 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Detalle de orden
   const [selectedOrdenId, setSelectedOrdenId] = useState<number | null>(null);
   const [selectedOrden, setSelectedOrden] = useState<any | null>(null);
 
-  // Modales
   const [nuevaSolicitudVisible, setNuevaSolicitudVisible] = useState(false);
   const [solicitudParaAsignar, setSolicitudParaAsignar] = useState<any | null>(null);
   const [escanearQrVisible, setEscanearQrVisible] = useState(false);
@@ -76,7 +74,13 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (token) {
+      fetch(`${API_URL}/logout`, {
+        method: 'POST',
+        headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    }
     setToken(null);
     setUser(null);
     setCurrentScreen('home');
@@ -143,8 +147,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-
+        <StatusBar barStyle={token ? 'light-content' : 'dark-content'} />
       {!token ? (
         <LoginScreen
           correo={correo}
@@ -192,6 +195,7 @@ export default function App() {
                       token={token}
                       user={user}
                       onAsignar={(sol) => setSolicitudParaAsignar(sol)}
+                      onBack={() => setCurrentScreen('home')}
                     />
                   )}
                   {currentScreen === 'ordenes' && (
@@ -205,7 +209,11 @@ export default function App() {
                     />
                   )}
                   {currentScreen === 'catalogos' && (
-                    <CatalogosScreen token={token} user={user} />
+                    <CatalogosScreen
+                      token={token}
+                      user={user}
+                      onBack={() => setCurrentScreen('home')}
+                    />
                   )}
                   {currentScreen === 'mas' && <MasScreen setScreen={setCurrentScreen} />}
                   {currentScreen === 'perfil' && (
