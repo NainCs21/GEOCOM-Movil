@@ -122,25 +122,6 @@ fun derivarEventos(solicitudes: List<Solicitud>, ordenes: List<Orden>): List<Eve
             )
         }
 
-        // 5. evidencia_subida
-        ord.detalles?.forEach { detalle ->
-            detalle.evidencias.forEach { evidencia ->
-                if (!evidencia.fecha_subida.isNullOrBlank()) {
-                    lista.add(
-                        EventoNotificacion(
-                            id = "evidencia_subida_${ord.id}_${evidencia.id}",
-                            tipo = "evidencia_subida",
-                            titulo = "Evidencia subida",
-                            cuerpo = "$conductorNombre subió la foto de ${evidencia.tipo} de la orden ${ord.numero_orden}",
-                            fechaMillis = parseFechaIsoMillis(evidencia.fecha_subida),
-                            destino = "orden",
-                            ordenId = ord.id,
-                        ),
-                    )
-                }
-            }
-        }
-
         // 6. orden_completada
         if (!ord.fecha_completada.isNullOrBlank()) {
             lista.add(
