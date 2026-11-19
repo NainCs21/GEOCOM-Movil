@@ -33,13 +33,13 @@ suspend fun generarFacturaPdf(
     orden.detalles?.forEach { detalle ->
         val destinoLabel = if (detalle.tipo_destino == "vehiculo") {
             val v = detalle.vehiculo
-            if (v != null) "${v.marca} ${v.modelo} (${v.placa})" else "Vehiculo"
+            if (v != null) "${v.marca} ${v.modelo} (${v.placa})" else "Vehículo"
         } else {
             detalle.descripcion_mgp ?: "MGP"
         }
         detalle.evidencias.forEach { ev ->
             if (!ev.url.isNullOrBlank()) {
-                val bitmap = descargarBitmap(normalizarUrlApi(ev.url))
+                val bitmap = descargarBitmap(ev.url)
                 if (bitmap != null) {
                     listaImagenes.add(EvidenciaImagen(ev.tipo, destinoLabel, bitmap))
                 }
@@ -100,19 +100,19 @@ suspend fun generarFacturaPdf(
     val contentWidth = pageWidth - marginLeft - marginRight
 
     try {
-        // PAGINA 1
+        // PÁGINA 1
         val page1 = document.startPage(pageInfo)
         val canvas1 = page1.canvas
         var currentY = 50f
 
-        canvas1.drawText("GEOCOM - Sistema de Ordenes de Combustible", marginLeft, currentY, paintHeader)
+        canvas1.drawText("GEOCOM · Sistema de Órdenes de Combustible", marginLeft, currentY, paintHeader)
         currentY += 18f
 
         canvas1.drawText("FACTURA / COMPROBANTE DE ORDEN #${orden.numero_orden}", marginLeft, currentY, paintTitle)
         currentY += 18f
 
         val fechaGen = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("es", "HN")).format(Date())
-        canvas1.drawText("Generado el $fechaGen - Estado: ${orden.estado.uppercase()}", marginLeft, currentY, paintSubtitle)
+        canvas1.drawText("Generado el $fechaGen · Estado: ${orden.estado.uppercase()}", marginLeft, currentY, paintSubtitle)
         currentY += 22f
 
         canvas1.drawRect(marginLeft, currentY, pageWidth - marginRight, currentY + 70f, Paint().apply {
@@ -120,18 +120,18 @@ suspend fun generarFacturaPdf(
         })
 
         var infoY = currentY + 16f
-        val conductorNombre = orden.conductor?.usuario?.name ?: "N/D"
-        val gasolineraNombre = orden.gasolinera?.nombre ?: "N/D"
+        val conductorNombre = orden.conductor?.usuario?.name ?: "—"
+        val gasolineraNombre = orden.gasolinera?.nombre ?: "—"
         val gasolineraDir = orden.gasolinera?.direccion.orEmpty()
 
         canvas1.drawText("Conductor: $conductorNombre", marginLeft + 12f, infoY, paintRowText)
         canvas1.drawText("Gasolinera: $gasolineraNombre", marginLeft + 260f, infoY, paintRowText)
         infoY += 16f
 
-        canvas1.drawText("Direccion: $gasolineraDir", marginLeft + 260f, infoY, paintSubtitle)
+        canvas1.drawText("Dirección: $gasolineraDir", marginLeft + 260f, infoY, paintSubtitle)
 
-        val fAsig = orden.fecha_asignacion?.let { formatoLegible(it) } ?: "N/D"
-        val fComp = orden.fecha_completada?.let { formatoLegible(it) } ?: "N/D"
+        val fAsig = orden.fecha_asignacion?.let { formatoLegible(it) } ?: "—"
+        val fComp = orden.fecha_completada?.let { formatoLegible(it) } ?: "—"
         canvas1.drawText("Asignada: $fAsig", marginLeft + 12f, infoY, paintSubtitle)
         infoY += 16f
 
@@ -155,7 +155,7 @@ suspend fun generarFacturaPdf(
         canvas1.drawRect(marginLeft, currentY, pageWidth - marginRight, currentY + headerH, paintTableHeader)
         val textBaseH = currentY + 15f
         canvas1.drawText("#", xNo + 6f, textBaseH, paintHeaderText)
-        canvas1.drawText("Destino / Vehiculo", xDestino + 6f, textBaseH, paintHeaderText)
+        canvas1.drawText("Destino / Vehículo", xDestino + 6f, textBaseH, paintHeaderText)
         canvas1.drawText("Combustible", xComb + 6f, textBaseH, paintHeaderText)
         canvas1.drawText("Monto (L)", xMonto + 6f, textBaseH, paintHeaderText)
         currentY += headerH
@@ -170,7 +170,7 @@ suspend fun generarFacturaPdf(
 
             val destText = if (det.tipo_destino == "vehiculo") {
                 val v = det.vehiculo
-                if (v != null) "${v.marca} ${v.modelo} (${v.placa})" else "Vehiculo"
+                if (v != null) "${v.marca} ${v.modelo} (${v.placa})" else "Vehículo"
             } else {
                 det.descripcion_mgp ?: "MGP"
             }
@@ -197,7 +197,7 @@ suspend fun generarFacturaPdf(
         canvas1.drawText(totalFmt, (pageWidth - marginRight - 6f) - totalWidth, currentY, paintTotalText)
 
         val totalPaginasEstimadas = if (listaImagenes.isEmpty()) 1 else 1 + ((listaImagenes.size + 1) / 2)
-        canvas1.drawText("Pagina 1 de $totalPaginasEstimadas", pageWidth / 2f, pageHeight - 25f, paintFooter)
+        canvas1.drawText("Página 1 de $totalPaginasEstimadas", pageWidth / 2f, pageHeight - 25f, paintFooter)
 
         document.finishPage(page1)
 
@@ -209,14 +209,14 @@ suspend fun generarFacturaPdf(
                 val canvasImg = imgPage.canvas
                 var yImg = 50f
 
-                canvasImg.drawText("GEOCOM - Orden #${orden.numero_orden}", marginLeft, yImg, paintHeader)
+                canvasImg.drawText("GEOCOM · Orden #${orden.numero_orden}", marginLeft, yImg, paintHeader)
                 yImg += 18f
 
-                canvasImg.drawText("EVIDENCIAS FOTOGRAFICAS", marginLeft, yImg, paintSectionTitle)
+                canvasImg.drawText("EVIDENCIAS FOTOGRÁFICAS", marginLeft, yImg, paintSectionTitle)
                 yImg += 22f
 
                 for (evImg in chunk) {
-                    canvasImg.drawText("Foto: ${evImg.tipo.uppercase()} - ${evImg.destino}", marginLeft, yImg, paintTitle)
+                    canvasImg.drawText("Foto: ${evImg.tipo.uppercase()} — ${evImg.destino}", marginLeft, yImg, paintTitle)
                     yImg += 14f
 
                     val maxW = contentWidth
@@ -250,7 +250,7 @@ suspend fun generarFacturaPdf(
                     yImg += maxH + 30f
                 }
 
-                canvasImg.drawText("Pagina $pageNum de $totalPaginasEstimadas", pageWidth / 2f, pageHeight - 25f, paintFooter)
+                canvasImg.drawText("Página $pageNum de $totalPaginasEstimadas", pageWidth / 2f, pageHeight - 25f, paintFooter)
                 document.finishPage(imgPage)
             }
         }
@@ -263,52 +263,26 @@ suspend fun generarFacturaPdf(
         document.writeTo(fos)
         fos.close()
         document.close()
-
-        // Reciclar bitmaps para liberar memoria
-        listaImagenes.forEach { it.bitmap.recycle() }
-
         file
     } catch (_: Exception) {
         try {
-            listaImagenes.forEach { it.bitmap.recycle() }
             document.close()
         } catch (_: Exception) {}
         null
     }
 }
 
-private suspend fun descargarBitmap(urlStr: String?): Bitmap? = withContext(Dispatchers.IO) {
-    if (urlStr.isNullOrBlank()) return@withContext null
+private suspend fun descargarBitmap(urlStr: String): Bitmap? = withContext(Dispatchers.IO) {
     try {
         val request = okhttp3.Request.Builder().url(urlStr).build()
-        ApiClient.client.newCall(request).execute().use { response ->
-            val body = response.body
-            if (response.isSuccessful && body != null) {
-                val bytes = body.bytes()
-                val options = BitmapFactory.Options().apply {
-                    inJustDecodeBounds = true
-                }
-                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
-
-                val maxDimension = 1200
-                var sampleSize = 1
-                val width = options.outWidth
-                val height = options.outHeight
-                if (width > maxDimension || height > maxDimension) {
-                    val halfWidth = width / 2
-                    val halfHeight = height / 2
-                    while ((halfWidth / sampleSize) >= maxDimension || (halfHeight / sampleSize) >= maxDimension) {
-                        sampleSize *= 2
-                    }
-                }
-
-                val decodeOptions = BitmapFactory.Options().apply {
-                    inSampleSize = sampleSize
-                }
-                BitmapFactory.decodeByteArray(bytes, 0, bytes.size, decodeOptions)
-            } else {
-                null
+        val response = ApiClient.client.newCall(request).execute()
+        val body = response.body
+        if (response.isSuccessful && body != null) {
+            body.byteStream().use { stream ->
+                BitmapFactory.decodeStream(stream)
             }
+        } else {
+            null
         }
     } catch (_: Exception) {
         null
