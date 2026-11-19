@@ -145,16 +145,27 @@ class AdminViewModel : ViewModel() {
     }
 
     // Rehabilita una orden vencida
-    fun rehabilitarOrden(ordenId: Int, onSuccess: () -> Unit) {
+    private val _rehabilitacion = MutableStateFlow(UiState<Boolean>())
+    val rehabilitacion = _rehabilitacion.asStateFlow()
+
+    fun rehabilitarOrden(ordenId: Int, horas: Int, onSuccess: () -> Unit) {
         viewModelScope.launch {
+            _rehabilitacion.value = UiState(loading = true)
             try {
-                ApiClient.api.rehabilitarOrden(ordenId)
+                ApiClient.api.rehabilitarOrden(ordenId, RehabilitarOrdenRequest(horas))
+                _rehabilitacion.value = UiState(data = true)
                 onSuccess()
                 cargarOrdenes()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                _ordenes.value = UiState(error = mensajeDeError(e))
+                _rehabilitacion.value = UiState(error = mensajeDeError(e))
             }
         }
+    }
+
+    fun limpiarRehabilitacion() {
+        _rehabilitacion.value = UiState()
     }
 
     // Catalogos de conductores, vehiculos y gasolineras

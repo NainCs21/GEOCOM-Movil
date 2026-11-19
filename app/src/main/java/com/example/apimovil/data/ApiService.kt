@@ -34,6 +34,9 @@ interface ApiService {
     @POST("solicitudes/{id}/rechazar")
     suspend fun rechazarSolicitud(@Path("id") id: Int): Solicitud
 
+    @PUT("solicitudes/{id}")
+    suspend fun editarSolicitud(@Path("id") id: Int, @Body body: SolicitudRequest): Solicitud
+
     // Ordenes
     @GET("ordenes")
     suspend fun listarOrdenes(
@@ -55,7 +58,7 @@ interface ApiService {
     suspend fun escanearOrden(@Body body: EscanearRequest): Orden
 
     @POST("ordenes/{id}/rehabilitar")
-    suspend fun rehabilitarOrden(@Path("id") id: Int): Orden
+    suspend fun rehabilitarOrden(@Path("id") id: Int, @Body body: RehabilitarOrdenRequest): Orden
 
     @Multipart
     @POST("detalle-ordenes/{id}/evidencia")

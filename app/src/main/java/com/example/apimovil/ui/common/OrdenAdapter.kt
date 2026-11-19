@@ -20,10 +20,9 @@ private val DIFF = object : DiffUtil.ItemCallback<Orden>() {
 fun colorDeEstado(context: Context, estado: String): Int = when (estado) {
     "pendiente" -> ContextCompat.getColor(context, R.color.estado_pendiente)
     "abierta" -> ContextCompat.getColor(context, R.color.estado_abierta)
-    "completada" -> ContextCompat.getColor(context, R.color.estado_completada)
+    "completada", "completada_tarde" -> ContextCompat.getColor(context, R.color.estado_completada)
     "vencida" -> ContextCompat.getColor(context, R.color.estado_vencida)
-    "rehabilitada" -> ContextCompat.getColor(context, R.color.marca)
-    "tardio", "completado_tardio" -> ContextCompat.getColor(context, R.color.estado_vencida)
+    "abierta_tarde" -> ContextCompat.getColor(context, R.color.estado_vencida)
     else -> ContextCompat.getColor(context, R.color.texto_secundario)
 }
 
@@ -31,10 +30,9 @@ fun colorDeEstado(context: Context, estado: String): Int = when (estado) {
 fun fondoBadgeDeEstado(estado: String): Int = when (estado) {
     "pendiente" -> R.drawable.bg_badge_pendiente
     "abierta" -> R.drawable.bg_badge_abierta
-    "completada" -> R.drawable.bg_badge_completada
+    "completada", "completada_tarde" -> R.drawable.bg_badge_completada
     "vencida" -> R.drawable.bg_badge_vencida
-    "rehabilitada" -> R.drawable.bg_badge_abierta
-    "tardio", "completado_tardio" -> R.drawable.bg_badge_vencida
+    "abierta_tarde" -> R.drawable.bg_badge_abierta
     else -> R.drawable.bg_badge_pendiente
 }
 
@@ -44,8 +42,8 @@ fun etiquetaDeEstado(context: Context, estado: String): String = when (estado) {
     "abierta" -> context.getString(R.string.abierta_badge)
     "completada" -> context.getString(R.string.completada_badge)
     "vencida" -> context.getString(R.string.vencida_badge)
-    "rehabilitada" -> context.getString(R.string.rehabilitada_badge)
-    "tardio", "completado_tardio" -> context.getString(R.string.tardio_badge)
+    "abierta_tarde" -> context.getString(R.string.abierta_tarde_badge)
+    "completada_tarde" -> context.getString(R.string.completada_tarde_badge)
     else -> estado.uppercase()
 }
 

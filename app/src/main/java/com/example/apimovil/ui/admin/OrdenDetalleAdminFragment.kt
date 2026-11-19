@@ -2,6 +2,7 @@ package com.example.apimovil.ui.admin
 
 import android.content.ContentValues
 import android.content.Context
+import android.content.DialogInterface
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -15,7 +16,9 @@ import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.model.GlideUrl
@@ -25,6 +28,7 @@ import com.example.apimovil.data.ApiClient
 import com.example.apimovil.data.SessionManager
 import com.example.apimovil.data.models.DetalleOrden
 import com.example.apimovil.data.models.Orden
+import com.example.apimovil.databinding.DialogRehabilitarOrdenBinding
 import com.example.apimovil.databinding.FragmentOrdenDetalleBinding
 import com.example.apimovil.databinding.ItemLineaEvidenciaBinding
 import com.example.apimovil.ui.common.colorDeEstado
@@ -32,9 +36,12 @@ import com.example.apimovil.ui.common.etiquetaDeEstado
 import com.example.apimovil.ui.common.fondoBadgeDeEstado
 import com.example.apimovil.ui.common.mensajeDeError
 import com.example.apimovil.ui.common.normalizarUrlApi
+import com.example.apimovil.ui.common.esCompletada
+import com.example.apimovil.ui.common.esTarde
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
@@ -94,21 +101,103 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
 
         binding.btnRehabilitar.isVisible = orden.estado == "vencida"
         binding.btnRehabilitar.setOnClickListener {
-            model.rehabilitarOrden(orden.id) {
-                Toast.makeText(requireContext(), R.string.orden_rehabilitada, Toast.LENGTH_SHORT).show()
-                cargarOrden(orden.id)
-            }
+            mostrarDialogoRehabilitar(orden.id)
         }
 
-        if (orden.estado == "completada" || orden.estado == "tardio" || orden.estado == "completado_tardio") {
+        if (esCompletada(orden.estado)) {
             binding.textMensajeFinal.isVisible = true
-            binding.textMensajeFinal.text = getString(R.string.orden_completada_mensaje)
+            binding.textMensajeFinal.text = if (orden.estado == "completada_tarde") {
+                getString(R.string.orden_completada_tardio_mensaje)
+            } else {
+                getString(R.string.orden_completada_mensaje)
+            }
         } else if (orden.estado == "vencida") {
             binding.textMensajeFinal.isVisible = true
             binding.textMensajeFinal.text = getString(R.string.orden_vencida_mensaje)
         } else {
             binding.textMensajeFinal.isVisible = false
         }
+
+        if (!orden.justificacion.isNullOrBlank() && esTarde(orden.estado)) {
+            binding.textJustificacionRehabilitacion.isVisible = true
+            binding.textJustificacionRehabilitacion.text = getString(R.string.justificacion_conductor_label, orden.justificacion)
+        } else if (orden.estado == "abierta_tarde" && orden.justificacion.isNullOrBlank()) {
+            binding.textJustificacionRehabilitacion.isVisible = true
+            binding.textJustificacionRehabilitacion.text = getString(R.string.conductor_aun_no_justificacion)
+        } else {
+            binding.textJustificacionRehabilitacion.isVisible = false
+        }
+    }
+
+    private fun mostrarDialogoRehabilitar(ordenId: Int) {
+        val dialogBinding = DialogRehabilitarOrdenBinding.inflate(LayoutInflater.from(requireContext()))
+        var jobRehabilitacion: Job? = null
+        var isEnviando = false
+
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setView(dialogBinding.root)
+            .setPositiveButton(R.string.confirmar, null)
+            .setNegativeButton(R.string.cancelar, null)
+            .create()
+
+        dialog.setOnDismissListener {
+            jobRehabilitacion?.cancel()
+            model.limpiarRehabilitacion()
+        }
+
+        dialog.setOnShowListener {
+            val btnConfirmar = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
+            btnConfirmar.setOnClickListener {
+                if (isEnviando) return@setOnClickListener
+
+                val horasStr = dialogBinding.inputHoras.text?.toString()?.trim().orEmpty()
+                val horas = horasStr.toIntOrNull()
+
+                if (horas == null || horas !in 1..3) {
+                    dialogBinding.inputHoras.error = getString(R.string.error_horas_vigencia)
+                    return@setOnClickListener
+                } else {
+                    dialogBinding.inputHoras.error = null
+                }
+
+                isEnviando = true
+                dialogBinding.progressDialog.isVisible = true
+                dialogBinding.textErrorDialog.isVisible = false
+                dialog.getButton(DialogInterface.BUTTON_POSITIVE)?.isEnabled = false
+                dialog.getButton(DialogInterface.BUTTON_NEGATIVE)?.isEnabled = false
+                dialogBinding.inputHoras.isEnabled = false
+
+                model.rehabilitarOrden(ordenId, horas) {
+                    // Success callback
+                }
+            }
+        }
+
+        jobRehabilitacion = viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                model.rehabilitacion.collect { estado ->
+                    if (estado.loading) {
+                        dialogBinding.progressDialog.isVisible = true
+                    } else if (estado.error != null) {
+                        isEnviando = false
+                        dialogBinding.progressDialog.isVisible = false
+                        dialogBinding.textErrorDialog.isVisible = true
+                        dialogBinding.textErrorDialog.text = estado.error
+                        dialog.getButton(DialogInterface.BUTTON_POSITIVE)?.isEnabled = true
+                        dialog.getButton(DialogInterface.BUTTON_NEGATIVE)?.isEnabled = true
+                        dialogBinding.inputHoras.isEnabled = true
+                    } else if (estado.data == true) {
+                        isEnviando = false
+                        dialogBinding.progressDialog.isVisible = false
+                        Toast.makeText(requireContext(), R.string.orden_rehabilitada, Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                        cargarOrden(ordenId)
+                    }
+                }
+            }
+        }
+
+        dialog.show()
     }
 
     private fun agregarVistaDeLinea(linea: DetalleOrden) {

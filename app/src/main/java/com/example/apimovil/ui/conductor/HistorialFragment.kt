@@ -13,13 +13,12 @@ import com.example.apimovil.R
 import com.example.apimovil.data.models.Orden
 import com.example.apimovil.databinding.FragmentHistorialBinding
 import com.example.apimovil.ui.common.OrdenAdapter
+import com.example.apimovil.ui.common.esCompletada
 import kotlinx.coroutines.launch
 
 /**
- * El backend ya excluye las órdenes "vencida" para el rol conductor (así
- * quedó definido a propósito), así que aquí solo tiene sentido ofrecer
- * "Todas" y "Completadas"; un filtro de "Vencidas" nunca tendría nada que
- * mostrar para este rol.
+ * El historial del conductor incluye órdenes donde esCompletada(estado).
+ * Permite filtrar entre todas las completadas o solo las completadas tarde.
  */
 class HistorialFragment : Fragment(R.layout.fragment_historial) {
 
@@ -45,7 +44,7 @@ class HistorialFragment : Fragment(R.layout.fragment_historial) {
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 model.ordenes.collect { estado ->
-                    todasLasOrdenes = estado.data.orEmpty()
+                    todasLasOrdenes = estado.data.orEmpty().filter { esCompletada(it.estado) }
                     aplicarFiltro()
                 }
             }
@@ -56,11 +55,16 @@ class HistorialFragment : Fragment(R.layout.fragment_historial) {
 
     private fun aplicarFiltro() {
         val filtradas = if (binding.toggleFiltro.checkedButtonId == R.id.btnCompletadas) {
-            todasLasOrdenes.filter { it.estado == "completada" }
+            todasLasOrdenes.filter { it.estado == "completada_tarde" }
         } else {
             todasLasOrdenes
         }
         adapter.submitList(filtradas)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        model.cargarMisOrdenes()
     }
 
     override fun onDestroyView() {

@@ -26,7 +26,6 @@ import com.example.apimovil.ui.common.FiltroAdapter
 import com.example.apimovil.ui.common.OrdenAdapter
 import com.example.apimovil.ui.common.configurarNavegacionAdmin
 import com.example.apimovil.ui.common.configurarNavegacionSupervisor
-import com.example.apimovil.ui.common.etiquetaDeEstado
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.chip.Chip
@@ -36,6 +35,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+
+data class OpcionEstado(val etiqueta: String, val valor: String?)
 
 class OrdenesAdminFragment : Fragment(R.layout.fragment_ordenes_admin) {
 
@@ -47,7 +48,18 @@ class OrdenesAdminFragment : Fragment(R.layout.fragment_ordenes_admin) {
         findNavController().navigate(R.id.ordenDetalleAdminFragment, bundle)
     }
 
-    private val estados = listOf("Todos los estados", "pendiente", "abierta", "completada", "vencida", "rehabilitada")
+    private val opcionesEstado by lazy {
+        listOf(
+            OpcionEstado(getString(R.string.todos_los_estados), null),
+            OpcionEstado(getString(R.string.filtro_pendientes), "pendiente"),
+            OpcionEstado(getString(R.string.filtro_abiertas), "abierta,abierta_tarde"),
+            OpcionEstado(getString(R.string.filtro_completadas), "completada,completada_tarde"),
+            OpcionEstado(getString(R.string.filtro_vencidas), "vencida"),
+            OpcionEstado(getString(R.string.filtro_abierta_tarde), "abierta_tarde"),
+            OpcionEstado(getString(R.string.filtro_completada_tarde), "completada_tarde"),
+        )
+    }
+
     private var estadoSeleccionado: String? = null
     private var conductorIdSeleccionado: Int? = null
     private var gasolineraIdSeleccionada: Int? = null
@@ -130,9 +142,11 @@ class OrdenesAdminFragment : Fragment(R.layout.fragment_ordenes_admin) {
         var hayFiltro = false
 
         // 1. Estado
-        estadoSeleccionado?.let { est ->
+        estadoSeleccionado?.let { valApi ->
             hayFiltro = true
-            val chip = crearChip(etiquetaDeEstado(requireContext(), est)) {
+            val opcion = opcionesEstado.find { it.valor == valApi }
+            val etiqueta = opcion?.etiqueta ?: valApi
+            val chip = crearChip(etiqueta) {
                 estadoSeleccionado = null
                 aplicarFiltros()
             }
@@ -214,14 +228,14 @@ class OrdenesAdminFragment : Fragment(R.layout.fragment_ordenes_admin) {
         var tempHasta = hastaSeleccionado
 
         // 1. Estado
+        val etiquetasEstado = opcionesEstado.map { it.etiqueta }
         sheetBinding.spinnerEstado.setAdapter(
-            ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, estados)
+            ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, etiquetasEstado)
         )
-        val textoEstado = if (tempEstado != null) etiquetaDeEstado(requireContext(), tempEstado) else estados.first()
-        sheetBinding.spinnerEstado.setText(textoEstado, false)
-        sheetBinding.spinnerEstado.setOnItemClickListener { adapterView: AdapterView<*>, _, position: Int, _ ->
-            val sel = estados[position]
-            tempEstado = if (sel == "Todos los estados") null else sel
+        val opcionActual = opcionesEstado.find { it.valor == tempEstado } ?: opcionesEstado.first()
+        sheetBinding.spinnerEstado.setText(opcionActual.etiqueta, false)
+        sheetBinding.spinnerEstado.setOnItemClickListener { _, _, position, _ ->
+            tempEstado = opcionesEstado.getOrNull(position)?.valor
         }
 
         // 2. Conductor
@@ -363,7 +377,7 @@ class OrdenesAdminFragment : Fragment(R.layout.fragment_ordenes_admin) {
             ultimoNombreValidoConductor = itemsConductor.first().nombre
             ultimoNombreValidoGasolinera = itemsGasolinera.first().nombre
 
-            sheetBinding.spinnerEstado.setText(estados.first(), false)
+            sheetBinding.spinnerEstado.setText(opcionesEstado.first().etiqueta, false)
             sheetBinding.spinnerConductor.setText(ultimoNombreValidoConductor, false)
             sheetBinding.spinnerGasolinera.setText(ultimoNombreValidoGasolinera, false)
             sheetBinding.inputRangoFechas.setText("")

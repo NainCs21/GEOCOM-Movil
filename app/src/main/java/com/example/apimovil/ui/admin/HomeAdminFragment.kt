@@ -17,6 +17,8 @@ import com.example.apimovil.ui.common.configurarNavegacionSupervisor
 import com.example.apimovil.ui.common.vincularBadgeAvisos
 import com.example.apimovil.ui.common.formatoLegible
 import com.example.apimovil.ui.common.parseFechaIso
+import com.example.apimovil.ui.common.esAbierta
+import com.example.apimovil.ui.common.esCompletada
 import com.example.apimovil.data.notificaciones.NotificacionesStore
 import com.google.android.material.badge.BadgeDrawable
 import com.google.android.material.badge.BadgeUtils
@@ -96,12 +98,12 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
                 launch {
                     model.ordenes.collect { estado ->
                         val ordenes = estado.data.orEmpty()
-                        binding.textAbiertas.text = ordenes.count { it.estado == "abierta" }.toString()
-                        binding.textCompletadas.text = ordenes.count { it.estado == "completada" }.toString()
+                        binding.textAbiertas.text = ordenes.count { esAbierta(it.estado) }.toString()
+                        binding.textCompletadas.text = ordenes.count { esCompletada(it.estado) }.toString()
                         binding.textVencidas.text = ordenes.count { it.estado == "vencida" }.toString()
 
                         val proxima = ordenes
-                            .filter { it.estado == "abierta" && it.vence_apertura != null }
+                            .filter { esAbierta(it.estado) && it.vence_apertura != null }
                             .minByOrNull { parseFechaIso(it.vence_apertura!!).time }
 
                         if (proxima != null) {

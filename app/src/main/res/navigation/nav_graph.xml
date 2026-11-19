@@ -19,7 +19,12 @@
     <fragment
         android:id="@+id/nuevaSolicitudFragment"
         android:name="com.example.apimovil.ui.conductor.NuevaSolicitudFragment"
-        android:label="Nueva solicitud" />
+        android:label="Nueva solicitud">
+        <argument
+            android:name="solicitudId"
+            app:argType="integer"
+            android:defaultValue="-1" />
+    </fragment>
 
     <fragment
         android:id="@+id/escanearQrFragment"

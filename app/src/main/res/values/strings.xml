@@ -190,8 +190,6 @@
     <string name="orden_rehabilitada">Orden rehabilitada con éxito</string>
     <string name="justificacion_tardanza">Justificación de entrega tardía</string>
     <string name="ingresa_justificacion">Ingresa el motivo por el cual se entrega tarde este pedido:</string>
-    <string name="tardio_badge">COMPLETADO TARDÍO</string>
-    <string name="rehabilitada_badge">REHABILITADA</string>
     <string name="continuar">Continuar</string>
     <string name="filtrar_por_conductor">Filtrar por conductor</string>
     <string name="todos_los_conductores">Todos los conductores</string>
@@ -273,4 +271,28 @@
     <string name="hace_n_h">Hace %1$d h</string>
     <string name="solicitud_codigo">Solicitud #%1$s</string>
     <string name="plazo_de_retiro">Plazo de retiro: %1$s</string>
+    <string name="confirmar">Confirmar</string>
+    <string name="editar_solicitud">Editar solicitud</string>
+    <string name="guardar_cambios">Guardar cambios</string>
+    <string name="solicitud_actualizada">Solicitud actualizada</string>
+    <string name="error_horas_vigencia">Indica horas de vigencia válidas (1, 2 o 3).</string>
+    <string name="error_justificacion_obligatoria">La justificación es obligatoria.</string>
+    <string name="rehabilitacion_ayuda_dialogo">La orden se abrirá de inmediato. El conductor podrá subir las evidencias que le falten sin escanear el QR, tendrá 15 minutos para hacerlo y deberá escribir la justificación de la entrega tardía.</string>
+    <string name="rehabilitacion_ayuda_admin_dialogo">La orden se abrirá de inmediato. El conductor podrá subir las evidencias que le falten sin escanear el QR, tendrá 15 minutos para hacerlo y deberá escribir la justificación de la entrega tardía.</string>
+    <string name="instruccion_justificacion_tardanza">Explica por qué la entrega se hizo tarde. Se guardará con la primera foto que subas.</string>
+    <string name="motivo">Motivo</string>
+    <string name="conductor_aun_no_justificacion">El conductor aún no ha escrito la justificación.</string>
+    <string name="justificacion_conductor_label">Justificación del conductor: %1$s</string>
+    <string name="aviso_orden_rehabilitada_conductor">Orden rehabilitada. Tienes poco tiempo para subir las evidencias que faltan.</string>
+    <string name="orden_completada_tardio_mensaje">Esta orden fue completada con retraso.</string>
+    <string name="justificacion_rehabilitacion_label">Justificación de rehabilitación: %1$s</string>
+    <string name="aviso_orden_rehabilitada">Orden rehabilitada. Tienes poco tiempo para subir las evidencias.</string>
+    <string name="motivo_rehabilitacion">Motivo: %1$s</string>
+    <string name="abierta_tarde_badge">ABIERTA TARDE</string>
+    <string name="completada_tarde_badge">COMPLETADA TARDE</string>
+    <string name="filtro_pendientes">Pendientes</string>
+    <string name="filtro_abiertas">Abiertas</string>
+    <string name="filtro_vencidas">Vencidas</string>
+    <string name="filtro_abierta_tarde">Abierta tarde</string>
+    <string name="filtro_completada_tarde">Completada tarde</string>
 </resources>

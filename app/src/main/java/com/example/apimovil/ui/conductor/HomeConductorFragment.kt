@@ -14,13 +14,13 @@ import com.example.apimovil.R
 import com.example.apimovil.data.SessionManager
 import com.example.apimovil.databinding.FragmentHomeConductorBinding
 import com.example.apimovil.ui.common.OrdenAdapter
+import com.example.apimovil.ui.common.esCompletada
 import kotlinx.coroutines.launch
 
 /**
  * "Mis solicitudes": el conductor toca cualquier orden (sin importar su
  * estado) para ver su detalle. Si está "pendiente", el detalle es quien
- * ofrece el botón para escanear el QR; aquí ya no hay un botón de escaneo
- * suelto, siguiendo el flujo real del Figma.
+ * ofrece el botón para escanear el QR.
  */
 class HomeConductorFragment : Fragment(R.layout.fragment_home_conductor) {
 
@@ -54,7 +54,7 @@ class HomeConductorFragment : Fragment(R.layout.fragment_home_conductor) {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 model.ordenes.collect { estado ->
                     binding.swipeRefresh.isRefreshing = estado.loading
-                    val ordenesActivas = estado.data.orEmpty().filter { it.estado.lowercase() != "completada" }
+                    val ordenesActivas = estado.data.orEmpty().filter { !esCompletada(it.estado) }
                     binding.textVacio.isVisible = !estado.loading && ordenesActivas.isEmpty()
                     binding.textError.isVisible = estado.error != null
                     binding.textError.text = estado.error

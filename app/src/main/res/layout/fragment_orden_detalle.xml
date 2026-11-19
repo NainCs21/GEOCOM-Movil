@@ -76,6 +76,17 @@
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
+            <TextView
+                android:id="@+id/textAvisoRehabilitacion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_tarjeta_info"
+                android:padding="12dp"
+                android:textColor="@color/marca_oscuro"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
             <!-- Contador de 15 minutos: tarjeta de advertencia -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/contenedorContador"
@@ -326,6 +337,15 @@
                 android:gravity="center"
                 android:textColor="@color/texto_secundario"
                 android:textSize="14sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/textJustificacionRehabilitacion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textColor="@color/texto_principal"
+                android:textSize="13sp"
                 android:visibility="gone" />
 
             <ProgressBar

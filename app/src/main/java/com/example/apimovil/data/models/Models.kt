@@ -91,6 +91,10 @@ data class AsignarOrdenRequest(
     val detalles: List<DetalleLineaRequest>
 )
 
+data class RehabilitarOrdenRequest(
+    val horas_vigencia: Int
+)
+
 data class EscanearRequest(
     val codigo_qr: String
 )
@@ -127,6 +131,7 @@ data class Orden(
     val fecha_apertura: String?,
     val vence_apertura: String?,
     val fecha_completada: String?,
+    val justificacion: String? = null,
     val gasolinera: Gasolinera? = null,
     val conductor: Conductor? = null,
     val detalles: List<DetalleOrden>? = null

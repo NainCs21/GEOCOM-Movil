@@ -38,10 +38,11 @@ private fun antiguedad(context: Context, createdAt: String?): String {
     }
 }
 
-// Adapter para la lista de solicitudes pendientes
+// Adapter para la lista de solicitudes pendientes o del conductor
 class SolicitudAdapter(
     private val mostrarAccionAsignar: Boolean = true,
     private val onRechazar: ((Solicitud) -> Unit)? = null,
+    private val onEditar: ((Solicitud) -> Unit)? = null,
     private val onClick: (Solicitud) -> Unit
 ) : ListAdapter<Solicitud, SolicitudAdapter.Holder>(DIFF) {
 
@@ -65,6 +66,10 @@ class SolicitudAdapter(
         holder.binding.textAsignarMonto.isVisible = mostrarAccionAsignar
         holder.binding.textRechazar.isVisible = mostrarAccionAsignar
         holder.binding.textRechazar.setOnClickListener { onRechazar?.invoke(solicitud) }
+
+        holder.binding.textEditar.isVisible = (onEditar != null && solicitud.estado == "pendiente")
+        holder.binding.textEditar.setOnClickListener { onEditar?.invoke(solicitud) }
+
         holder.binding.root.setOnClickListener { onClick(solicitud) }
     }
 }

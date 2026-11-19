@@ -6,6 +6,7 @@ import com.example.apimovil.data.ApiClient
 import com.example.apimovil.data.models.EscanearRequest
 import com.example.apimovil.data.models.MensajeResponse
 import com.example.apimovil.data.models.Orden
+import com.example.apimovil.data.models.Solicitud
 import com.example.apimovil.data.models.SolicitudRequest
 import com.example.apimovil.data.models.Vehiculo
 import com.example.apimovil.ui.common.UiState
@@ -36,6 +37,15 @@ class ConductorViewModel : ViewModel() {
 
     private val _solicitud = MutableStateFlow(UiState<Boolean>())
     val solicitud = _solicitud.asStateFlow()
+
+    private val _edicionSolicitud = MutableStateFlow(UiState<Boolean>())
+    val edicionSolicitud = _edicionSolicitud.asStateFlow()
+
+    private val _solicitudDetalle = MutableStateFlow(UiState<Solicitud>())
+    val solicitudDetalle = _solicitudDetalle.asStateFlow()
+
+    private val _solicitudes = MutableStateFlow(UiState<List<Solicitud>>())
+    val solicitudes = _solicitudes.asStateFlow()
 
     private val _ordenEscaneada = MutableStateFlow(UiState<Orden>())
     val ordenEscaneada = _ordenEscaneada.asStateFlow()
@@ -101,6 +111,71 @@ class ConductorViewModel : ViewModel() {
                 throw e
             } catch (e: Exception) {
                 _solicitud.value = UiState(error = mensajeDeError(e))
+            }
+        }
+    }
+
+    fun cargarSolicitudPorId(id: Int) {
+        viewModelScope.launch {
+            _solicitudDetalle.value = UiState(loading = true)
+            try {
+                val sol = ApiClient.api.verSolicitud(id)
+                _solicitudDetalle.value = UiState(data = sol)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _solicitudDetalle.value = UiState(error = mensajeDeError(e))
+            }
+        }
+    }
+
+    fun editarSolicitud(
+        id: Int,
+        tipoDestino: String,
+        vehiculoId: Int?,
+        descripcionMgp: String?,
+        descripcionActividad: String
+    ) {
+        if (descripcionActividad.isBlank()) {
+            _edicionSolicitud.value = UiState(error = "Describe la actividad que justifica el combustible.")
+            return
+        }
+
+        viewModelScope.launch {
+            _edicionSolicitud.value = UiState(loading = true)
+            try {
+                ApiClient.api.editarSolicitud(
+                    id,
+                    SolicitudRequest(
+                        tipo_destino = tipoDestino,
+                        vehiculo_id = vehiculoId,
+                        descripcion_mgp = descripcionMgp,
+                        descripcion_actividad = descripcionActividad
+                    )
+                )
+                _edicionSolicitud.value = UiState(data = true)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _edicionSolicitud.value = UiState(error = mensajeDeError(e))
+            }
+        }
+    }
+
+    fun limpiarEdicionSolicitud() {
+        _edicionSolicitud.value = UiState()
+    }
+
+    fun cargarMisSolicitudes() {
+        viewModelScope.launch {
+            _solicitudes.value = UiState(loading = true, data = _solicitudes.value.data)
+            try {
+                val pagina = ApiClient.api.listarSolicitudes()
+                _solicitudes.value = UiState(data = pagina.data)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _solicitudes.value = UiState(data = _solicitudes.value.data, error = mensajeDeError(e))
             }
         }
     }

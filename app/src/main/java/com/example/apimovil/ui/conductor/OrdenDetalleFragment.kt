@@ -1,9 +1,8 @@
 package com.example.apimovil.ui.conductor
 
-import android.Manifest
 import android.content.ContentValues
 import android.content.Context
-import android.content.pm.PackageManager
+import android.content.DialogInterface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -16,9 +15,6 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -34,6 +30,7 @@ import com.example.apimovil.data.ApiClient
 import com.example.apimovil.data.SessionManager
 import com.example.apimovil.data.models.DetalleOrden
 import com.example.apimovil.data.models.Orden
+import com.example.apimovil.databinding.DialogJustificacionTardanzaBinding
 import com.example.apimovil.databinding.FragmentOrdenDetalleBinding
 import com.example.apimovil.databinding.ItemLineaEvidenciaBinding
 import com.example.apimovil.ui.common.colorDeEstado
@@ -42,10 +39,10 @@ import com.example.apimovil.ui.common.fondoBadgeDeEstado
 import com.example.apimovil.ui.common.formatoLegible
 import com.example.apimovil.ui.common.normalizarUrlApi
 import com.example.apimovil.ui.common.parseFechaIso
+import com.example.apimovil.ui.common.esAbierta
+import com.example.apimovil.ui.common.esCompletada
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -96,10 +93,17 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
                     if (estado.error != null) {
                         binding.textError.isVisible = true
                         binding.textError.text = estado.error
+                        ordenActual?.id?.let { model.cargarOrdenPorId(it) }
+                        model.limpiarEvidencia()
                     }
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        ordenActual?.id?.let { model.cargarOrdenPorId(it) }
     }
 
     private fun pintarOrden(orden: Orden) {
@@ -116,6 +120,7 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
             binding.contenedorDetalleRevelado.isVisible = false
             binding.contenedorContador.isVisible = false
             binding.textMensajeFinal.isVisible = false
+            binding.textAvisoRehabilitacion.isVisible = false
             binding.textPlazoRetiro.text = getString(
                 R.string.plazo_de_retiro, formatoLegible(orden.vence_asignacion)
             )
@@ -144,9 +149,18 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
             tiposSubidos.contains("bomba") && (tiposSubidos.contains("tablero") || mgp) && tiposSubidos.contains("tanque") && tiposSubidos.contains("factura")
         }
 
-        when (orden.estado) {
-            "abierta", "rehabilitada", "completada" -> {
-                if (todasLineasCompletas || orden.estado == "completada") {
+        when {
+            esCompletada(orden.estado) -> {
+                binding.contenedorContador.isVisible = false
+                binding.textMensajeFinal.isVisible = true
+                binding.textMensajeFinal.text = if (orden.estado == "completada_tarde") {
+                    getString(R.string.orden_completada_tardio_mensaje)
+                } else {
+                    getString(R.string.orden_completada_mensaje)
+                }
+            }
+            esAbierta(orden.estado) -> {
+                if (todasLineasCompletas) {
                     binding.contenedorContador.isVisible = false
                     binding.textMensajeFinal.isVisible = true
                     binding.textMensajeFinal.text = getString(R.string.orden_completada_mensaje)
@@ -156,12 +170,7 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
                     iniciarContador(orden.vence_apertura)
                 }
             }
-            "tardio", "completado_tardio" -> {
-                binding.contenedorContador.isVisible = false
-                binding.textMensajeFinal.isVisible = true
-                binding.textMensajeFinal.text = getString(R.string.orden_completada_mensaje)
-            }
-            "vencida" -> {
+            orden.estado == "vencida" -> {
                 binding.contenedorContador.isVisible = false
                 binding.textMensajeFinal.isVisible = true
                 binding.textMensajeFinal.text = getString(R.string.orden_vencida_mensaje)
@@ -170,6 +179,17 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
                 binding.contenedorContador.isVisible = false
                 binding.textMensajeFinal.isVisible = false
             }
+        }
+
+        if (orden.estado == "abierta_tarde") {
+            binding.textAvisoRehabilitacion.isVisible = true
+            val aviso = getString(R.string.aviso_orden_rehabilitada_conductor)
+            val motivo = if (!orden.justificacion.isNullOrBlank()) {
+                "\n" + getString(R.string.motivo_rehabilitacion, orden.justificacion)
+            } else ""
+            binding.textAvisoRehabilitacion.text = "$aviso$motivo"
+        } else {
+            binding.textAvisoRehabilitacion.isVisible = false
         }
     }
 
@@ -192,7 +212,7 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
             val tiposSubidos = l.evidencias.map { it.tipo }.toSet()
             tiposSubidos.contains("bomba") && (tiposSubidos.contains("tablero") || mgp) && tiposSubidos.contains("tanque") && tiposSubidos.contains("factura")
         }
-        val isOpen = (ordenActual?.estado == "abierta" || ordenActual?.estado == "rehabilitada") && !todasCompletas
+        val isOpen = esAbierta(ordenActual?.estado) && !todasCompletas
 
         val evidenciasMap = linea.evidencias.associateBy { it.tipo }
 
@@ -397,32 +417,38 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
 
     private fun pedirPermisoYAbrirCamara(detalleId: Int, tipo: String) {
         val orden = ordenActual
-        if (orden?.estado == "rehabilitada") {
+        if (orden?.estado == "abierta_tarde" && orden.justificacion.isNullOrBlank()) {
             val context = requireContext()
-            val input = TextInputEditText(context).apply {
-                hint = getString(R.string.ingresa_justificacion)
-            }
-            val container = LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(48, 32, 48, 16)
-                addView(TextInputLayout(context).apply {
-                    addView(input)
-                    layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-                })
-            }
-            MaterialAlertDialogBuilder(context)
-                .setTitle(R.string.justificacion_tardanza)
-                .setView(container)
-                .setPositiveButton(R.string.continuar) { _, _ ->
-                    val justif = input.text?.toString()?.trim().orEmpty()
+            val dialogBinding = DialogJustificacionTardanzaBinding.inflate(LayoutInflater.from(context))
+
+            val dialog = MaterialAlertDialogBuilder(context)
+                .setView(dialogBinding.root)
+                .setPositiveButton(R.string.continuar, null)
+                .setNegativeButton(R.string.cancelar, null)
+                .create()
+
+            dialog.setOnShowListener {
+                val btnContinuar = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
+                btnContinuar.setOnClickListener {
+                    val justif = dialogBinding.inputJustificacion.text?.toString()?.trim().orEmpty()
                     if (justif.isBlank()) {
-                        Toast.makeText(context, "Debes ingresar una justificación.", Toast.LENGTH_SHORT).show()
-                        return@setPositiveButton
+                        dialogBinding.inputJustificacion.error = getString(R.string.error_justificacion_obligatoria)
+                        return@setOnClickListener
+                    } else {
+                        dialogBinding.inputJustificacion.error = null
                     }
+                    if (justif.length > 500) {
+                        dialogBinding.inputJustificacion.error = "Máximo 500 caracteres"
+                        return@setOnClickListener
+                    } else {
+                        dialogBinding.inputJustificacion.error = null
+                    }
+
+                    dialog.dismiss()
                     irAInstruccion(detalleId, tipo, justif)
                 }
-                .setNegativeButton(R.string.cancelar, null)
-                .show()
+            }
+            dialog.show()
         } else {
             irAInstruccion(detalleId, tipo, null)
         }
