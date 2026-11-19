@@ -295,4 +295,5 @@
     <string name="filtro_vencidas">Vencidas</string>
     <string name="filtro_abierta_tarde">Abierta tarde</string>
     <string name="filtro_completada_tarde">Completada tarde</string>
+    <string name="ver_factura_pdf">Ver / Exportar Factura PDF</string>
 </resources>

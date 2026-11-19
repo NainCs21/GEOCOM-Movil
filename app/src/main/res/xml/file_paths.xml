@@ -2,4 +2,5 @@
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <cache-path name="evidencias_temp" path="." />
     <cache-path name="reportes" path="reportes/" />
+    <cache-path name="facturas" path="facturas/" />
 </paths>
