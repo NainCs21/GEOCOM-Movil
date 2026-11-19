@@ -123,6 +123,7 @@
     <string name="notificaciones_titulo">Notificaciones</string>
     <string name="notificaciones_nota">Se generan a partir de tus órdenes completadas y vencidas recientes.</string>
     <string name="sin_notificaciones">No hay notificaciones por ahora.</string>
+    <string name="marcar_todas_leidas">Marcar todas leídas</string>
     <string name="orden_completada_notif">%1$s completó su carga en %2$s.</string>
     <string name="orden_vencida_notif">%1$s no completó la orden %2$s dentro del tiempo de vigencia.</string>
 

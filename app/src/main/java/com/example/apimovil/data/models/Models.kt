@@ -72,7 +72,8 @@ data class Solicitud(
     val conductor: Conductor? = null,
     val vehiculo: Vehiculo? = null,
     val orden: Orden? = null,
-    val created_at: String? = null
+    val created_at: String? = null,
+    val updated_at: String? = null
 )
 
 // Modelos para ordenes de carga de combustible

@@ -1,9 +1,16 @@
 package com.example.apimovil.ui.common
 
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import com.example.apimovil.R
+import com.example.apimovil.data.notificaciones.NotificacionesStore
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 /**
  * Conecta la barra inferior de Administrador/Supervisor con el NavController,
@@ -71,3 +78,18 @@ private fun destinoActualAItemSupervisor(destino: Int): Int = when (destino) {
     R.id.reportesFragment -> R.id.nav_reportes
     else -> R.id.nav_perfil
 }
+
+fun BottomNavigationView.vincularBadgeAvisos(owner: LifecycleOwner, itemId: Int) {
+    owner.lifecycleScope.launch {
+        owner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            NotificacionesStore.noLeidas.collect { count ->
+                try {
+                    val badge = getOrCreateBadge(itemId)
+                    badge.isVisible = count > 0
+                    badge.number = count
+                } catch (_: Exception) {}
+            }
+        }
+    }
+}
+

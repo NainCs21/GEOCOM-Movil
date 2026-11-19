@@ -87,6 +87,7 @@ object SessionManager {
     }
 
     val token: String? get() = prefs.getString(KEY_TOKEN, null)
+    val usuarioId: Int get() = prefs.getInt(KEY_USUARIO_ID, -1)
     val nombre: String? get() = prefs.getString(KEY_NOMBRE, null)
     val correo: String? get() = prefs.getString(KEY_CORREO, null)
     val rol: String? get() = prefs.getString(KEY_ROL, null)

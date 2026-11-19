@@ -23,7 +23,7 @@ interface ApiService {
     suspend fun crearSolicitud(@Body body: SolicitudRequest): Solicitud
 
     @GET("solicitudes")
-    suspend fun listarSolicitudes(): PaginaRespuesta<Solicitud>
+    suspend fun listarSolicitudes(@Query("page") page: Int? = null): PaginaRespuesta<Solicitud>
 
     @GET("solicitudes/{id}")
     suspend fun verSolicitud(@Path("id") id: Int): Solicitud
@@ -39,6 +39,7 @@ interface ApiService {
         @Query("gasolinera_id") gasolineraId: Int? = null,
         @Query("desde") desde: String? = null,
         @Query("hasta") hasta: String? = null,
+        @Query("page") page: Int? = null,
     ): PaginaRespuesta<Orden>
 
     @GET("ordenes/{id}")

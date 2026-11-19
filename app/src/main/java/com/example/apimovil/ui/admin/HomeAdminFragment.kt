@@ -14,14 +14,19 @@ import com.example.apimovil.data.SessionManager
 import com.example.apimovil.databinding.FragmentHomeAdminBinding
 import com.example.apimovil.ui.common.configurarNavegacionAdmin
 import com.example.apimovil.ui.common.configurarNavegacionSupervisor
+import com.example.apimovil.ui.common.vincularBadgeAvisos
 import com.example.apimovil.ui.common.formatoLegible
 import com.example.apimovil.ui.common.parseFechaIso
+import com.example.apimovil.data.notificaciones.NotificacionesStore
+import com.google.android.material.badge.BadgeDrawable
+import com.google.android.material.badge.BadgeUtils
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@Suppress("RestrictedApi")
 class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
 
     private val model: AdminViewModel by viewModels()
@@ -44,10 +49,23 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
             bottomNav.menu.clear()
             bottomNav.inflateMenu(R.menu.bottom_nav_admin)
             bottomNav.configurarNavegacionAdmin(findNavController(), R.id.homeAdminFragment)
+            bottomNav.vincularBadgeAvisos(viewLifecycleOwner, R.id.nav_mas)
         } else {
             bottomNav.menu.clear()
             bottomNav.inflateMenu(R.menu.bottom_nav_supervisor)
             bottomNav.configurarNavegacionSupervisor(findNavController(), R.id.homeAdminFragment)
+            bottomNav.vincularBadgeAvisos(viewLifecycleOwner, R.id.nav_avisos)
+        }
+
+        val badgeDrawable = BadgeDrawable.create(requireContext())
+        BadgeUtils.attachBadgeDrawable(badgeDrawable, binding.btnNotificaciones)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                NotificacionesStore.noLeidas.collect { count ->
+                    badgeDrawable.isVisible = count > 0
+                    badgeDrawable.number = count
+                }
+            }
         }
 
         binding.btnNotificaciones.setOnClickListener {

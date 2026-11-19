@@ -19,6 +19,15 @@ fun parseFechaIso(fecha: String): Date {
     return formato.parse(normalizada) ?: Date()
 }
 
+fun parseFechaIsoMillis(fecha: String?): Long {
+    if (fecha.isNullOrBlank()) return 0L
+    return try {
+        parseFechaIso(fecha).time
+    } catch (_: Exception) {
+        0L
+    }
+}
+
 fun formatoLegible(fecha: String): String {
     return try {
         val formato = SimpleDateFormat("dd/MM/yyyy hh:mm a", Locale("es", "HN"))
