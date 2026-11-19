@@ -2,12 +2,11 @@ package com.example.apimovil.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.security.crypto.EncryptedSharedPreferences
+import androidx.security.crypto.MasterKey
 
-// Administra la sesion local del usuario en SharedPreferences
+// Administra la sesion local del usuario de forma segura con EncryptedSharedPreferences
 object SessionManager {
-
-    // El valor definitivo esta pendiente de confirmar con el cliente (RNF-20)
-    const val INACTIVIDAD_HORAS = 8
 
     private const val PREFS = "api_movil_sesion"
     private const val KEY_TOKEN = "token"
@@ -15,14 +14,51 @@ object SessionManager {
     private const val KEY_NOMBRE = "nombre"
     private const val KEY_CORREO = "correo"
     private const val KEY_ROL = "rol"
-    private const val KEY_ULTIMA_ACTIVIDAD = "ultima_actividad"
     private const val KEY_MENSAJE_SALIDA = "mensaje_salida"
 
     private lateinit var prefs: SharedPreferences
 
-    // Inicializa las preferencias compartidas
+    // Inicializa las preferencias compartidas cifradas con migración y fallback
     fun init(context: Context) {
-        prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val appContext = context.applicationContext
+        try {
+            val regularPrefs = appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            val oldToken = regularPrefs.getString(KEY_TOKEN, null)
+
+            val masterKey = MasterKey.Builder(appContext)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+
+            val encryptedPrefs = EncryptedSharedPreferences.create(
+                appContext,
+                PREFS,
+                masterKey,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+
+            if (!oldToken.isNullOrBlank() && encryptedPrefs.getString(KEY_TOKEN, null).isNullOrBlank()) {
+                val usuarioId = regularPrefs.getInt(KEY_USUARIO_ID, -1)
+                val nombre = regularPrefs.getString(KEY_NOMBRE, null)
+                val correo = regularPrefs.getString(KEY_CORREO, null)
+                val rol = regularPrefs.getString(KEY_ROL, null)
+                val mensajeSalida = regularPrefs.getString(KEY_MENSAJE_SALIDA, null)
+
+                val editor = encryptedPrefs.edit()
+                editor.putString(KEY_TOKEN, oldToken)
+                if (usuarioId != -1) editor.putInt(KEY_USUARIO_ID, usuarioId)
+                if (nombre != null) editor.putString(KEY_NOMBRE, nombre)
+                if (correo != null) editor.putString(KEY_CORREO, correo)
+                if (rol != null) editor.putString(KEY_ROL, rol)
+                if (mensajeSalida != null) editor.putString(KEY_MENSAJE_SALIDA, mensajeSalida)
+                editor.apply()
+
+                regularPrefs.edit().clear().apply()
+            }
+            prefs = encryptedPrefs
+        } catch (_: Exception) {
+            prefs = appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        }
     }
 
     // Guarda los datos del usuario tras un login exitoso
@@ -34,30 +70,18 @@ object SessionManager {
             .putString(KEY_CORREO, correo)
             .putString(KEY_ROL, rol)
             .apply()
-        actualizarUltimaActividad()
     }
 
-    // Actualiza la marca de tiempo de la ultima actividad del usuario
-    fun actualizarUltimaActividad() {
-        if (haySesion) {
-            prefs.edit().putLong(KEY_ULTIMA_ACTIVIDAD, System.currentTimeMillis()).apply()
-        }
+    // Actualiza los datos del usuario sin modificar el token
+    fun actualizarUsuario(nombre: String, correo: String, rol: String?) {
+        prefs.edit()
+            .putString(KEY_NOMBRE, nombre)
+            .putString(KEY_CORREO, correo)
+            .putString(KEY_ROL, rol)
+            .apply()
     }
 
-    // Comprueba si ha superado el tiempo limite de inactividad (8 horas sin usar la app)
-    fun haExpiradoInactividad(): Boolean {
-        if (!haySesion) return false
-        val ultima = prefs.getLong(KEY_ULTIMA_ACTIVIDAD, 0L)
-        if (ultima == 0L) {
-            actualizarUltimaActividad()
-            return false
-        }
-        val transcurridoMs = System.currentTimeMillis() - ultima
-        val limiteMs = INACTIVIDAD_HORAS * 60 * 60 * 1000L
-        return transcurridoMs > limiteMs
-    }
-
-    // Guarda un mensaje de salida (sesion expirada o inactividad) para mostrarlo en el login
+    // Guarda un mensaje de salida (sesion expirada) para mostrarlo en el login
     fun guardarMensajeSalida(mensaje: String) {
         prefs.edit().putString(KEY_MENSAJE_SALIDA, mensaje).apply()
     }

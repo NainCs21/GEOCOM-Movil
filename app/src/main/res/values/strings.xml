@@ -256,4 +256,9 @@
     <string name="reactivar">Reactivar</string>
     <string name="reactivar_mensaje">¿Reactivar este registro? Volverá a estar disponible en el sistema.</string>
     <string name="registro_reactivado">Registro reactivado</string>
+
+    <!-- Confirmar contraseña de administrador -->
+    <string name="dialog_confirmar_contrasena_titulo">Confirmar contraseña</string>
+    <string name="dialog_confirmar_contrasena_mensaje">Ingresa tu contraseña para autorizar la asignación de la orden.</string>
+    <string name="contrasena_requerida">Ingresa tu contraseña.</string>
 </resources>

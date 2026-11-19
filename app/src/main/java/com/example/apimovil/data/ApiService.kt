@@ -18,6 +18,9 @@ interface ApiService {
     @GET("yo")
     suspend fun yo(): UsuarioInfo
 
+    @POST("verificar-contrasena")
+    suspend fun verificarContrasena(@Body body: VerificarContrasenaRequest): VerificarContrasenaResponse
+
     // Solicitudes
     @POST("solicitudes")
     suspend fun crearSolicitud(@Body body: SolicitudRequest): Solicitud

@@ -14,6 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.NavHostFragment
+import com.example.apimovil.data.ApiClient
 import com.example.apimovil.data.SessionManager
 import com.example.apimovil.data.SesionEventos
 import com.example.apimovil.data.notificaciones.NotificacionesRepository
@@ -23,6 +24,7 @@ import com.example.apimovil.data.notificaciones.programarSincronizacionNotificac
 import com.example.apimovil.databinding.ActivityMainBinding
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
 
@@ -50,6 +52,25 @@ class MainActivity : AppCompatActivity() {
                 navController.graph = graph
             }
 
+            // Cold start call to /yo
+            lifecycleScope.launch {
+                try {
+                    val usuario = ApiClient.api.yo()
+                    val rolAnterior = SessionManager.rol
+                    SessionManager.actualizarUsuario(usuario.nombre, usuario.correo, usuario.rol)
+                    if (usuario.rol != rolAnterior && esArranqueEnFrio) {
+                        val nuevoDestino = if (SessionManager.esConductor) R.id.homeConductorFragment else R.id.homeAdminFragment
+                        val graph = navController.navInflater.inflate(R.navigation.nav_graph)
+                        graph.setStartDestination(nuevoDestino)
+                        navController.graph = graph
+                    }
+                } catch (_: IOException) {
+                    // Offline mode, maintain session
+                } catch (_: Exception) {
+                    // Other errors (401 handled by interceptor)
+                }
+            }
+
             if (SessionManager.puedeConsultar) {
                 programarSincronizacionNotificaciones(this)
                 lifecycleScope.launch {
@@ -63,7 +84,7 @@ class MainActivity : AppCompatActivity() {
         verificarYPedirPermisoNotificaciones()
         handleNotificationIntent(intent, navController)
 
-        // Observar eventos globales de sesion y chequeo periodico de notificaciones e inactividad
+        // Observar eventos globales de sesion y chequeo periodico de notificaciones
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
@@ -86,12 +107,6 @@ class MainActivity : AppCompatActivity() {
                             navController.navigate(R.id.loginFragment, null, navOptions)
                         }
                         SesionEventos.reiniciarGuardia()
-                    }
-                }
-                launch {
-                    while (true) {
-                        delay(30_000L) // Chequeo periodico de inactividad
-                        verificarInactividadYSalir()
                     }
                 }
             }
@@ -144,32 +159,14 @@ class MainActivity : AppCompatActivity() {
         } catch (_: Exception) {}
     }
 
-    override fun onUserInteraction() {
-        super.onUserInteraction()
-        if (SessionManager.haySesion) {
-            SessionManager.actualizarUltimaActividad()
-        }
-    }
-
     override fun onResume() {
         super.onResume()
-        verificarInactividadYSalir()
-        if (SessionManager.haySesion) {
-            SessionManager.actualizarUltimaActividad()
-        }
         verificarYPedirPermisoNotificaciones()
         if (SessionManager.haySesion && SessionManager.puedeConsultar) {
             programarSincronizacionNotificaciones(this)
             lifecycleScope.launch {
                 NotificacionesRepository.sincronizar(this@MainActivity)
             }
-        }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        if (SessionManager.haySesion) {
-            SessionManager.actualizarUltimaActividad()
         }
     }
 
@@ -187,16 +184,6 @@ class MainActivity : AppCompatActivity() {
                         1001,
                     )
                 }
-            }
-        }
-    }
-
-    private fun verificarInactividadYSalir() {
-        if (SessionManager.haySesion && SessionManager.haExpiradoInactividad()) {
-            lifecycleScope.launch {
-                cancelarSincronizacionNotificaciones(this@MainActivity)
-                SessionManager.cerrarSesionRemotaYLocal()
-                SesionEventos.notificarSesionExpirada("Tu sesión se cerró por inactividad.")
             }
         }
     }

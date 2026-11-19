@@ -177,3 +177,15 @@ data class PaginaRespuesta<T>(
 data class MensajeResponse(val mensaje: String? = null, val message: String? = null) {
     val texto: String get() = mensaje ?: message ?: "Ocurrio un error inesperado."
 }
+
+// Modelos para verificación de contraseña de administrador
+data class VerificarContrasenaRequest(
+    val contrasena: String
+)
+
+data class VerificarContrasenaResponse(
+    val permitido: Boolean,
+    val usuario_id: Int? = null,
+    val rol: String? = null,
+    val mensaje: String? = null
+)

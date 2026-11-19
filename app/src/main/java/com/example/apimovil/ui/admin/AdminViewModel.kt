@@ -9,6 +9,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 
 // ViewModel principal para las funciones de administracion y supervision
 class AdminViewModel : ViewModel() {
@@ -75,6 +77,40 @@ class AdminViewModel : ViewModel() {
                 _asignacion.value = UiState(error = mensajeDeError(e))
             }
         }
+    }
+
+    // Verificación de contraseña de administrador
+    private val _verificacion = MutableStateFlow(UiState<Boolean>())
+    val verificacion = _verificacion.asStateFlow()
+
+    fun verificarContrasena(contrasena: String, alExito: () -> Unit) {
+        viewModelScope.launch {
+            _verificacion.value = UiState(loading = true)
+            try {
+                val respuesta = ApiClient.api.verificarContrasena(VerificarContrasenaRequest(contrasena))
+                if (respuesta.permitido) {
+                    _verificacion.value = UiState(data = true)
+                    alExito()
+                } else {
+                    _verificacion.value = UiState(error = respuesta.mensaje ?: "Contraseña incorrecta.")
+                }
+            } catch (e: HttpException) {
+                val mensaje = when (e.code()) {
+                    401 -> "Contraseña incorrecta."
+                    403 -> "Tu cuenta no tiene un rol activo."
+                    else -> mensajeDeError(e)
+                }
+                _verificacion.value = UiState(error = mensaje)
+            } catch (e: IOException) {
+                _verificacion.value = UiState(error = "Sin conexión. Revisa tu internet e intenta de nuevo.")
+            } catch (e: Exception) {
+                _verificacion.value = UiState(error = mensajeDeError(e))
+            }
+        }
+    }
+
+    fun limpiarVerificacion() {
+        _verificacion.value = UiState()
     }
 
     // Consulta general de ordenes

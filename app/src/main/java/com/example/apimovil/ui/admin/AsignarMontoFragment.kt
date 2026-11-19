@@ -5,6 +5,9 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.ArrayAdapter
+import android.widget.ProgressBar
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -17,6 +20,8 @@ import com.example.apimovil.data.models.DetalleLineaRequest
 import com.example.apimovil.data.models.Gasolinera
 import com.example.apimovil.data.models.Vehiculo
 import com.example.apimovil.databinding.FragmentAsignarMontoBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
 
 class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
@@ -171,7 +176,72 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
                 return@setOnClickListener
             }
 
-            model.asignarOrden(solicitudId, gasolineraId, horas, detalles)
+            mostrarDialogoConfirmarContrasena(solicitudId, gasolineraId, horas, detalles)
+        }
+    }
+
+    private fun mostrarDialogoConfirmarContrasena(
+        solicitudId: Int,
+        gasolineraId: Int,
+        horas: Int,
+        detalles: List<DetalleLineaRequest>
+    ) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_confirmar_contrasena, null)
+        val inputContrasena = dialogView.findViewById<TextInputEditText>(R.id.inputContrasenaAdmin)
+        val progress = dialogView.findViewById<ProgressBar>(R.id.progressVerificacion)
+        val textError = dialogView.findViewById<TextView>(R.id.textErrorVerificacion)
+
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.dialog_confirmar_contrasena_titulo)
+            .setView(dialogView)
+            .setPositiveButton(R.string.aceptar, null)
+            .setNegativeButton(R.string.cancelar) { d, _ ->
+                model.limpiarVerificacion()
+                d.dismiss()
+            }
+            .setOnDismissListener {
+                model.limpiarVerificacion()
+            }
+            .create()
+
+        dialog.show()
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            val contrasena = inputContrasena.text?.toString()?.trim().orEmpty()
+            if (contrasena.isEmpty()) {
+                textError.isVisible = true
+                textError.text = getString(R.string.contrasena_requerida)
+                return@setOnClickListener
+            }
+            textError.isVisible = false
+            progress.isVisible = true
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).isEnabled = false
+            inputContrasena.isEnabled = false
+
+            model.verificarContrasena(contrasena) {
+                dialog.dismiss()
+                model.asignarOrden(solicitudId, gasolineraId, horas, detalles)
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                model.verificacion.collect { estado ->
+                    if (!dialog.isShowing) return@collect
+                    progress.isVisible = estado.loading
+                    val buttonsEnabled = !estado.loading
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = buttonsEnabled
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).isEnabled = buttonsEnabled
+                    inputContrasena.isEnabled = buttonsEnabled
+
+                    if (estado.error != null) {
+                        textError.isVisible = true
+                        textError.text = estado.error
+                        inputContrasena.setText("")
+                    }
+                }
+            }
         }
     }
 

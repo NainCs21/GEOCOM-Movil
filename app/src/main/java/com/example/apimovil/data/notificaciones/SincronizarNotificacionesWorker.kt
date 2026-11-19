@@ -18,13 +18,6 @@ class SincronizarNotificacionesWorker(
     override suspend fun doWork(): Result {
         SessionManager.init(applicationContext)
 
-        if (SessionManager.haySesion && SessionManager.haExpiradoInactividad()) {
-            SessionManager.guardarMensajeSalida("Tu sesión se cerró por inactividad.")
-            SessionManager.cerrarSesionRemotaYLocal()
-            cancelarSincronizacionNotificaciones(applicationContext)
-            return Result.success()
-        }
-
         if (!SessionManager.haySesion || !SessionManager.puedeConsultar) {
             return Result.success()
         }

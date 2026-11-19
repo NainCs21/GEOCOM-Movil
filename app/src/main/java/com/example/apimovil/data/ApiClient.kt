@@ -39,7 +39,7 @@ private class SessionExpiredInterceptor : Interceptor {
         val response = chain.proceed(original)
         if (response.code == 401 && SessionManager.haySesion) {
             val path = original.url.encodedPath
-            if (!path.endsWith("/login") && !path.endsWith("/logout")) {
+            if (!path.endsWith("/login") && !path.endsWith("/logout") && !path.endsWith("/verificar-contrasena")) {
                 SessionManager.cerrarSesion()
                 runBlocking {
                     SesionEventos.notificarSesionExpirada("Tu sesión expiró. Inicia sesión de nuevo.")
