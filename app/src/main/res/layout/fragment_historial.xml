@@ -143,4 +143,9 @@
             android:textSize="12sp" />
 
     </LinearLayout>
+
+    <include
+        android:id="@+id/incluirNavInferior"
+        layout="@layout/widget_nav_conductor" />
+
 </LinearLayout>

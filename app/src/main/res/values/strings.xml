@@ -304,4 +304,6 @@
     <string name="filtro_completada_tarde">Completada tarde</string>
     <string name="abierta_tarde_badge">ABIERTA TARDE</string>
     <string name="completada_tarde_badge">COMPLETADA TARDE</string>
+    <string name="sin_ordenes_activas_titulo">Aquí se mostrarán tus órdenes</string>
+    <string name="sin_ordenes_activas_subtitulo">No tienes órdenes activas en este momento. Cuando tengas solicitudes aprobadas o autorizadas para retirar combustible aparecerán aquí.</string>
 </resources>

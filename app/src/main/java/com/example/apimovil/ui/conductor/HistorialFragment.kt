@@ -9,10 +9,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import android.widget.Toast
 import com.example.apimovil.R
 import com.example.apimovil.data.models.Orden
 import com.example.apimovil.databinding.FragmentHistorialBinding
 import com.example.apimovil.ui.common.OrdenAdapter
+import com.example.apimovil.ui.common.configurarNavegacionConductor
 import kotlinx.coroutines.launch
 
 class HistorialFragment : Fragment(R.layout.fragment_historial) {
@@ -29,6 +31,16 @@ class HistorialFragment : Fragment(R.layout.fragment_historial) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentHistorialBinding.bind(view)
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
+
+        val bottomNav = binding.root.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavConductor)
+        bottomNav?.configurarNavegacionConductor(findNavController(), R.id.historialFragment) {
+            val ordenPendiente = model.ordenes.value.data.orEmpty().find { it.estado == "pendiente" }
+            if (ordenPendiente != null) {
+                findNavController().navigate(R.id.escanearQrFragment)
+            } else {
+                Toast.makeText(requireContext(), "No tienes órdenes pendientes de escanear", Toast.LENGTH_SHORT).show()
+            }
+        }
         binding.recyclerHistorial.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerHistorial.adapter = adapter
 

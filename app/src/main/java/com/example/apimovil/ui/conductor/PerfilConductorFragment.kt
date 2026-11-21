@@ -2,7 +2,9 @@ package com.example.apimovil.ui.conductor
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
@@ -11,16 +13,29 @@ import com.example.apimovil.data.SessionManager
 import com.example.apimovil.data.notificaciones.NotificacionesForegroundService
 import com.example.apimovil.data.notificaciones.cancelarSincronizacionNotificaciones
 import com.example.apimovil.databinding.FragmentPerfilConductorBinding
+import com.example.apimovil.ui.common.configurarNavegacionConductor
 import kotlinx.coroutines.launch
 
 class PerfilConductorFragment : Fragment(R.layout.fragment_perfil_conductor) {
 
+    private val model: ConductorViewModel by viewModels()
     private var _binding: FragmentPerfilConductorBinding? = null
     private val binding get() = _binding!!
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentPerfilConductorBinding.bind(view)
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
+
+        val bottomNav = binding.root.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavConductor)
+        bottomNav?.configurarNavegacionConductor(findNavController(), R.id.perfilConductorFragment) {
+            val ordenPendiente = model.ordenes.value.data.orEmpty().find { it.estado == "pendiente" }
+            if (ordenPendiente != null) {
+                findNavController().navigate(R.id.escanearQrFragment)
+            } else {
+                Toast.makeText(requireContext(), "No tienes órdenes pendientes de escanear", Toast.LENGTH_SHORT).show()
+            }
+        }
+        model.cargarMisOrdenes()
         binding.textNombre.text = SessionManager.nombre ?: ""
         binding.textCorreo.text = SessionManager.correo ?: ""
 
