@@ -19,6 +19,7 @@ import com.example.apimovil.databinding.FragmentReportesBinding
 import com.example.apimovil.ui.common.*
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.flow.map
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -34,6 +35,22 @@ class ReportesFragment : Fragment(R.layout.fragment_reportes) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentReportesBinding.bind(view)
         binding.recycler.layoutManager = LinearLayoutManager(requireContext())
+
+        val bottomNav = binding.root.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.incluirNavInferior)
+            ?: binding.root.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavAdmin)
+        if (SessionManager.esAdmin) {
+            bottomNav?.menu?.clear()
+            bottomNav?.inflateMenu(R.menu.bottom_nav_admin)
+            bottomNav?.configurarNavegacionAdmin(findNavController(), R.id.reportesFragment)
+            bottomNav?.vincularBadgeAvisos(viewLifecycleOwner, R.id.nav_mas)
+            bottomNav?.vincularBadgeSolicitudes(viewLifecycleOwner, R.id.nav_solicitudes, model.solicitudesPendientes.map { it.data?.size ?: 0 })
+            model.cargarSolicitudesPendientes()
+        } else {
+            bottomNav?.menu?.clear()
+            bottomNav?.inflateMenu(R.menu.bottom_nav_supervisor)
+            bottomNav?.configurarNavegacionSupervisor(findNavController(), R.id.reportesFragment)
+            bottomNav?.vincularBadgeAvisos(viewLifecycleOwner, R.id.nav_avisos)
+        }
 
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
         binding.btnPeriodo.text = model.periodoSeleccionadoEtiqueta

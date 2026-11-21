@@ -197,4 +197,8 @@
             android:visibility="gone" />
     </FrameLayout>
 
+    <include
+        android:id="@+id/incluirNavInferior"
+        layout="@layout/widget_bottom_nav_admin" />
+
 </LinearLayout>
