@@ -27,6 +27,7 @@ import com.example.apimovil.data.models.Vehiculo
 import com.example.apimovil.databinding.FragmentCatalogosBinding
 import com.example.apimovil.ui.common.configurarNavegacionAdmin
 import com.example.apimovil.ui.common.configurarNavegacionSupervisor
+import com.example.apimovil.ui.common.formatoCargo
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -100,7 +101,7 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                             FilaDoble(
                                 id = it.id,
                                 titulo = it.usuario?.name ?: getString(R.string.conductor_numero, it.id),
-                                subtitulo = "${it.telefono} · ${it.cargo}" +
+                                subtitulo = "${it.telefono} · ${formatoCargo(it.cargo)}" +
                                     if (!it.activo) " · " + getString(R.string.inactivo) else ""
                             )
                         })
@@ -442,6 +443,7 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         val b = _binding ?: return
         b.toggleCatalogo.check(R.id.btnConductores)
         b.layoutFiltrosVehiculos.isVisible = false
+        b.btnNuevo.text = getString(R.string.nuevo_conductor_btn)
         model.cargarConductores()
     }
 
@@ -449,6 +451,7 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         val b = _binding ?: return
         b.toggleCatalogo.check(R.id.btnVehiculos)
         b.layoutFiltrosVehiculos.isVisible = true
+        b.btnNuevo.text = getString(R.string.nuevo_vehiculo_btn)
         if (b.toggleFiltroCombustible.checkedButtonId == View.NO_ID) {
             b.toggleFiltroCombustible.check(R.id.btnFiltroTodos)
         }
@@ -463,6 +466,7 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         val b = _binding ?: return
         b.toggleCatalogo.check(R.id.btnGasolineras)
         b.layoutFiltrosVehiculos.isVisible = false
+        b.btnNuevo.text = getString(R.string.nuevo_gasolinera_btn)
         model.cargarGasolineras()
     }
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Órdenes de Combustible</string>
+    <string name="app_name">GESTCOM</string>
 
     <!-- Login -->
     <string name="correo">Correo electrónico</string>
@@ -9,16 +9,16 @@
     <string name="inicia_sesion">Inicia sesión</string>
     <string name="acceso_seguro">Acceso seguro</string>
     <string name="control_movil">ADMINISTRACIÓN MÓVIL</string>
-    <string name="control_de_combustible_desde_tu_movil">Control de combustible.\nDesde tu móvil.</string>
+    <string name="control_de_combustible_desde_tu_movil">Gestión de órdenes de combustible</string>
     <string name="asigna_consulta_y_gestiona">Asigna, consulta y gestiona en un solo lugar.</string>
-    <string name="olvidaste_tu_contrasena">¿Olvidaste tu contraseña?</string>
+    <string name="olvidaste_tu_contrasena">Si no puedes ingresar, contacta al administrador.</string>
     <string name="una_app_el_acceso_que_corresponde">Una app, el acceso que te corresponde</string>
     <string name="al_ingresar_tu_rol_te_lleva">Al ingresar, tu rol te lleva automáticamente a la vista que corresponde.</string>
     <string name="acceso_exclusivo_personal_autorizado">Acceso exclusivo para personal autorizado.</string>
     <string name="hola_usuario">Hola, %1$s</string>
     <string name="hola_usuario_rol">Hola, %1$s (%2$s)</string>
     <string name="rol_administrador">Administrador</string>
-    <string name="rol_supervisor">Supervisor</string>
+    <string name="rol_supervisor">Contabilidad</string>
     <string name="cerrar_sesion">Cerrar sesión</string>
 
     <!-- Conductor: inicio -->
@@ -49,7 +49,7 @@
     <string name="orden_numero">Orden #%1$s</string>
     <string name="pendiente_de_retirar_badge">PENDIENTE</string>
     <string name="disponible_badge">DISPONIBLE</string>
-    <string name="completada_badge">COMPLETADA</string>
+    <string name="completada_badge">Completadas</string>
     <string name="vencida_badge">VENCIDA</string>
     <string name="ver_orden">Ver orden</string>
     <string name="escanear_qr_de_gasolinera">Escanear QR de gasolinera</string>
@@ -91,19 +91,19 @@
     <string name="buen_dia_usuario">Buen día, %1$s</string>
     <string name="solicitudes_pendientes">Solicitudes pendientes</string>
     <string name="esperan_asignacion_de_monto">Esperan asignación de monto</string>
-    <string name="asignar_montos">Asignar montos  →</string>
+    <string name="asignar_montos">Asignar montos</string>
     <string name="abierta_badge">Abiertas</string>
-    <string name="ordenes_del_dia_vigencia">Órdenes del día y vigencia</string>
+    <string name="ordenes_del_dia_vigencia">Órdenes de hoy</string>
     <string name="vence_a_las">Vence en %1$s · %2$s</string>
     <string name="quedan_n_min">Quedan %1$d min</string>
     <string name="accesos_rapidos">Accesos rápidos</string>
-    <string name="catalogos_flecha">Catálogos  →</string>
-    <string name="mas_caja_chica">Caja chica  →</string>
+    <string name="catalogos_flecha">Catálogos</string>
+    <string name="mas_caja_chica">Caja chica</string>
 
     <!-- Admin/Supervisor: solicitudes pendientes -->
-    <string name="solo_consulta_no_puedes_asignar">Modo solo consulta: los supervisores pueden ver solicitudes pero la asignación de montos es exclusiva del administrador.</string>
+    <string name="solo_consulta_no_puedes_asignar">Modo solo consulta: contabilidad puede ver solicitudes pero la asignación de montos es exclusiva del administrador.</string>
     <string name="no_hay_solicitudes_pendientes">No hay solicitudes pendientes en este momento.</string>
-    <string name="asignar_monto_flecha">Asignar monto  →</string>
+    <string name="asignar_monto_flecha">Asignar monto</string>
 
     <!-- Admin/Supervisor: asignar monto -->
     <string name="asignar_monto_titulo">Asignar monto</string>
@@ -112,12 +112,12 @@
     <string name="monto_vehiculo_lempiras">Monto para vehículo (Lempiras)</string>
     <string name="monto_mgp_lempiras">Monto para planta MGP (Lempiras)</string>
     <string name="total_asignado_l">Total asignado: L %1$.2f</string>
-    <string name="asignar_y_generar_orden">Asignar y generar orden</string>
+    <string name="asignar_y_generar_orden">Emitir orden</string>
     <string name="completa_gasolinera_y_vigencia">Selecciona una gasolinera y define las horas de vigencia.</string>
     <string name="ingresa_al_menos_un_monto">Ingresa al menos un monto válido (vehículo o MGP).</string>
 
     <!-- Admin/Supervisor: órdenes -->
-    <string name="ordenes">Órdenes</string>
+    <string name="ordenes">Historial</string>
     <string name="filtrar_por_estado">Filtrar por estado</string>
 
     <!-- Admin/Supervisor: catálogos -->
@@ -146,11 +146,11 @@
 
     <!-- Admin/Supervisor: caja chica -->
     <string name="caja_chica">Caja chica</string>
-    <string name="registrar_caja_chica">Registrar entrega de caja chica</string>
+    <string name="registrar_caja_chica">Nueva entrega</string>
     <string name="id_conductor_opcional">ID del conductor (opcional)</string>
     <string name="monto_lempiras_hint">Monto (Lempiras)</string>
     <string name="descripcion">Descripción / Motivo</string>
-    <string name="registrar">Registrar</string>
+    <string name="registrar">Registrar entrega</string>
     <string name="completa_monto_y_descripcion">Completa el monto y la descripción.</string>
     <string name="entrega_registrada_exito">Entrega registrada con éxito</string>
 
@@ -165,7 +165,7 @@
     <string name="reportes_subtitulo">Estadísticas y consumos</string>
     <string name="caja_chica_subtitulo">Entregas extraordinarias</string>
     <string name="datos_de_mi_cuenta">Datos de mi cuenta</string>
-    <string name="notificaciones_titulo">Notificaciones</string>
+    <string name="notificaciones_titulo">Avisos</string>
     <string name="notificaciones_nota">Se generan a partir de tus órdenes completadas y vencidas recientes.</string>
     <string name="sin_notificaciones">No hay notificaciones por ahora.</string>
     <string name="marcar_todas_leidas">Marcar todas leídas</string>
@@ -190,6 +190,8 @@
     <string name="orden_rehabilitada">Orden rehabilitada con éxito</string>
     <string name="justificacion_tardanza">Justificación de entrega tardía</string>
     <string name="ingresa_justificacion">Ingresa el motivo por el cual se entrega tarde este pedido:</string>
+    <string name="tardio_badge">COMPLETADO TARDÍO</string>
+    <string name="rehabilitada_badge">REHABILITADA</string>
     <string name="continuar">Continuar</string>
     <string name="filtrar_por_conductor">Filtrar por conductor</string>
     <string name="todos_los_conductores">Todos los conductores</string>
@@ -243,7 +245,7 @@
     <string name="dialog_confirmar_contrasena_titulo">Confirmar contraseña</string>
     <string name="dialog_confirmar_contrasena_mensaje">Ingresa tu contraseña para autorizar la asignación de la orden.</string>
     <string name="contrasena_requerida">Ingresa tu contraseña.</string>
-    <string name="notificaciones">Notificaciones</string>
+    <string name="notificaciones">Avisos</string>
     <string name="vehiculo">Vehículo</string>
     <string name="orden_protegida">Orden protegida</string>
     <string name="el_monto_y_gasolinera_tras_qr">El monto y la gasolinera se revelarán al escanear el QR</string>
@@ -254,7 +256,7 @@
     <string name="conductor_numero">Conductor #%1$d</string>
     <string name="planta_generadora">Planta generadora (MGP)</string>
     <string name="total_de_la_solicitud">Total de la solicitud: L %1$.2f</string>
-    <string name="monto_y_descripcion">L %1$.2f · %2$s</string>
+    <string name="monto_y_descripcion">Monto y descripción requeridos</string>
     <string name="inactivo">Inactivo</string>
     <string name="ver_codigo_qr">Ver código QR</string>
     <string name="cargo">Cargo</string>
@@ -265,35 +267,35 @@
     <string name="codigo_qr">Código QR</string>
     <string name="orden_completada_mensaje">Esta orden ya fue completada exitosamente.</string>
     <string name="orden_vencida_mensaje">Esta orden ha vencido y ya no puede ser utilizada.</string>
-    <string name="monto_lempiras">Monto autorizado: L %1$.2f</string>
+    <string name="monto_lempiras">L %1$.2f</string>
     <string name="gasolinera_por_definir">Gasolinera por definir</string>
     <string name="hace_n_min">Hace %1$d min</string>
     <string name="hace_n_h">Hace %1$d h</string>
-    <string name="solicitud_codigo">Solicitud #%1$d</string>
+    <string name="solicitud_codigo">Solicitud #%1$s</string>
     <string name="plazo_de_retiro">Plazo de retiro: %1$s</string>
-    <string name="confirmar">Confirmar</string>
-    <string name="editar_solicitud">Editar solicitud</string>
-    <string name="guardar_cambios">Guardar cambios</string>
-    <string name="solicitud_actualizada">Solicitud actualizada</string>
-    <string name="error_horas_vigencia">Indica horas de vigencia válidas (1, 2 o 3).</string>
-    <string name="error_justificacion_obligatoria">La justificación es obligatoria.</string>
-    <string name="rehabilitacion_ayuda_dialogo">La orden se abrirá de inmediato. El conductor podrá subir las evidencias que le falten sin escanear el QR, tendrá 15 minutos para hacerlo y deberá escribir la justificación de la entrega tardía.</string>
-    <string name="rehabilitacion_ayuda_admin_dialogo">La orden se abrirá de inmediato. El conductor podrá subir las evidencias que le falten sin escanear el QR, tendrá 15 minutos para hacerlo y deberá escribir la justificación de la entrega tardía.</string>
+    <string name="nuevo_conductor_btn">+ Conductor</string>
+    <string name="nuevo_vehiculo_btn">+ Vehículo</string>
+    <string name="nuevo_gasolinera_btn">+ Gasolinera</string>
     <string name="instruccion_justificacion_tardanza">Explica por qué la entrega se hizo tarde. Se guardará con la primera foto que subas.</string>
     <string name="motivo">Motivo</string>
-    <string name="conductor_aun_no_justificacion">El conductor aún no ha escrito la justificación.</string>
-    <string name="justificacion_conductor_label">Justificación del conductor: %1$s</string>
-    <string name="aviso_orden_rehabilitada_conductor">Orden rehabilitada. Tienes poco tiempo para subir las evidencias que faltan.</string>
+    <string name="rehabilitacion_ayuda_admin_dialogo">La orden se abrirá de inmediato. El conductor podrá subir las evidencias que le falten sin escanear el QR, tendrá 15 minutos para hacerlo y deberá escribir la justificación de la entrega tardía.</string>
+    <string name="ver_factura_pdf">Ver / Exportar Factura PDF</string>
     <string name="orden_completada_tardio_mensaje">Esta orden fue completada con retraso.</string>
-    <string name="justificacion_rehabilitacion_label">Justificación de rehabilitación: %1$s</string>
-    <string name="aviso_orden_rehabilitada">Orden rehabilitada. Tienes poco tiempo para subir las evidencias.</string>
-    <string name="motivo_rehabilitacion">Motivo: %1$s</string>
-    <string name="abierta_tarde_badge">ABIERTA TARDE</string>
-    <string name="completada_tarde_badge">COMPLETADA TARDE</string>
+    <string name="justificacion_conductor_label">Justificación del conductor: %1$s</string>
+    <string name="conductor_aun_no_justificacion">El conductor aún no ha escrito la justificación.</string>
+    <string name="confirmar">Confirmar</string>
+    <string name="error_horas_vigencia">Indica horas de vigencia válidas (1, 2 o 3).</string>
     <string name="filtro_pendientes">Pendientes</string>
     <string name="filtro_abiertas">Abiertas</string>
     <string name="filtro_vencidas">Vencidas</string>
     <string name="filtro_abierta_tarde">Abierta tarde</string>
     <string name="filtro_completada_tarde">Completada tarde</string>
-    <string name="ver_factura_pdf">Ver / Exportar Factura PDF</string>
+    <string name="abierta_tarde_badge">ABIERTA TARDE</string>
+    <string name="completada_tarde_badge">COMPLETADA TARDE</string>
+    <string name="editar_solicitud">Editar solicitud</string>
+    <string name="guardar_cambios">Guardar cambios</string>
+    <string name="solicitud_actualizada">Solicitud actualizada</string>
+    <string name="aviso_orden_rehabilitada_conductor">Orden rehabilitada. Tienes poco tiempo para subir las evidencias que faltan.</string>
+    <string name="motivo_rehabilitacion">Motivo: %1$s</string>
+    <string name="error_justificacion_obligatoria">La justificación es obligatoria.</string>
 </resources>

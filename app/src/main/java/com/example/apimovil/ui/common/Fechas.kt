@@ -1,5 +1,7 @@
 package com.example.apimovil.ui.common
 
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -94,5 +96,23 @@ fun formatearFechaIsoShort(fechaStr: String?): String {
         if (date != null) formatter.format(date) else fechaStr
     } catch (_: Exception) {
         fechaStr
+    }
+}
+
+fun formatoMoneda(monto: Number?): String {
+    val valor = monto?.toDouble() ?: 0.0
+    val symbols = DecimalFormatSymbols(Locale("es", "HN")).apply {
+        decimalSeparator = '.'
+        groupingSeparator = ','
+    }
+    val formatter = DecimalFormat("#,##0.00", symbols)
+    return "L ${formatter.format(valor)}"
+}
+
+fun formatoCargo(cargo: String?): String {
+    return when (cargo?.lowercase()?.trim()) {
+        "tecnico" -> "Técnico"
+        "tecnico_jefe_cuadrilla", "jefe_cuadrilla" -> "Jefe de cuadrilla"
+        else -> cargo?.replace("_", " ")?.replaceFirstChar { it.uppercase() } ?: "Técnico"
     }
 }

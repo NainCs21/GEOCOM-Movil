@@ -66,7 +66,7 @@
     <fragment
         android:id="@+id/ordenesAdminFragment"
         android:name="com.example.apimovil.ui.admin.OrdenesAdminFragment"
-        android:label="Órdenes" />
+        android:label="Historial" />
 
     <fragment
         android:id="@+id/catalogosFragment"
