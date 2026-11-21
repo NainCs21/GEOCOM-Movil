@@ -67,6 +67,7 @@ class OrdenAdapter(
         holder.binding.textEstado.text = etiquetaDeEstado(ctx, orden.estado)
         holder.binding.textEstado.setTextColor(colorDeEstado(ctx, orden.estado))
         holder.binding.textEstado.setBackgroundResource(fondoBadgeDeEstado(orden.estado))
+        holder.binding.viewBarraEstado.setBackgroundColor(colorDeEstado(ctx, orden.estado))
         holder.binding.root.setOnClickListener { onClick(orden) }
     }
 }

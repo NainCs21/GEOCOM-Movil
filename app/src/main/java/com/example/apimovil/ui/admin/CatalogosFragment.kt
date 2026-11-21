@@ -102,7 +102,8 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                                 id = it.id,
                                 titulo = it.usuario?.name ?: getString(R.string.conductor_numero, it.id),
                                 subtitulo = "${it.telefono} · ${formatoCargo(it.cargo)}" +
-                                    if (!it.activo) " · " + getString(R.string.inactivo) else ""
+                                    if (!it.activo) " · " + getString(R.string.inactivo) else "",
+                                iconRes = R.drawable.ic_person
                             )
                         })
                     }
@@ -128,7 +129,9 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                             FilaDoble(
                                 id = it.id,
                                 titulo = it.nombre,
-                                subtitulo = "${it.direccion ?: "—"} · QR: ${it.codigo_qr}"
+                                subtitulo = "${it.direccion ?: "—"} · QR: ${it.codigo_qr}" +
+                                    if (!it.activo) " · " + getString(R.string.inactivo) else "",
+                                iconRes = R.drawable.ic_gas_pump
                             )
                         })
                     }
@@ -493,7 +496,8 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                 id = it.id,
                 titulo = "${it.placa} · ${it.marca} ${it.modelo}",
                 subtitulo = it.tipo_combustible +
-                    if (!it.activo) " · " + getString(R.string.inactivo) else ""
+                    if (!it.activo) " · " + getString(R.string.inactivo) else "",
+                iconRes = R.drawable.ic_vehiculo
             )
         }
     }
