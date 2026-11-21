@@ -33,8 +33,9 @@ class HomeConductorFragment : Fragment(R.layout.fragment_home_conductor) {
         _binding = FragmentHomeConductorBinding.bind(view)
         binding.textSaludo.text = getString(R.string.hola_usuario, SessionManager.nombre ?: "")
 
-        val bottomNav = binding.root.findViewById<BottomNavigationView>(R.id.bottomNavConductor)
-        bottomNav.configurarNavegacionConductor(findNavController(), R.id.homeConductorFragment) {
+        val bottomNav = binding.root.findViewById<BottomNavigationView>(R.id.incluirNavInferior)
+            ?: binding.root.findViewById<BottomNavigationView>(R.id.bottomNavConductor)
+        bottomNav?.configurarNavegacionConductor(findNavController(), R.id.homeConductorFragment) {
             val ordenPendiente = model.ordenes.value.data.orEmpty().find { it.estado == "pendiente" }
             if (ordenPendiente != null) {
                 findNavController().navigate(R.id.escanearQrFragment)

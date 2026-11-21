@@ -130,9 +130,27 @@ fun BottomNavigationView.vincularBadgeAvisos(owner: LifecycleOwner, itemId: Int)
         owner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             NotificacionesStore.noLeidas.collect { count ->
                 try {
-                    val badge = getOrCreateBadge(itemId)
-                    badge.isVisible = count > 0
-                    badge.number = count
+                    if (menu.findItem(itemId) != null) {
+                        val badge = getOrCreateBadge(itemId)
+                        badge.isVisible = count > 0
+                        badge.number = count
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+    }
+}
+
+fun BottomNavigationView.vincularBadgeSolicitudes(owner: LifecycleOwner, itemId: Int, countFlow: kotlinx.coroutines.flow.Flow<Int>) {
+    owner.lifecycleScope.launch {
+        owner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            countFlow.collect { count ->
+                try {
+                    if (menu.findItem(itemId) != null) {
+                        val badge = getOrCreateBadge(itemId)
+                        badge.isVisible = count > 0
+                        badge.number = count
+                    }
                 } catch (_: Exception) {}
             }
         }
