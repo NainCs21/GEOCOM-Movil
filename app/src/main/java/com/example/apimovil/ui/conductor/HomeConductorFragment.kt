@@ -10,10 +10,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import android.widget.Toast
 import com.example.apimovil.R
 import com.example.apimovil.data.SessionManager
 import com.example.apimovil.databinding.FragmentHomeConductorBinding
 import com.example.apimovil.ui.common.OrdenAdapter
+import com.example.apimovil.ui.common.configurarNavegacionConductor
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.launch
 
 class HomeConductorFragment : Fragment(R.layout.fragment_home_conductor) {
@@ -30,17 +33,21 @@ class HomeConductorFragment : Fragment(R.layout.fragment_home_conductor) {
         _binding = FragmentHomeConductorBinding.bind(view)
         binding.textSaludo.text = getString(R.string.hola_usuario, SessionManager.nombre ?: "")
 
+        val bottomNav = binding.root.findViewById<BottomNavigationView>(R.id.bottomNavConductor)
+        bottomNav.configurarNavegacionConductor(findNavController(), R.id.homeConductorFragment) {
+            val ordenPendiente = model.ordenes.value.data.orEmpty().find { it.estado == "pendiente" }
+            if (ordenPendiente != null) {
+                findNavController().navigate(R.id.escanearQrFragment)
+            } else {
+                Toast.makeText(requireContext(), "No tienes órdenes pendientes de escanear", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         binding.recyclerOrdenes.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerOrdenes.adapter = adapter
 
         binding.btnNuevaSolicitud.setOnClickListener {
             findNavController().navigate(R.id.nuevaSolicitudFragment)
-        }
-        binding.btnHistorial.setOnClickListener {
-            findNavController().navigate(R.id.historialFragment)
-        }
-        binding.btnPerfil.setOnClickListener {
-            findNavController().navigate(R.id.perfilConductorFragment)
         }
         binding.swipeRefresh.setOnRefreshListener { model.cargarMisOrdenes() }
 
@@ -58,7 +65,7 @@ class HomeConductorFragment : Fragment(R.layout.fragment_home_conductor) {
                         findNavController().navigate(R.id.escanearQrFragment)
                     }
 
-                    binding.textVacio.isVisible = !estado.loading && ordenesActivas.isEmpty()
+                    binding.cardEstadoVacio.isVisible = !estado.loading && estado.error == null && ordenesActivas.isEmpty()
                     binding.textError.isVisible = estado.error != null
                     binding.textError.text = estado.error
                     adapter.submitList(ordenesActivas)

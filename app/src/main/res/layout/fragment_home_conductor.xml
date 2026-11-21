@@ -29,33 +29,11 @@
 
                     <TextView
                         android:id="@+id/textSaludo"
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:textColor="@color/blanco"
                         android:textSize="18sp"
                         android:textStyle="bold" />
-
-                    <ImageButton
-                        android:id="@+id/btnHistorial"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="@string/mi_historial"
-                        android:src="@drawable/ic_history"
-                        android:tooltipText="@string/mi_historial"
-                        app:tint="@color/blanco" />
-
-                    <ImageButton
-                        android:id="@+id/btnPerfil"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="4dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:contentDescription="@string/mi_perfil"
-                        android:src="@drawable/ic_person"
-                        android:tooltipText="@string/mi_perfil"
-                        app:tint="@color/blanco" />
                 </LinearLayout>
 
             </com.google.android.material.appbar.MaterialToolbar>
@@ -135,16 +113,55 @@
                     android:layout_gravity="center"
                     android:visibility="gone" />
 
-                <TextView
-                    android:id="@+id/textVacio"
-                    android:layout_width="wrap_content"
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardEstadoVacio"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:accessibilityLiveRegion="polite"
-                    android:text="@string/no_tienes_ordenes_activas"
-                    android:textColor="@color/texto_secundario"
-                    android:textSize="14sp"
-                    android:visibility="gone" />
+                    android:layout_marginHorizontal="24dp"
+                    android:visibility="gone"
+                    app:cardBackgroundColor="@color/blanco"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="0dp"
+                    app:contentPadding="24dp"
+                    app:strokeColor="@color/borde"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <ImageView
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:background="@drawable/bg_tarjeta_info"
+                            android:contentDescription="@null"
+                            android:padding="12dp"
+                            android:src="@drawable/ic_nav_ordenes"
+                            app:tint="@color/marca" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="16dp"
+                            android:gravity="center"
+                            android:text="@string/sin_ordenes_activas_titulo"
+                            android:textColor="@color/texto_principal"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:gravity="center"
+                            android:text="@string/sin_ordenes_activas_subtitulo"
+                            android:textColor="@color/texto_secundario"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
                 <TextView
                     android:id="@+id/textError"
@@ -158,6 +175,10 @@
             </FrameLayout>
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
+        <include
+            android:id="@+id/incluirNavInferior"
+            layout="@layout/widget_nav_conductor" />
+
     </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
@@ -165,7 +186,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="20dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="76dp"
         android:contentDescription="@string/nueva_solicitud"
         android:text="@string/nueva_solicitud"
         android:textColor="@color/blanco"

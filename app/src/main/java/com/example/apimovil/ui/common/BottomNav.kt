@@ -26,7 +26,7 @@ fun BottomNavigationView.configurarNavegacionAdmin(nav: NavController, destinoAc
             R.id.nav_inicio -> R.id.homeAdminFragment
             R.id.nav_solicitudes -> R.id.solicitudesPendientesFragment
             R.id.nav_ordenes -> R.id.ordenesAdminFragment
-            R.id.nav_catalogos -> R.id.catalogosFragment
+            R.id.nav_reportes -> R.id.reportesFragment
             R.id.nav_mas -> R.id.masFragment
             else -> null
         }
@@ -44,7 +44,7 @@ private fun destinoActualAItemAdmin(destino: Int): Int = when (destino) {
     R.id.homeAdminFragment -> R.id.nav_inicio
     R.id.solicitudesPendientesFragment -> R.id.nav_solicitudes
     R.id.ordenesAdminFragment -> R.id.nav_ordenes
-    R.id.catalogosFragment -> R.id.nav_catalogos
+    R.id.reportesFragment -> R.id.nav_reportes
     else -> R.id.nav_mas
 }
 
@@ -77,6 +77,52 @@ private fun destinoActualAItemSupervisor(destino: Int): Int = when (destino) {
     R.id.notificacionesFragment -> R.id.nav_avisos
     R.id.reportesFragment -> R.id.nav_reportes
     else -> R.id.nav_perfil
+}
+
+fun BottomNavigationView.configurarNavegacionConductor(
+    nav: NavController,
+    destinoActual: Int,
+    onEscanearClick: () -> Unit
+) {
+    menu.findItem(destinoActualAItemConductor(destinoActual))?.isChecked = true
+
+    setOnItemSelectedListener { item ->
+        when (item.itemId) {
+            R.id.nav_conductor_inicio -> {
+                if (destinoActual != R.id.homeConductorFragment) {
+                    val opciones = NavOptions.Builder().setPopUpTo(R.id.homeConductorFragment, false).build()
+                    nav.navigate(R.id.homeConductorFragment, null, opciones)
+                }
+                true
+            }
+            R.id.nav_conductor_escanear -> {
+                onEscanearClick()
+                false
+            }
+            R.id.nav_conductor_historial -> {
+                if (destinoActual != R.id.historialFragment) {
+                    val opciones = NavOptions.Builder().setPopUpTo(R.id.homeConductorFragment, false).build()
+                    nav.navigate(R.id.historialFragment, null, opciones)
+                }
+                true
+            }
+            R.id.nav_conductor_perfil -> {
+                if (destinoActual != R.id.perfilConductorFragment) {
+                    val opciones = NavOptions.Builder().setPopUpTo(R.id.homeConductorFragment, false).build()
+                    nav.navigate(R.id.perfilConductorFragment, null, opciones)
+                }
+                true
+            }
+            else -> false
+        }
+    }
+}
+
+private fun destinoActualAItemConductor(destino: Int): Int = when (destino) {
+    R.id.homeConductorFragment -> R.id.nav_conductor_inicio
+    R.id.historialFragment -> R.id.nav_conductor_historial
+    R.id.perfilConductorFragment -> R.id.nav_conductor_perfil
+    else -> R.id.nav_conductor_inicio
 }
 
 fun BottomNavigationView.vincularBadgeAvisos(owner: LifecycleOwner, itemId: Int) {
