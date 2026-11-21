@@ -88,6 +88,12 @@ class OrdenesAdminFragment : Fragment(R.layout.fragment_ordenes_admin) {
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
         binding.btnFiltros.setOnClickListener { mostrarBottomSheetFiltros() }
 
+        val estadoArg = arguments?.getString("filtroEstado")
+        if (estadoArg != null) {
+            estadoSeleccionado = estadoArg
+            aplicarFiltros()
+        }
+
         binding.swipeRefresh.setOnRefreshListener {
             aplicarFiltros()
         }

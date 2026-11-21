@@ -13,13 +13,8 @@ import com.example.apimovil.R
 import com.example.apimovil.data.models.Orden
 import com.example.apimovil.databinding.FragmentHistorialBinding
 import com.example.apimovil.ui.common.OrdenAdapter
-import com.example.apimovil.ui.common.esCompletada
 import kotlinx.coroutines.launch
 
-/**
- * El historial del conductor incluye órdenes donde esCompletada(estado).
- * Permite filtrar entre todas las completadas o solo las completadas tarde.
- */
 class HistorialFragment : Fragment(R.layout.fragment_historial) {
 
     private val model: ConductorViewModel by viewModels()
@@ -40,11 +35,12 @@ class HistorialFragment : Fragment(R.layout.fragment_historial) {
         binding.toggleFiltro.check(R.id.btnTodas)
         binding.btnTodas.setOnClickListener { aplicarFiltro() }
         binding.btnCompletadas.setOnClickListener { aplicarFiltro() }
+        binding.btnVencidas.setOnClickListener { aplicarFiltro() }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 model.ordenes.collect { estado ->
-                    todasLasOrdenes = estado.data.orEmpty().filter { esCompletada(it.estado) }
+                    todasLasOrdenes = estado.data.orEmpty()
                     aplicarFiltro()
                 }
             }
@@ -54,10 +50,10 @@ class HistorialFragment : Fragment(R.layout.fragment_historial) {
     }
 
     private fun aplicarFiltro() {
-        val filtradas = if (binding.toggleFiltro.checkedButtonId == R.id.btnCompletadas) {
-            todasLasOrdenes.filter { it.estado == "completada_tarde" }
-        } else {
-            todasLasOrdenes
+        val filtradas = when (binding.toggleFiltro.checkedButtonId) {
+            R.id.btnCompletadas -> todasLasOrdenes.filter { it.estado == "completada" || it.estado == "completada_tarde" }
+            R.id.btnVencidas -> todasLasOrdenes.filter { it.estado == "vencida" }
+            else -> todasLasOrdenes
         }
         adapter.submitList(filtradas)
     }

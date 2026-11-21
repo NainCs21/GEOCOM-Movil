@@ -26,13 +26,6 @@ class NuevaSolicitudFragment : Fragment(R.layout.fragment_nueva_solicitud) {
     private var _binding: FragmentNuevaSolicitudBinding? = null
     private val binding get() = _binding!!
 
-    private val opcionesMap = LinkedHashMap<String, String>().apply {
-        put("Vehículo", "vehiculo")
-        put("Planta generadora (MGP)", "mgp")
-        put("Ambos (Vehículo + MGP)", "ambos")
-    }
-    private val opcionesDestino = opcionesMap.keys.toList()
-
     private var listaVehiculos: List<Vehiculo> = emptyList()
     private var vehiculoSeleccionadoId: Int? = null
     private var solicitudId: Int = -1
@@ -50,16 +43,20 @@ class NuevaSolicitudFragment : Fragment(R.layout.fragment_nueva_solicitud) {
             model.cargarSolicitudPorId(solicitudId)
         }
 
-        // Configurar dropdown de destino
-        val adapterDestino = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, opcionesDestino)
-        binding.spinnerDestino.setAdapter(adapterDestino)
-        binding.spinnerDestino.setText(opcionesDestino.first(), false)
-        actualizarCamposVisibles(opcionesMap[opcionesDestino.first()] ?: "vehiculo")
-
-        binding.spinnerDestino.setOnItemClickListener { _, _, position, _ ->
-            val opcion = opcionesDestino.getOrNull(position) ?: opcionesDestino.first()
-            val codigo = opcionesMap[opcion] ?: "vehiculo"
-            actualizarCamposVisibles(codigo)
+        // Configurar toggle de destino
+        binding.toggleDestino.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                val codigo = when (checkedId) {
+                    R.id.btnDestinoMgp -> "mgp"
+                    R.id.btnDestinoAmbos -> "ambos"
+                    else -> "vehiculo"
+                }
+                actualizarCamposVisibles(codigo)
+            }
+        }
+        if (!esEdicion) {
+            binding.toggleDestino.check(R.id.btnDestinoVehiculo)
+            actualizarCamposVisibles("vehiculo")
         }
 
         binding.spinnerVehiculo.setOnItemClickListener { _, _, position, _ ->
@@ -116,13 +113,12 @@ class NuevaSolicitudFragment : Fragment(R.layout.fragment_nueva_solicitud) {
                         model.solicitudDetalle.collect { estado ->
                             binding.progress.isVisible = estado.loading
                             estado.data?.let { sol ->
-                                val labelDestino = when (sol.tipo_destino) {
-                                    "vehiculo" -> "Vehículo"
-                                    "mgp" -> "Planta generadora (MGP)"
-                                    "ambos" -> "Ambos (Vehículo + MGP)"
-                                    else -> "Vehículo"
+                                when (sol.tipo_destino) {
+                                    "vehiculo" -> binding.toggleDestino.check(R.id.btnDestinoVehiculo)
+                                    "mgp" -> binding.toggleDestino.check(R.id.btnDestinoMgp)
+                                    "ambos" -> binding.toggleDestino.check(R.id.btnDestinoAmbos)
+                                    else -> binding.toggleDestino.check(R.id.btnDestinoVehiculo)
                                 }
-                                binding.spinnerDestino.setText(labelDestino, false)
                                 actualizarCamposVisibles(sol.tipo_destino)
 
                                 if (sol.vehiculo_id != null) {
@@ -193,11 +189,9 @@ class NuevaSolicitudFragment : Fragment(R.layout.fragment_nueva_solicitud) {
     }
 
     private fun enviarSolicitud() {
-        val textoDestino = binding.spinnerDestino.text?.toString()?.trim().orEmpty()
-        val codigoDestino = opcionesMap[textoDestino] ?: when {
-            textoDestino.contains("vehiculo", ignoreCase = true) && textoDestino.contains("mgp", ignoreCase = true) -> "ambos"
-            textoDestino.contains("ambos", ignoreCase = true) -> "ambos"
-            textoDestino.contains("mgp", ignoreCase = true) -> "mgp"
+        val codigoDestino = when (binding.toggleDestino.checkedButtonId) {
+            R.id.btnDestinoMgp -> "mgp"
+            R.id.btnDestinoAmbos -> "ambos"
             else -> "vehiculo"
         }
 

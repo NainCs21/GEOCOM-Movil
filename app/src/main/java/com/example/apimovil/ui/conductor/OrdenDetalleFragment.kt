@@ -37,6 +37,7 @@ import com.example.apimovil.ui.common.colorDeEstado
 import com.example.apimovil.ui.common.etiquetaDeEstado
 import com.example.apimovil.ui.common.fondoBadgeDeEstado
 import com.example.apimovil.ui.common.formatoLegible
+import com.example.apimovil.ui.common.formatoMoneda
 import com.example.apimovil.ui.common.normalizarUrlApi
 import com.example.apimovil.ui.common.parseFechaIso
 import com.example.apimovil.ui.common.esAbierta
@@ -137,7 +138,7 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
 
         val lineas = orden.detalles.orEmpty()
         val montoTotal = lineas.sumOf { it.monto }
-        binding.textMontoTotal.text = getString(R.string.monto_lempiras, montoTotal)
+        binding.textMontoTotal.text = formatoMoneda(montoTotal)
         binding.textCantidadLineas.text = getString(R.string.distribuido_en_n_lineas, lineas.size)
 
         binding.contenedorLineas.removeAllViews()
@@ -204,7 +205,7 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
         }
 
         itemBinding.textDestino.text = "$etiquetaDestino (${linea.tipo_combustible})"
-        itemBinding.textMonto.text = getString(R.string.monto_lempiras, linea.monto)
+        itemBinding.textMonto.text = formatoMoneda(linea.monto)
 
         val lineasList = ordenActual?.detalles.orEmpty()
         val todasCompletas = lineasList.isNotEmpty() && lineasList.all { l ->
@@ -229,6 +230,12 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
         val tableroSubida = isSubido("tablero") || esMgp
         val tanqueSubida = isSubido("tanque")
         val facturaSubida = isSubido("factura")
+
+        val totalFotosReq = if (esMgp) 3 else 4
+        val fotosSubidasCount = listOf(bombaSubida, if (!esMgp) tableroSubida else true, tanqueSubida, facturaSubida).count { it }
+        itemBinding.textProgresoFotos.text = getString(R.string.fotos_progreso_formato, fotosSubidasCount, totalFotosReq)
+        itemBinding.progressFotos.max = totalFotosReq
+        itemBinding.progressFotos.progress = fotosSubidasCount
 
         // 1. Bomba
         itemBinding.btnBomba.isVisible = isOpen && !bombaSubida

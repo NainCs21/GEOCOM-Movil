@@ -47,7 +47,7 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
             .format(Date()).uppercase()
 
         // La barra inferior es distinta para admin (5 pestañas de gestión)
-        // y supervisor (5 pestañas de solo consulta).
+        // y contabilidad (5 pestañas de solo consulta).
         val bottomNav = binding.incluirNavInferior.root as BottomNavigationView
         if (SessionManager.esAdmin) {
             bottomNav.menu.clear()
@@ -75,11 +75,6 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
         binding.btnNotificaciones.setOnClickListener {
             findNavController().navigate(R.id.notificacionesFragment)
         }
-        if (SessionManager.esAdmin) {
-            binding.btnAsignarMontos.text = getString(R.string.asignar_montos)
-        } else {
-            binding.btnAsignarMontos.text = getString(R.string.ver_solicitudes)
-        }
         binding.btnAsignarMontos.setOnClickListener {
             findNavController().navigate(R.id.solicitudesPendientesFragment)
         }
@@ -90,11 +85,32 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
             findNavController().navigate(R.id.cajaChicaFragment)
         }
 
+        binding.cardAbiertas.setOnClickListener {
+            val bundle = Bundle().apply { putString("filtroEstado", "abierta,abierta_tarde") }
+            findNavController().navigate(R.id.ordenesAdminFragment, bundle)
+        }
+        binding.cardCompletadas.setOnClickListener {
+            val bundle = Bundle().apply { putString("filtroEstado", "completada,completada_tarde") }
+            findNavController().navigate(R.id.ordenesAdminFragment, bundle)
+        }
+        binding.cardVencidas.setOnClickListener {
+            val bundle = Bundle().apply { putString("filtroEstado", "vencida") }
+            findNavController().navigate(R.id.ordenesAdminFragment, bundle)
+        }
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
                     model.solicitudesPendientes.collect { estado ->
-                        binding.textConteoPendientes.text = (estado.data?.size ?: 0).toString()
+                        val count = estado.data?.size ?: 0
+                        binding.textConteoPendientes.text = count.toString()
+                        binding.btnAsignarMontos.isEnabled = count > 0
+                        binding.btnAsignarMontos.text = if (count > 0) {
+                            if (SessionManager.esAdmin) getString(R.string.asignar_montos) else getString(R.string.ver_solicitudes)
+                        } else {
+                            "Sin solicitudes por asignar"
+                        }
+                        binding.btnAsignarMontos.alpha = if (count > 0) 1.0f else 0.5f
                     }
                 }
                 launch {
