@@ -14,6 +14,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
+import java.io.File
 import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -132,30 +133,47 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
         }
 
         val abrirFacturaPdf = {
-            viewLifecycleOwner.lifecycleScope.launch {
-                binding.progress.isVisible = true
-                Toast.makeText(requireContext(), "Generando factura PDF...", Toast.LENGTH_SHORT).show()
-                val pdfFile = generarFacturaPdf(requireContext(), orden)
-                binding.progress.isVisible = false
+            if (isAdded && _binding != null) {
+                binding.btnExportarPdf.isEnabled = false
+                binding.btnVerFacturaPdf.isEnabled = false
 
-                if (pdfFile != null && pdfFile.exists()) {
+                viewLifecycleOwner.lifecycleScope.launch {
                     try {
-                        val uri = FileProvider.getUriForFile(
-                            requireContext(),
-                            "${requireContext().packageName}.fileprovider",
-                            pdfFile
-                        )
-                        val intent = Intent(Intent.ACTION_SEND).apply {
-                            type = "application/pdf"
-                            putExtra(Intent.EXTRA_STREAM, uri)
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        Toast.makeText(requireContext(), "Generando factura PDF...", Toast.LENGTH_SHORT).show()
+                        val pdfFile = generarFacturaPdf(requireContext(), orden)
+
+                        if (!isAdded || _binding == null) return@launch
+
+                        if (pdfFile != null && pdfFile.exists()) {
+                            val guardado = guardarFacturaEnDescargas(requireContext(), pdfFile, orden.numero_orden)
+                            if (guardado) {
+                                Toast.makeText(requireContext(), "Factura guardada en Descargas/GeoComFacturas", Toast.LENGTH_SHORT).show()
+                            }
+
+                            try {
+                                val uri = FileProvider.getUriForFile(
+                                    requireContext(),
+                                    "${requireContext().packageName}.fileprovider",
+                                    pdfFile
+                                )
+                                val intent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "application/pdf"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+                                startActivity(Intent.createChooser(intent, "Compartir factura de orden"))
+                            } catch (_: Exception) {
+                                Toast.makeText(requireContext(), "No se pudo generar la factura PDF", Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            Toast.makeText(requireContext(), "No se pudo generar la factura PDF", Toast.LENGTH_SHORT).show()
                         }
-                        startActivity(Intent.createChooser(intent, "Compartir factura de orden"))
-                    } catch (_: Exception) {
-                        Toast.makeText(requireContext(), "No se pudo generar la factura PDF", Toast.LENGTH_SHORT).show()
+                    } finally {
+                        if (isAdded && _binding != null) {
+                            binding.btnExportarPdf.isEnabled = true
+                            binding.btnVerFacturaPdf.isEnabled = true
+                        }
                     }
-                } else {
-                    Toast.makeText(requireContext(), "No se pudo generar la factura PDF", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -165,6 +183,40 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
 
         binding.btnVerFacturaPdf.isVisible = true
         binding.btnVerFacturaPdf.setOnClickListener { abrirFacturaPdf() }
+    }
+
+    private fun guardarFacturaEnDescargas(context: Context, sourceFile: File, numeroOrden: String): Boolean {
+        return try {
+            val contentValues = ContentValues().apply {
+                put(MediaStore.Downloads.DISPLAY_NAME, "factura_orden_$numeroOrden.pdf")
+                put(MediaStore.Downloads.MIME_TYPE, "application/pdf")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/GeoComFacturas")
+                    put(MediaStore.Downloads.IS_PENDING, 1)
+                }
+            }
+
+            val resolver = context.contentResolver
+            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+            if (uri != null) {
+                resolver.openOutputStream(uri)?.use { outputStream ->
+                    sourceFile.inputStream().use { inputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    contentValues.clear()
+                    contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
+                    resolver.update(uri, contentValues, null, null)
+                }
+                true
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }
 
     private fun mostrarDialogoRehabilitar(ordenId: Int) {

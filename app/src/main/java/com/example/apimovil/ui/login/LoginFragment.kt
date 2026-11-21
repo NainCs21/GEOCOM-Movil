@@ -12,6 +12,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.apimovil.R
 import com.example.apimovil.data.SessionManager
 import com.example.apimovil.data.SesionEventos
+import com.example.apimovil.data.notificaciones.NotificacionesForegroundService
 import com.example.apimovil.data.notificaciones.programarSincronizacionNotificaciones
 import com.example.apimovil.databinding.FragmentLoginBinding
 import com.google.android.material.snackbar.Snackbar
@@ -48,7 +49,11 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
                     binding.textError.text = estado.error
 
                     if (estado.data == true) {
-                        programarSincronizacionNotificaciones(requireContext().applicationContext)
+                        val appContext = requireContext().applicationContext
+                        if (SessionManager.puedeConsultar) {
+                            NotificacionesForegroundService.iniciar(appContext)
+                        }
+                        programarSincronizacionNotificaciones(appContext)
                         irAHome()
                     }
                 }
