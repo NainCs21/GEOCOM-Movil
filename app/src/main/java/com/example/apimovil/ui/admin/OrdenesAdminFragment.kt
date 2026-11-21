@@ -86,17 +86,7 @@ class OrdenesAdminFragment : Fragment(R.layout.fragment_ordenes_admin) {
         }
 
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
-
-        // Spinner Estado
-        binding.spinnerEstado.setAdapter(
-            ArrayAdapter(requireContext(), android.R.layout.simple_list_item_1, estados)
-        )
-        binding.spinnerEstado.setText(estados.first(), false)
-        binding.spinnerEstado.setOnItemClickListener { _, _, position, _ ->
-            val sel = estados[position]
-            estadoSeleccionado = if (sel == "Todos los estados") null else sel
-            model.cargarOrdenes(estadoSeleccionado, conductorIdSeleccionado)
-        }
+        binding.btnFiltros.setOnClickListener { mostrarBottomSheetFiltros() }
 
         val estadoArg = arguments?.getString("filtroEstado")
         if (estadoArg != null) {

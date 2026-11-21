@@ -33,6 +33,7 @@
                     app:tint="@color/blanco" />
 
                 <TextView
+                    android:id="@+id/textTitulo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
@@ -59,10 +60,10 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="20dp"
+                android:layout_marginBottom="12dp"
                 android:text="@string/para_que_necesitas_combustible"
                 android:textColor="@color/texto_principal"
-                android:textSize="20sp"
+                android:textSize="18sp"
                 android:textStyle="bold" />
 
             <!-- Selector de destino tipo segmented / toggle group -->
@@ -70,25 +71,56 @@
                 android:id="@+id/toggleDestino"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="@string/destino"
-                app:boxCornerRadiusBottomEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp"
-                app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusTopStart="12dp">
+                app:singleSelection="true"
+                app:checkedButton="@+id/btnDestinoVehiculo">
 
-                <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                    android:id="@+id/spinnerDestino"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="none" />
-            </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDestinoVehiculo"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="@string/destino_vehiculo"
+                    android:textColor="@color/selector_toggle_button_text"
+                    android:textSize="12sp"
+                    app:backgroundTint="@color/selector_toggle_button_bg"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/borde" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDestinoMgp"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="@string/destino_mgp"
+                    android:textColor="@color/selector_toggle_button_text"
+                    android:textSize="12sp"
+                    app:backgroundTint="@color/selector_toggle_button_bg"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/borde" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDestinoAmbos"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="@string/destino_ambos"
+                    android:textColor="@color/selector_toggle_button_text"
+                    android:textSize="12sp"
+                    app:backgroundTint="@color/selector_toggle_button_bg"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/borde" />
+
+            </com.google.android.material.button.MaterialButtonToggleGroup>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layoutVehiculo"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="16dp"
                 android:hint="@string/vehiculo"
                 app:boxCornerRadiusBottomEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"

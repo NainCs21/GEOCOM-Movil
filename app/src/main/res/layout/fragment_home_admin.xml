@@ -163,10 +163,14 @@
                 android:orientation="horizontal">
 
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardAbiertas"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="4dp"
                     android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
                     app:cardBackgroundColor="@color/blanco"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"
@@ -192,15 +196,19 @@
                             android:layout_height="wrap_content"
                             android:text="@string/abierta_badge"
                             android:textColor="@color/texto_secundario"
-                            android:textSize="11sp" />
+                            android:textSize="12sp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardCompletadas"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="4dp"
                     android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
                     app:cardBackgroundColor="@color/blanco"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"
@@ -226,15 +234,19 @@
                             android:layout_height="wrap_content"
                             android:text="@string/completada_badge"
                             android:textColor="@color/texto_secundario"
-                            android:textSize="11sp" />
+                            android:textSize="12sp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardVencidas"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="4dp"
                     android:layout_weight="1"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
                     app:cardBackgroundColor="@color/blanco"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"
@@ -260,7 +272,7 @@
                             android:layout_height="wrap_content"
                             android:text="@string/vencida_badge"
                             android:textColor="@color/texto_secundario"
-                            android:textSize="11sp" />
+                            android:textSize="12sp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
@@ -368,23 +380,29 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnCajaChicaRapido"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    style="@style/Widget.App.Button.Tonal"
                     android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_marginEnd="6dp"
+                    android:layout_height="56dp"
+                    android:layout_marginEnd="4dp"
                     android:layout_weight="1"
-                    android:text="@string/mas_caja_chica"
-                    app:cornerRadius="12dp" />
+                    android:text="@string/caja_chica"
+                    app:icon="@drawable/ic_add"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconSize="20dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnCatalogosRapido"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    style="@style/Widget.App.Button.Tonal"
                     android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_marginStart="6dp"
+                    android:layout_height="56dp"
+                    android:layout_marginStart="4dp"
                     android:layout_weight="1"
-                    android:text="@string/catalogos_flecha"
-                    app:cornerRadius="12dp" />
+                    android:text="@string/catalogos"
+                    app:icon="@drawable/ic_nav_catalogos"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
+                    app:iconSize="20dp" />
             </LinearLayout>
 
         </LinearLayout>
