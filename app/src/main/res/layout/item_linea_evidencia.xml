@@ -53,10 +53,19 @@
             android:id="@+id/textMonto"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
+            android:layout_marginBottom="4dp"
             android:textColor="@color/marca_oscuro"
             android:textSize="14sp"
             android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textEstimacion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:textColor="@color/texto_secundario"
+            android:textSize="12sp"
+            android:visibility="gone" />
 
         <!-- 1. Bomba -->
         <LinearLayout

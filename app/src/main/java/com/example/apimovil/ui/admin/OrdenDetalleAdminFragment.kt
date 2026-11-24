@@ -42,6 +42,7 @@ import com.example.apimovil.ui.common.normalizarUrlApi
 import com.example.apimovil.ui.common.esCompletada
 import com.example.apimovil.ui.common.esTarde
 import com.example.apimovil.ui.common.generarFacturaPdf
+import java.util.Locale
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
@@ -97,7 +98,13 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
 
         val lineas = orden.detalles.orEmpty()
         val montoTotal = lineas.sumOf { it.monto }
-        binding.textMontoTotal.text = getString(R.string.monto_total_lempiras, montoTotal)
+        val totalGalones = lineas.mapNotNull { it.galones_estimados }.sum()
+        val montoStr = getString(R.string.monto_total_lempiras, montoTotal)
+        binding.textMontoTotal.text = if (totalGalones > 0.0) {
+            "$montoStr\n${getString(R.string.estimacion_total_galones, totalGalones)}"
+        } else {
+            montoStr
+        }
         binding.textCantidadLineas.text = getString(R.string.distribuido_en_n_lineas, lineas.size)
 
         binding.contenedorLineas.removeAllViews()
@@ -187,31 +194,35 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
 
     private fun guardarFacturaEnDescargas(context: Context, sourceFile: File, numeroOrden: String): Boolean {
         return try {
-            val contentValues = ContentValues().apply {
-                put(MediaStore.Downloads.DISPLAY_NAME, "factura_orden_$numeroOrden.pdf")
-                put(MediaStore.Downloads.MIME_TYPE, "application/pdf")
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/GeoComFacturas")
-                    put(MediaStore.Downloads.IS_PENDING, 1)
+            val filename = "factura_orden_$numeroOrden.pdf"
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                    put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/GeoComFacturas")
+                    put(MediaStore.MediaColumns.IS_PENDING, 1)
                 }
-            }
 
-            val resolver = context.contentResolver
-            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
-            if (uri != null) {
-                resolver.openOutputStream(uri)?.use { outputStream ->
-                    sourceFile.inputStream().use { inputStream ->
-                        inputStream.copyTo(outputStream)
+                val resolver = context.contentResolver
+                val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                if (uri != null) {
+                    resolver.openOutputStream(uri)?.use { outputStream ->
+                        sourceFile.inputStream().use { inputStream ->
+                            inputStream.copyTo(outputStream)
+                        }
                     }
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     contentValues.clear()
-                    contentValues.put(MediaStore.Downloads.IS_PENDING, 0)
+                    contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
                     resolver.update(uri, contentValues, null, null)
+                    true
+                } else {
+                    false
                 }
-                true
             } else {
-                false
+                val targetDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val targetFile = File(targetDir, filename)
+                sourceFile.copyTo(targetFile, overwrite = true)
+                true
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -302,6 +313,23 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
 
         itemBinding.textDestino.text = "$etiquetaDestino (${linea.tipo_combustible})"
         itemBinding.textMonto.text = getString(R.string.monto_lempiras, linea.monto)
+
+        if (linea.galones_estimados != null) {
+            val gal = linea.galones_estimados
+            val km = linea.km_estimados
+            val precio = linea.precio_galon
+            val textoEst = if (km != null && precio != null) {
+                String.format(Locale.US, "≈ %.2f gal · ≈ %.0f km · L %.2f/gal", gal, km, precio)
+            } else if (precio != null) {
+                String.format(Locale.US, "≈ %.2f gal · L %.2f/gal", gal, precio)
+            } else {
+                String.format(Locale.US, "≈ %.2f gal", gal)
+            }
+            itemBinding.textEstimacion.isVisible = true
+            itemBinding.textEstimacion.text = textoEst
+        } else {
+            itemBinding.textEstimacion.isVisible = false
+        }
 
         val evidenciasMap = linea.evidencias.associateBy { it.tipo }
         val evBomba = evidenciasMap["bomba"]

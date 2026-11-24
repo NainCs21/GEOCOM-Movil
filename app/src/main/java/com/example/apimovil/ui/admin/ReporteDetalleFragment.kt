@@ -92,6 +92,7 @@ class ReporteDetalleFragment : Fragment(R.layout.fragment_reporte_detalle) {
                         porMes = respC.por_mes,
                         porCombustible = respC.por_combustible,
                         ranking = respC.por_gasolinera,
+                        porVehiculo = respC.por_vehiculo,
                         ordenes = respC.ordenes,
                         entidadIdOrNombre = respC.conductor.id.toString()
                     )

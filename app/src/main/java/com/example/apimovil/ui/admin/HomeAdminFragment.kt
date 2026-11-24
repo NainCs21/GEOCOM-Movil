@@ -2,6 +2,7 @@ package com.example.apimovil.ui.admin
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -9,25 +10,23 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.annotation.OptIn
 import com.example.apimovil.R
 import com.example.apimovil.data.SessionManager
-import com.example.apimovil.databinding.FragmentHomeAdminBinding
-import com.example.apimovil.ui.common.configurarNavegacionAdmin
-import com.example.apimovil.ui.common.configurarNavegacionSupervisor
-import com.example.apimovil.ui.common.vincularBadgeAvisos
-import com.example.apimovil.ui.common.formatoLegible
-import com.example.apimovil.ui.common.parseFechaIso
-import com.example.apimovil.ui.common.esAbierta
-import com.example.apimovil.ui.common.esCompletada
 import com.example.apimovil.data.notificaciones.NotificacionesStore
+import com.example.apimovil.databinding.BottomSheetHistorialPreciosBinding
+import com.example.apimovil.databinding.FragmentHomeAdminBinding
+import com.example.apimovil.ui.common.*
 import com.google.android.material.badge.BadgeDrawable
 import com.google.android.material.badge.BadgeUtils
 import com.google.android.material.badge.ExperimentalBadgeUtils
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
 
 @Suppress("RestrictedApi")
 class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
@@ -47,7 +46,7 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
             .format(Date()).uppercase()
 
         // La barra inferior es distinta para admin (5 pestañas de gestión)
-        // y contabilidad (5 pestañas de solo consulta).
+        // y supervisor (5 pestañas de solo consulta).
         val bottomNav = binding.incluirNavInferior.root as BottomNavigationView
         if (SessionManager.esAdmin) {
             bottomNav.menu.clear()
@@ -75,6 +74,11 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
         binding.btnNotificaciones.setOnClickListener {
             findNavController().navigate(R.id.notificacionesFragment)
         }
+        if (SessionManager.esAdmin) {
+            binding.btnAsignarMontos.text = getString(R.string.asignar_montos)
+        } else {
+            binding.btnAsignarMontos.text = getString(R.string.ver_solicitudes)
+        }
         binding.btnAsignarMontos.setOnClickListener {
             findNavController().navigate(R.id.solicitudesPendientesFragment)
         }
@@ -85,32 +89,15 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
             findNavController().navigate(R.id.cajaChicaFragment)
         }
 
-        binding.cardAbiertas.setOnClickListener {
-            val bundle = Bundle().apply { putString("filtroEstado", "abierta,abierta_tarde") }
-            findNavController().navigate(R.id.ordenesAdminFragment, bundle)
-        }
-        binding.cardCompletadas.setOnClickListener {
-            val bundle = Bundle().apply { putString("filtroEstado", "completada,completada_tarde") }
-            findNavController().navigate(R.id.ordenesAdminFragment, bundle)
-        }
-        binding.cardVencidas.setOnClickListener {
-            val bundle = Bundle().apply { putString("filtroEstado", "vencida") }
-            findNavController().navigate(R.id.ordenesAdminFragment, bundle)
+        binding.cardPreciosCombustible.setOnClickListener {
+            mostrarBottomSheetPrecios()
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch {
                     model.solicitudesPendientes.collect { estado ->
-                        val count = estado.data?.size ?: 0
-                        binding.textConteoPendientes.text = count.toString()
-                        binding.btnAsignarMontos.isEnabled = count > 0
-                        binding.btnAsignarMontos.text = if (count > 0) {
-                            if (SessionManager.esAdmin) getString(R.string.asignar_montos) else getString(R.string.ver_solicitudes)
-                        } else {
-                            "Sin solicitudes por asignar"
-                        }
-                        binding.btnAsignarMontos.alpha = if (count > 0) 1.0f else 0.5f
+                        binding.textConteoPendientes.text = (estado.data?.size ?: 0).toString()
                     }
                 }
                 launch {
@@ -144,17 +131,138 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
                         }
                     }
                 }
+                launch {
+                    model.precios.collect { estado ->
+                        binding.progressPrecios.isVisible = estado.loading
+                        val lista = estado.data.orEmpty()
+                        if (estado.error != null || lista.isEmpty()) {
+                            binding.cardPreciosCombustible.isVisible = false
+                        } else {
+                            binding.cardPreciosCombustible.isVisible = true
+                            binding.progressPrecios.isVisible = false
+
+                            val primeraVigencia = lista.firstOrNull()?.vigente_desde
+                            if (!primeraVigencia.isNullOrBlank()) {
+                                binding.textPreciosSemana.text = getString(R.string.semana_del_formato, formatearFechaIsoShort(primeraVigencia))
+                            } else {
+                                binding.textPreciosSemana.text = getString(R.string.san_pedro_sula)
+                            }
+
+                            for (item in lista) {
+                                val precioFmt = String.format(Locale.US, "L %.2f", item.precio)
+                                val varAbs = abs(item.variacion)
+                                val varFmt = String.format(Locale.US, "%.2f", varAbs)
+                                val (varTexto, colorRes) = when {
+                                    item.variacion > 0 -> Pair("▲ $varFmt", R.color.estado_vencida)
+                                    item.variacion < 0 -> Pair("▼ $varFmt", R.color.estado_completada)
+                                    else -> Pair("= 0.00", R.color.texto_secundario)
+                                }
+                                val colorInt = ContextCompat.getColor(requireContext(), colorRes)
+
+                                when (item.combustible.lowercase().trim()) {
+                                    "regular" -> {
+                                        binding.textPrecioRegular.text = precioFmt
+                                        binding.textVariacionRegular.text = varTexto
+                                        binding.textVariacionRegular.setTextColor(colorInt)
+                                    }
+                                    "super", "súper" -> {
+                                        binding.textPrecioSuper.text = precioFmt
+                                        binding.textVariacionSuper.text = varTexto
+                                        binding.textVariacionSuper.setTextColor(colorInt)
+                                    }
+                                    "diesel", "diésel" -> {
+                                        binding.textPrecioDiesel.text = precioFmt
+                                        binding.textVariacionDiesel.text = varTexto
+                                        binding.textVariacionDiesel.setTextColor(colorInt)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
         model.cargarSolicitudesPendientes()
         model.cargarOrdenes()
+        model.cargarPrecios()
+        model.cargarHistorialPrecios()
+    }
+
+    private fun mostrarBottomSheetPrecios() {
+        val sheetBinding = BottomSheetHistorialPreciosBinding.inflate(layoutInflater)
+        val dialog = BottomSheetDialog(requireContext())
+        dialog.setContentView(sheetBinding.root)
+
+        var tipoCombustibleActual = "diesel"
+        sheetBinding.toggleCombustible.check(R.id.btnDiesel)
+
+        val actualizarGraficaYMinMax = {
+            val hp = model.historialPrecios.value.data
+            if (hp != null && hp.semanas.isNotEmpty()) {
+                val barras = mutableListOf<BarChartView.Barra>()
+                val preciosList = mutableListOf<Double>()
+
+                for (semana in hp.semanas) {
+                    val fechaStr = semana["vigente_desde"] as? String ?: ""
+                    val etiquetaFecha = formatearFechaIsoShort(fechaStr)
+                    val valorObj = semana[tipoCombustibleActual]
+                    val precio = (valorObj as? Number)?.toDouble()
+                    if (precio != null) {
+                        barras.add(BarChartView.Barra(etiquetaFecha, precio))
+                        preciosList.add(precio)
+                    }
+                }
+
+                sheetBinding.chartHistorial.setDatos(barras)
+                if (preciosList.isNotEmpty()) {
+                    val min = preciosList.minOrNull() ?: 0.0
+                    val max = preciosList.maxOrNull() ?: 0.0
+                    val actual = preciosList.lastOrNull() ?: 0.0
+                    sheetBinding.textMinMaxActual.text = getString(
+                        R.string.min_max_actual_formato,
+                        min, max, actual
+                    )
+                } else {
+                    sheetBinding.textMinMaxActual.text = ""
+                }
+            } else {
+                sheetBinding.chartHistorial.setDatos(emptyList())
+                sheetBinding.textMinMaxActual.text = ""
+            }
+        }
+
+        sheetBinding.toggleCombustible.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                tipoCombustibleActual = when (checkedId) {
+                    R.id.btnRegular -> "regular"
+                    R.id.btnSuper -> "super"
+                    else -> "diesel"
+                }
+                actualizarGraficaYMinMax()
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                model.historialPrecios.collect { estado ->
+                    if (estado.data != null) {
+                        actualizarGraficaYMinMax()
+                    }
+                }
+            }
+        }
+
+        actualizarGraficaYMinMax()
+        dialog.show()
     }
 
     override fun onResume() {
         super.onResume()
         model.cargarSolicitudesPendientes()
         model.cargarOrdenes()
+        model.cargarPrecios()
+        model.cargarHistorialPrecios()
     }
 
     override fun onDestroyView() {

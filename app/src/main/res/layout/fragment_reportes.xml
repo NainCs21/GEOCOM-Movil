@@ -191,6 +191,15 @@
                         android:layout_marginTop="4dp"
                         android:textColor="@color/texto_secundario"
                         android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/textGalonesYPromedio"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:textColor="@color/texto_secundario"
+                        android:textSize="13sp"
+                        android:visibility="gone" />
                 </LinearLayout>
 
                 <!-- Card Gasto por mes -->
@@ -220,6 +229,14 @@
                             android:id="@+id/chartMesesGeneral"
                             android:layout_width="match_parent"
                             android:layout_height="220dp" />
+                        <TextView
+                            android:id="@+id/textEquivaleGalonesGeneral"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:textColor="@color/texto_secundario"
+                            android:textSize="12sp"
+                            android:visibility="gone" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

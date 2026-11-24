@@ -6,6 +6,8 @@ import com.example.apimovil.data.ApiClient
 import com.example.apimovil.data.models.*
 import com.example.apimovil.ui.common.*
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -385,6 +387,91 @@ class AdminViewModel : ViewModel() {
                 throw e
             } catch (e: Exception) {
                 _detalleGasolinera.value = UiState(error = mensajeDeError(e))
+            }
+        }
+    }
+
+    private val _estimacionVehiculo = MutableStateFlow(UiState<EstimacionCombustible>())
+    val estimacionVehiculo = _estimacionVehiculo.asStateFlow()
+
+    private val _estimacionMgp = MutableStateFlow(UiState<EstimacionCombustible>())
+    val estimacionMgp = _estimacionMgp.asStateFlow()
+
+    private var jobEstimarVehiculo: Job? = null
+    private var jobEstimarMgp: Job? = null
+
+    fun estimarVehiculo(monto: Double, vehiculoId: Int) {
+        if (monto <= 0) {
+            jobEstimarVehiculo?.cancel()
+            _estimacionVehiculo.value = UiState()
+            return
+        }
+        jobEstimarVehiculo?.cancel()
+        jobEstimarVehiculo = viewModelScope.launch {
+            _estimacionVehiculo.value = UiState(loading = true)
+            try {
+                delay(400)
+                val res = ApiClient.api.estimarCombustible(EstimacionRequest(monto = monto, vehiculo_id = vehiculoId))
+                _estimacionVehiculo.value = UiState(data = res)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _estimacionVehiculo.value = UiState(error = mensajeDeError(e))
+            }
+        }
+    }
+
+    fun estimarMgp(monto: Double) {
+        if (monto <= 0) {
+            jobEstimarMgp?.cancel()
+            _estimacionMgp.value = UiState()
+            return
+        }
+        jobEstimarMgp?.cancel()
+        jobEstimarMgp = viewModelScope.launch {
+            _estimacionMgp.value = UiState(loading = true)
+            try {
+                delay(400)
+                val res = ApiClient.api.estimarCombustible(EstimacionRequest(monto = monto, tipo_combustible = "gasolina"))
+                _estimacionMgp.value = UiState(data = res)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _estimacionMgp.value = UiState(error = mensajeDeError(e))
+            }
+        }
+    }
+
+    private val _precios = MutableStateFlow(UiState<List<PrecioCombustible>>())
+    val precios = _precios.asStateFlow()
+
+    fun cargarPrecios() {
+        viewModelScope.launch {
+            _precios.value = UiState(loading = true)
+            try {
+                val lista = ApiClient.api.preciosCombustible("san_pedro_sula")
+                _precios.value = UiState(data = lista)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _precios.value = UiState(error = mensajeDeError(e))
+            }
+        }
+    }
+
+    private val _historialPrecios = MutableStateFlow(UiState<HistorialPrecios>())
+    val historialPrecios = _historialPrecios.asStateFlow()
+
+    fun cargarHistorialPrecios() {
+        viewModelScope.launch {
+            _historialPrecios.value = UiState(loading = true)
+            try {
+                val hp = ApiClient.api.historialPrecios(12)
+                _historialPrecios.value = UiState(data = hp)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _historialPrecios.value = UiState(error = mensajeDeError(e))
             }
         }
     }

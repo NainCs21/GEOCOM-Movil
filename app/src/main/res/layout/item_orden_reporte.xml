@@ -78,5 +78,14 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/textEstimacion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="end"
+            android:textColor="@color/texto_secundario"
+            android:textSize="12sp"
+            android:visibility="gone" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -293,7 +293,25 @@ class ReportesFragment : Fragment(R.layout.fragment_reportes) {
                             resp.resumen.promedio_orden,
                             resp.resumen.cumplimiento_pct
                         )
+                        if (resp.resumen.precio_promedio_galon != null) {
+                            binding.textGalonesYPromedio.isVisible = true
+                            binding.textGalonesYPromedio.text = getString(
+                                R.string.galones_y_promedio_formato,
+                                resp.resumen.galones_total,
+                                resp.resumen.precio_promedio_galon
+                            )
+                        } else {
+                            binding.textGalonesYPromedio.isVisible = false
+                        }
+
                         binding.chartMesesGeneral.setDatos(resp.por_mes.map { BarChartView.Barra(formatearMes(it.mes), it.monto_total) })
+                        val totalGalonesMes = resp.por_mes.sumOf { it.galones_total }
+                        if (totalGalonesMes > 0) {
+                            binding.textEquivaleGalonesGeneral.isVisible = true
+                            binding.textEquivaleGalonesGeneral.text = getString(R.string.equivale_a_galones, totalGalonesMes)
+                        } else {
+                            binding.textEquivaleGalonesGeneral.isVisible = false
+                        }
 
                         val porConductor = binding.toggleReporte.checkedButtonId == R.id.btnPorConductor
                         if (porConductor) {

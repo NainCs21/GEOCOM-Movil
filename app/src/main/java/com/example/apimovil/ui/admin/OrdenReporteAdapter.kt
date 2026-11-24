@@ -2,6 +2,7 @@ package com.example.apimovil.ui.admin
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -34,6 +35,20 @@ class OrdenReporteAdapter(
         holder.binding.textDestino.text = "${orden.destino} (${orden.tipo_combustible})"
         holder.binding.textFecha.text = formatearFechaIsoShort(orden.fecha_completada)
         holder.binding.textMonto.text = String.format(Locale.US, "L %,.2f", orden.monto)
+
+        if (orden.galones_estimados != null) {
+            val gal = orden.galones_estimados
+            val precio = orden.precio_galon
+            val txtEst = if (precio != null) {
+                String.format(Locale.US, "≈ %.1f gal · L %.2f/gal", gal, precio)
+            } else {
+                String.format(Locale.US, "≈ %.1f gal", gal)
+            }
+            holder.binding.textEstimacion.isVisible = true
+            holder.binding.textEstimacion.text = txtEst
+        } else {
+            holder.binding.textEstimacion.isVisible = false
+        }
 
         val estadoTxt = when (orden.estado) {
             "completada_tarde" -> ctx.getString(R.string.completada_tarde_badge)

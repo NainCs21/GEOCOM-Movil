@@ -164,4 +164,13 @@ interface ApiService {
     suspend fun reporteDetalleGasolinera(
         @Path("id") id: Int, @Query("desde") desde: String?, @Query("hasta") hasta: String?
     ): ReporteGasolineraDetalleResp
+
+    @GET("combustibles")
+    suspend fun preciosCombustible(@Query("ciudad") ciudad: String? = "san_pedro_sula"): List<PrecioCombustible>
+
+    @GET("combustibles/historial")
+    suspend fun historialPrecios(@Query("semanas") semanas: Int = 12): HistorialPrecios
+
+    @POST("ordenes/estimar")
+    suspend fun estimarCombustible(@Body body: EstimacionRequest): EstimacionCombustible
 }

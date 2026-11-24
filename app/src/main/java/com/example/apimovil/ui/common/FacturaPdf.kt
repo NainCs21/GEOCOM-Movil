@@ -18,6 +18,7 @@ import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.Request
 
 data class EvidenciaImagen(
     val tipo: String,
@@ -33,7 +34,7 @@ suspend fun generarFacturaPdf(
     orden.detalles?.forEach { detalle ->
         val destinoLabel = if (detalle.tipo_destino == "vehiculo") {
             val v = detalle.vehiculo
-            if (v != null) "${v.marca} ${v.modelo} (${v.placa})" else "Vehiculo"
+            if (v != null) "${v.marca} ${v.modelo} (${v.placa})" else "Vehículo"
         } else {
             detalle.descripcion_mgp ?: "MGP"
         }
@@ -71,12 +72,12 @@ suspend fun generarFacturaPdf(
     val paintTableHeader = Paint().apply { color = Color.parseColor("#6042A6") }
     val paintHeaderText = Paint().apply {
         color = Color.WHITE
-        textSize = 10f
+        textSize = 9f
         isFakeBoldText = true
     }
     val paintRowText = TextPaint().apply {
         color = Color.parseColor("#24212D")
-        textSize = 10f
+        textSize = 9f
     }
     val paintRowLine = Paint().apply {
         color = Color.parseColor("#E5E0EB")
@@ -84,7 +85,7 @@ suspend fun generarFacturaPdf(
     }
     val paintTotalText = Paint().apply {
         color = Color.parseColor("#6042A6")
-        textSize = 11f
+        textSize = 10f
         isFakeBoldText = true
     }
     val paintFooter = Paint().apply {
@@ -105,7 +106,7 @@ suspend fun generarFacturaPdf(
         val canvas1 = page1.canvas
         var currentY = 50f
 
-        canvas1.drawText("GEOCOM - Sistema de Ordenes de Combustible", marginLeft, currentY, paintHeader)
+        canvas1.drawText("GEOCOM - Sistema de Órdenes de Combustible", marginLeft, currentY, paintHeader)
         currentY += 18f
 
         canvas1.drawText("FACTURA / COMPROBANTE DE ORDEN #${orden.numero_orden}", marginLeft, currentY, paintTitle)
@@ -128,7 +129,7 @@ suspend fun generarFacturaPdf(
         canvas1.drawText("Gasolinera: $gasolineraNombre", marginLeft + 260f, infoY, paintRowText)
         infoY += 16f
 
-        canvas1.drawText("Direccion: $gasolineraDir", marginLeft + 260f, infoY, paintSubtitle)
+        canvas1.drawText("Dirección: $gasolineraDir", marginLeft + 260f, infoY, paintSubtitle)
 
         val fAsig = orden.fecha_asignacion?.let { formatoLegible(it) } ?: "N/D"
         val fComp = orden.fecha_completada?.let { formatoLegible(it) } ?: "N/D"
@@ -141,23 +142,29 @@ suspend fun generarFacturaPdf(
         canvas1.drawText("DESGLOSE DE COMBUSTIBLE", marginLeft, currentY, paintSectionTitle)
         currentY += 14f
 
-        val colNoW = 30f
-        val colCombW = 100f
-        val colMontoW = 90f
-        val colDestinoW = contentWidth - colNoW - colCombW - colMontoW
+        val colNoW = 25f
+        val colDestinoW = 145f
+        val colCombW = 85f
+        val colLgalW = 60f
+        val colGalonesW = 65f
+        val colMontoW = contentWidth - colNoW - colDestinoW - colCombW - colLgalW - colGalonesW // 135f
 
         val xNo = marginLeft
         val xDestino = xNo + colNoW
         val xComb = xDestino + colDestinoW
-        val xMonto = xComb + colCombW
+        val xLgal = xComb + colCombW
+        val xGalones = xLgal + colLgalW
+        val xMonto = xGalones + colGalonesW
 
         val headerH = 22f
         canvas1.drawRect(marginLeft, currentY, pageWidth - marginRight, currentY + headerH, paintTableHeader)
         val textBaseH = currentY + 15f
-        canvas1.drawText("#", xNo + 6f, textBaseH, paintHeaderText)
-        canvas1.drawText("Destino / Vehiculo", xDestino + 6f, textBaseH, paintHeaderText)
-        canvas1.drawText("Combustible", xComb + 6f, textBaseH, paintHeaderText)
-        canvas1.drawText("Monto (L)", xMonto + 6f, textBaseH, paintHeaderText)
+        canvas1.drawText("#", xNo + 4f, textBaseH, paintHeaderText)
+        canvas1.drawText("Destino / Vehículo", xDestino + 4f, textBaseH, paintHeaderText)
+        canvas1.drawText("Combustible", xComb + 4f, textBaseH, paintHeaderText)
+        canvas1.drawText("L/gal", xLgal + 4f, textBaseH, paintHeaderText)
+        canvas1.drawText("Galones", xGalones + 4f, textBaseH, paintHeaderText)
+        canvas1.drawText("Monto (L)", xMonto + 4f, textBaseH, paintHeaderText)
         currentY += headerH
 
         val detalles = orden.detalles.orEmpty()
@@ -166,23 +173,37 @@ suspend fun generarFacturaPdf(
             canvas1.drawLine(marginLeft, currentY, pageWidth - marginRight, currentY, paintRowLine)
             val textBaseR = currentY + 15f
 
-            canvas1.drawText(itemNum.toString(), xNo + 6f, textBaseR, paintRowText)
+            canvas1.drawText(itemNum.toString(), xNo + 4f, textBaseR, paintRowText)
 
             val destText = if (det.tipo_destino == "vehiculo") {
                 val v = det.vehiculo
-                if (v != null) "${v.marca} ${v.modelo} (${v.placa})" else "Vehiculo"
+                if (v != null) "${v.marca} ${v.modelo} (${v.placa})" else "Vehículo"
             } else {
                 det.descripcion_mgp ?: "MGP"
             }
 
-            val destEllipsized = TextUtils.ellipsize(destText, paintRowText, colDestinoW - 12f, TextUtils.TruncateAt.END).toString()
-            canvas1.drawText(destEllipsized, xDestino + 6f, textBaseR, paintRowText)
+            val destEllipsized = TextUtils.ellipsize(destText, paintRowText, colDestinoW - 8f, TextUtils.TruncateAt.END).toString()
+            canvas1.drawText(destEllipsized, xDestino + 4f, textBaseR, paintRowText)
 
-            canvas1.drawText(det.tipo_combustible, xComb + 6f, textBaseR, paintRowText)
+            val combNombre = when (det.combustible_precio?.lowercase()?.trim()) {
+                "diesel", "diésel" -> "Diésel"
+                "regular" -> "Regular"
+                "super", "súper" -> "Súper"
+                null, "" -> det.tipo_combustible.replaceFirstChar { it.uppercase() }
+                else -> det.combustible_precio.replaceFirstChar { it.uppercase() }
+            }
+            val combEllipsized = TextUtils.ellipsize(combNombre, paintRowText, colCombW - 8f, TextUtils.TruncateAt.END).toString()
+            canvas1.drawText(combEllipsized, xComb + 4f, textBaseR, paintRowText)
+
+            val lGalText = if (det.precio_galon != null) String.format(Locale.US, "%,.2f", det.precio_galon) else "N/D"
+            canvas1.drawText(lGalText, xLgal + 4f, textBaseR, paintRowText)
+
+            val galText = if (det.galones_estimados != null) String.format(Locale.US, "≈ %.2f", det.galones_estimados) else "N/D"
+            canvas1.drawText(galText, xGalones + 4f, textBaseR, paintRowText)
 
             val montoFmt = String.format(Locale.US, "%,.2f", det.monto)
             val montoWidth = paintRowText.measureText(montoFmt)
-            canvas1.drawText(montoFmt, (xMonto + colMontoW - 6f) - montoWidth, textBaseR, paintRowText)
+            canvas1.drawText(montoFmt, (xMonto + colMontoW - 4f) - montoWidth, textBaseR, paintRowText)
 
             currentY += 22f
             itemNum++
@@ -190,14 +211,42 @@ suspend fun generarFacturaPdf(
 
         canvas1.drawLine(marginLeft, currentY, pageWidth - marginRight, currentY, paintRowLine)
         currentY += 16f
-        canvas1.drawText("TOTAL GENERAL", marginLeft + 6f, currentY, paintTotalText)
+        canvas1.drawText("TOTAL GENERAL", marginLeft + 4f, currentY, paintTotalText)
         val totalMonto = detalles.sumOf { it.monto }
         val totalFmt = String.format(Locale.US, "L %,.2f", totalMonto)
         val totalWidth = paintTotalText.measureText(totalFmt)
-        canvas1.drawText(totalFmt, (pageWidth - marginRight - 6f) - totalWidth, currentY, paintTotalText)
+        canvas1.drawText(totalFmt, (pageWidth - marginRight - 4f) - totalWidth, currentY, paintTotalText)
+
+        // Linea de estimacion
+        val totalGalonesEstimados = detalles.mapNotNull { it.galones_estimados }.sum()
+        val totalKmEstimados = detalles.filter { it.tipo_destino == "vehiculo" || it.vehiculo_id != null }.mapNotNull { it.km_estimados }.sum()
+        val tieneEstimaciones = detalles.any { it.precio_galon != null || it.galones_estimados != null }
+
+        if (tieneEstimaciones) {
+            currentY += 18f
+            val paintEstimacionLine = Paint().apply {
+                color = Color.parseColor("#6042A6")
+                textSize = 9.5f
+                isFakeBoldText = true
+            }
+            val estText = "Combustible estimado: ≈ ${String.format(Locale.US, "%.2f", totalGalonesEstimados)} galones · ≈ ${String.format(Locale.US, "%.0f", totalKmEstimados)} km recorribles"
+            canvas1.drawText(estText, marginLeft + 4f, currentY, paintEstimacionLine)
+
+            val vigenteDesdeRaw = detalles.firstOrNull { !it.precio_vigente_desde.isNullOrBlank() }?.precio_vigente_desde
+            val fechaVigenciaFmt = if (!vigenteDesdeRaw.isNullOrBlank()) formatearFechaIsoShort(vigenteDesdeRaw) else "esta semana"
+
+            currentY += 14f
+            val paintNote = TextPaint().apply {
+                color = Color.parseColor("#666270")
+                textSize = 8f
+            }
+            val notaText = "Estimación con el precio oficial de la Secretaría de Energía vigente desde $fechaVigenciaFmt (San Pedro Sula). Valores aproximados."
+            val notaEllipsized = TextUtils.ellipsize(notaText, paintNote, contentWidth - 8f, TextUtils.TruncateAt.END).toString()
+            canvas1.drawText(notaEllipsized, marginLeft + 4f, currentY, paintNote)
+        }
 
         val totalPaginasEstimadas = if (listaImagenes.isEmpty()) 1 else 1 + ((listaImagenes.size + 1) / 2)
-        canvas1.drawText("Pagina 1 de $totalPaginasEstimadas", pageWidth / 2f, pageHeight - 25f, paintFooter)
+        canvas1.drawText("Página 1 de $totalPaginasEstimadas", pageWidth / 2f, pageHeight - 25f, paintFooter)
 
         document.finishPage(page1)
 
@@ -212,7 +261,7 @@ suspend fun generarFacturaPdf(
                 canvasImg.drawText("GEOCOM - Orden #${orden.numero_orden}", marginLeft, yImg, paintHeader)
                 yImg += 18f
 
-                canvasImg.drawText("EVIDENCIAS FOTOGRAFICAS", marginLeft, yImg, paintSectionTitle)
+                canvasImg.drawText("EVIDENCIAS FOTOGRÁFICAS", marginLeft, yImg, paintSectionTitle)
                 yImg += 22f
 
                 for (evImg in chunk) {
@@ -250,7 +299,7 @@ suspend fun generarFacturaPdf(
                     yImg += maxH + 30f
                 }
 
-                canvasImg.drawText("Pagina $pageNum de $totalPaginasEstimadas", pageWidth / 2f, pageHeight - 25f, paintFooter)
+                canvasImg.drawText("Página $pageNum de $totalPaginasEstimadas", pageWidth / 2f, pageHeight - 25f, paintFooter)
                 document.finishPage(imgPage)
             }
         }
@@ -280,7 +329,7 @@ suspend fun generarFacturaPdf(
 private suspend fun descargarBitmap(urlStr: String?): Bitmap? = withContext(Dispatchers.IO) {
     if (urlStr.isNullOrBlank()) return@withContext null
     try {
-        val request = okhttp3.Request.Builder().url(urlStr).build()
+        val request = Request.Builder().url(urlStr).build()
         ApiClient.client.newCall(request).execute().use { response ->
             val body = response.body
             if (response.isSuccessful && body != null) {

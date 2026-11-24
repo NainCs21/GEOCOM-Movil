@@ -20,6 +20,7 @@ import com.example.apimovil.data.models.DetalleLineaRequest
 import com.example.apimovil.data.models.Gasolinera
 import com.example.apimovil.data.models.Vehiculo
 import com.example.apimovil.databinding.FragmentAsignarMontoBinding
+import com.example.apimovil.ui.common.formatearFechaIsoShort
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
@@ -33,6 +34,9 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
     private var listaGasolineras: List<Gasolinera> = emptyList()
     private var gasolineraIdSeleccionada: Int? = null
     private var listaVehiculos: List<Vehiculo> = emptyList()
+
+    private var galonesVehiculo: Double = 0.0
+    private var galonesMgp: Double = 0.0
 
     private val actualizarTotal = object : TextWatcher {
         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -101,6 +105,7 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
                         if (vehiculoId == null && listaVehiculos.isNotEmpty()) {
                             vehiculoId = listaVehiculos.first().id
                         }
+                        recalcularTotal()
                     }
                 }
 
@@ -137,6 +142,67 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
                         }
                         if (estado.data == true) {
                             findNavController().navigateUp()
+                        }
+                    }
+                }
+
+                launch {
+                    model.estimacionVehiculo.collect { estado ->
+                        if (estado.error != null) {
+                            galonesVehiculo = 0.0
+                            binding.textEstimacionVehiculo.isVisible = true
+                            binding.textEstimacionVehiculo.text = getString(R.string.estimacion_no_disponible)
+                            recalcularTotal()
+                        } else if (estado.data != null) {
+                            val est = estado.data
+                            galonesVehiculo = est.galones_aproximados
+                            val combNombre = capitalizarCombustible(est.combustible)
+                            val fechaVigente = formatearFechaIsoShort(est.vigente_desde)
+                            binding.textEstimacionVehiculo.isVisible = true
+                            binding.textEstimacionVehiculo.text = getString(
+                                R.string.estimacion_vehiculo,
+                                est.galones_aproximados,
+                                est.litros_aproximados,
+                                est.kilometros_aproximados ?: 0.0,
+                                combNombre,
+                                est.precio_por_galon,
+                                fechaVigente
+                            )
+                            recalcularTotal()
+                        } else if (!estado.loading) {
+                            galonesVehiculo = 0.0
+                            binding.textEstimacionVehiculo.isVisible = false
+                            recalcularTotal()
+                        }
+                    }
+                }
+
+                launch {
+                    model.estimacionMgp.collect { estado ->
+                        if (estado.error != null) {
+                            galonesMgp = 0.0
+                            binding.textEstimacionMgp.isVisible = true
+                            binding.textEstimacionMgp.text = getString(R.string.estimacion_no_disponible)
+                            recalcularTotal()
+                        } else if (estado.data != null) {
+                            val est = estado.data
+                            galonesMgp = est.galones_aproximados
+                            val combNombre = capitalizarCombustible(est.combustible)
+                            val fechaVigente = formatearFechaIsoShort(est.vigente_desde)
+                            binding.textEstimacionMgp.isVisible = true
+                            binding.textEstimacionMgp.text = getString(
+                                R.string.estimacion_mgp,
+                                est.galones_aproximados,
+                                est.litros_aproximados,
+                                combNombre,
+                                est.precio_por_galon,
+                                fechaVigente
+                            )
+                            recalcularTotal()
+                        } else if (!estado.loading) {
+                            galonesMgp = 0.0
+                            binding.textEstimacionMgp.isVisible = false
+                            recalcularTotal()
                         }
                     }
                 }
@@ -245,12 +311,45 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
         }
     }
 
+    private fun capitalizarCombustible(combustible: String?): String {
+        return when (combustible?.lowercase()?.trim()) {
+            "diesel", "diésel" -> "Diésel"
+            "regular" -> "Regular"
+            "super", "súper" -> "Súper"
+            else -> combustible?.replaceFirstChar { it.uppercase() } ?: "Combustible"
+        }
+    }
+
     private fun recalcularTotal() {
         val montoVehiculo = if (binding.tarjetaMontoVehiculo.isVisible)
             binding.inputMontoVehiculo.text?.toString()?.toDoubleOrNull() ?: 0.0 else 0.0
         val montoMgp = if (binding.tarjetaMontoMgp.isVisible)
             binding.inputMontoMgp.text?.toString()?.toDoubleOrNull() ?: 0.0 else 0.0
-        binding.textTotalAsignado.text = getString(R.string.total_de_la_solicitud, montoVehiculo + montoMgp)
+
+        val vehiculoId = listaVehiculos.firstOrNull()?.id
+        if (binding.tarjetaMontoVehiculo.isVisible && vehiculoId != null) {
+            model.estimarVehiculo(montoVehiculo, vehiculoId)
+        } else {
+            galonesVehiculo = 0.0
+            binding.textEstimacionVehiculo.isVisible = false
+        }
+
+        if (binding.tarjetaMontoMgp.isVisible) {
+            model.estimarMgp(montoMgp)
+        } else {
+            galonesMgp = 0.0
+            binding.textEstimacionMgp.isVisible = false
+        }
+
+        val totalMonto = montoVehiculo + montoMgp
+        val totalGalones = galonesVehiculo + galonesMgp
+        val totalMontoStr = getString(R.string.total_de_la_solicitud, totalMonto)
+        val textoTotal = if (totalGalones > 0) {
+            "$totalMontoStr\n${getString(R.string.estimacion_total_galones, totalGalones)}"
+        } else {
+            totalMontoStr
+        }
+        binding.textTotalAsignado.text = textoTotal
     }
 
     override fun onDestroyView() {

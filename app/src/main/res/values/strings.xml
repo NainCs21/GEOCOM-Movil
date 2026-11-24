@@ -321,4 +321,27 @@
     <string name="gasolineras_donde_cargo">Gasolineras donde cargó</string>
     <string name="conductores_que_la_usan">Conductores que la usan</string>
     <string name="ordenes_del_periodo">Órdenes del periodo</string>
+    <string name="rendimiento_km_litro">Rendimiento (km por litro)</string>
+    <string name="rendimiento_ayuda">Kilómetros que recorre con un litro. Si lo dejas vacío se usa 8.</string>
+    <string name="estimacion_vehiculo">≈ %.1f gal (%.1f L) · ≈ %.0f km\n%s a L %,.2f/gal · semana del %s</string>
+    <string name="estimacion_mgp">≈ %.1f gal (%.1f L)\n%s a L %,.2f/gal · semana del %s</string>
+    <string name="estimacion_total_galones">≈ %.1f galones en total</string>
+    <string name="estimacion_no_disponible">Sin precio oficial disponible para estimar</string>
+    <string name="precios_combustible">Precios del combustible</string>
+    <string name="regular">Regular</string>
+    <string name="super_combustible">Súper</string>
+    <string name="diesel_combustible">Diésel</string>
+    <string name="evolucion_precio_galon">Evolución del precio por galón</string>
+    <string name="min_max_actual_formato">Mínimo L %1$,.2f · Máximo L %2$,.2f · Actual L %3$,.2f</string>
+    <string name="semana_del_formato">Semana del %1$s · San Pedro Sula</string>
+    <string name="san_pedro_sula">San Pedro Sula</string>
+    <string name="estimacion_linea_con_km">≈ %.2f gal · ≈ %.0f km · L %.2f/gal</string>
+    <string name="estimacion_linea_sin_km">≈ %.2f gal · L %.2f/gal</string>
+    <string name="pie_factura_estimacion">Combustible estimado: ≈ %.2f galones · ≈ %.0f km recorribles</string>
+    <string name="pie_factura_secretaria">Estimación con el precio oficial de la Secretaría de Energía vigente desde %s (San Pedro Sula). Valores aproximados.</string>
+    <string name="galones_y_promedio_formato">≈ %,.1f galones · precio promedio L %,.2f/gal</string>
+    <string name="galones_aprox">Galones (aprox.)</string>
+    <string name="precio_promedio_label">Precio promedio</string>
+    <string name="equivale_a_galones">Equivale a ≈ %,.1f galones</string>
+    <string name="pie_pdf_precio_oficial">Galones y km estimados con el precio oficial vigente al asignar cada orden.</string>
 </resources>

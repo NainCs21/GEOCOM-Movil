@@ -109,28 +109,33 @@ private fun dibujarIndicadoresPdf(canvas: Canvas, x: Float, y: Float, ancho: Flo
     }
     val paintText = TextPaint().apply {
         color = Color.parseColor("#24212D")
-        textSize = 9f
+        textSize = 8.5f
     }
     val paintBold = TextPaint().apply {
         color = Color.parseColor("#6042A6")
-        textSize = 10f
+        textSize = 9.5f
         isFakeBoldText = true
     }
 
     val boxH = 32f
     canvas.drawRect(x, y, x + ancho, y + boxH, paintBox)
 
-    val colW = ancho / 5f
+    val precPromStr = if (resumen.precio_promedio_galon != null) String.format(Locale.US, "L %,.2f", resumen.precio_promedio_galon) else "N/D"
+    val galStr = String.format(Locale.US, "≈ %,.1f", resumen.galones_total)
+
+    val colW = ancho / 7f
     val items = listOf(
         "Gasto" to String.format(Locale.US, "L %,.2f", resumen.monto_total),
         "Órdenes" to resumen.cantidad_ordenes.toString(),
         "Promedio" to String.format(Locale.US, "L %,.2f", resumen.promedio_orden),
         "Cumplim." to String.format(Locale.US, "%.1f%%", resumen.cumplimiento_pct),
-        "Vencidas" to resumen.vencidas.toString()
+        "Vencidas" to resumen.vencidas.toString(),
+        "Galones" to galStr,
+        "Precio prom." to precPromStr
     )
 
     for ((i, par) in items.withIndex()) {
-        val colX = x + colW * i + 6f
+        val colX = x + colW * i + 4f
         canvas.drawText(par.first, colX, y + 12f, paintText)
         canvas.drawText(par.second, colX, y + 25f, paintBold)
     }
@@ -190,9 +195,9 @@ suspend fun generarReportePdf(
         textSize = 10f
         isFakeBoldText = true
     }
-    val paintFooter = Paint().apply {
+    val paintFooterNote = Paint().apply {
         color = Color.parseColor("#666270")
-        textSize = 9f
+        textSize = 8f
         textAlign = Paint.Align.CENTER
     }
 
@@ -320,6 +325,8 @@ suspend fun generarReportePdf(
         val totalWidth = paintTotalText.measureText(totalGeneralStr)
         canvas.drawText(totalGeneralStr, (xMonto + colMontoWidth - 8f) - totalWidth, textBaselineTotal, paintTotalText)
 
+        canvas.drawText("Galones y km estimados con el precio oficial vigente al asignar cada orden.", pageWidth / 2f, pageHeight - 25f, paintFooterNote)
+
         document.finishPage(page)
 
         val dir = File(context.cacheDir, "reportes")
@@ -358,6 +365,7 @@ suspend fun generarReporteDetallePdf(
     porMes: List<PuntoMes>,
     porCombustible: List<PuntoCombustible>,
     ranking: List<PuntoRanking>,
+    porVehiculo: List<PuntoVehiculo> = emptyList(),
     ordenes: List<OrdenReporte>,
     entidadIdOrNombre: String
 ): File? = withContext(Dispatchers.IO) {
@@ -398,6 +406,11 @@ suspend fun generarReporteDetallePdf(
         textSize = 9f
         isFakeBoldText = true
     }
+    val paintFooterNote = Paint().apply {
+        color = Color.parseColor("#666270")
+        textSize = 8f
+        textAlign = Paint.Align.CENTER
+    }
 
     val marginLeft = 40f
     val marginRight = 40f
@@ -405,17 +418,20 @@ suspend fun generarReporteDetallePdf(
     val pageHeight = 842f
     val contentWidth = pageWidth - marginLeft - marginRight
 
-    val colNoW = 35f
-    val colFechaW = 70f
-    val colCombW = 80f
-    val colMontoW = 75f
-    val colDestinoW = contentWidth - colNoW - colFechaW - colCombW - colMontoW
+    // Order table columns: # (25), Fecha (60), Destino (165), Comb (75), Galones (65), Monto (125) = 515f
+    val colNoW = 25f
+    val colFechaW = 60f
+    val colCombW = 75f
+    val colGalonesW = 65f
+    val colMontoW = 125f
+    val colDestinoW = contentWidth - colNoW - colFechaW - colCombW - colGalonesW - colMontoW
 
     val xNo = marginLeft
     val xFecha = xNo + colNoW
     val xDestino = xFecha + colFechaW
     val xComb = xDestino + colDestinoW
-    val xMonto = xComb + colCombW
+    val xGalones = xComb + colCombW
+    val xMonto = xGalones + colGalonesW
 
     val rowHeight = 20f
     val headerHeight = 22f
@@ -456,6 +472,84 @@ suspend fun generarReporteDetallePdf(
         val rankingTitle = if (tipo == "conductor") "Gasolineras donde cargó" else "Conductores que la usan"
         currentY = dibujarBarrasPdf(canvas, marginLeft, currentY, contentWidth, ranking.take(8).map { Pair(it.nombre, it.monto_total) }, true, rankingTitle)
 
+        // Vehículos Table if conductor
+        val vehiculosList = porVehiculo
+        if (tipo == "conductor" && vehiculosList.isNotEmpty()) {
+            val vColPlacaW = 65f
+            val vColGastoW = 85f
+            val vColGalW = 85f
+            val vColKmW = 95f
+            val vColDescW = contentWidth - vColPlacaW - vColGastoW - vColGalW - vColKmW
+
+            val vxPlaca = marginLeft
+            val vxDesc = vxPlaca + vColPlacaW
+            val vxGasto = vxDesc + vColDescW
+            val vxGal = vxGasto + vColGastoW
+            val vxKm = vxGal + vColGalW
+
+            if (currentY + headerHeight + rowHeight > pageHeight - 50f) {
+                document.finishPage(page)
+                page = document.startPage(pageInfo)
+                canvas = page.canvas
+                currentY = 50f
+            }
+
+            canvas.drawText("VEHÍCULOS", marginLeft, currentY, Paint().apply {
+                color = Color.parseColor("#24212D")
+                textSize = 11f
+                isFakeBoldText = true
+            })
+            currentY += 14f
+
+            canvas.drawRect(marginLeft, currentY, pageWidth - marginRight, currentY + headerHeight, paintTableHeader)
+            var textBaselineHeader = currentY + 15f
+            canvas.drawText("Placa", vxPlaca + 4f, textBaselineHeader, paintHeaderText)
+            canvas.drawText("Descripción", vxDesc + 4f, textBaselineHeader, paintHeaderText)
+            canvas.drawText("Gasto (L)", vxGasto + 4f, textBaselineHeader, paintHeaderText)
+            canvas.drawText("Galones", vxGal + 4f, textBaselineHeader, paintHeaderText)
+            canvas.drawText("Km aprox.", vxKm + 4f, textBaselineHeader, paintHeaderText)
+            currentY += headerHeight
+
+            for (pv in vehiculosList) {
+                if (currentY + rowHeight > pageHeight - 50f) {
+                    document.finishPage(page)
+                    page = document.startPage(pageInfo)
+                    canvas = page.canvas
+                    currentY = 50f
+
+                    canvas.drawRect(marginLeft, currentY, pageWidth - marginRight, currentY + headerHeight, paintTableHeader)
+                    textBaselineHeader = currentY + 15f
+                    canvas.drawText("Placa", vxPlaca + 4f, textBaselineHeader, paintHeaderText)
+                    canvas.drawText("Descripción", vxDesc + 4f, textBaselineHeader, paintHeaderText)
+                    canvas.drawText("Gasto (L)", vxGasto + 4f, textBaselineHeader, paintHeaderText)
+                    canvas.drawText("Galones", vxGal + 4f, textBaselineHeader, paintHeaderText)
+                    canvas.drawText("Km aprox.", vxKm + 4f, textBaselineHeader, paintHeaderText)
+                    currentY += headerHeight
+                }
+
+                canvas.drawLine(marginLeft, currentY, pageWidth - marginRight, currentY, paintRowLine)
+                val textBaselineRow = currentY + 13f
+
+                canvas.drawText(pv.placa, vxPlaca + 4f, textBaselineRow, paintRowText)
+
+                val descEllipsized = TextUtils.ellipsize(pv.descripcion, paintRowText, vColDescW - 8f, TextUtils.TruncateAt.END).toString()
+                canvas.drawText(descEllipsized, vxDesc + 4f, textBaselineRow, paintRowText)
+
+                val gastoStr = String.format(Locale.US, "%,.2f", pv.monto_total)
+                canvas.drawText(gastoStr, vxGasto + 4f, textBaselineRow, paintRowText)
+
+                val galStr = String.format(Locale.US, "≈ %.1f", pv.galones_total)
+                canvas.drawText(galStr, vxGal + 4f, textBaselineRow, paintRowText)
+
+                val kmStr = String.format(Locale.US, "≈ %.0f", pv.km_total)
+                canvas.drawText(kmStr, vxKm + 4f, textBaselineRow, paintRowText)
+
+                currentY += rowHeight
+            }
+            currentY += 15f
+        }
+
+        // Orders Table
         val indexedRows = ordenes.withIndex().toList()
         var rowIndex = 0
 
@@ -472,6 +566,7 @@ suspend fun generarReporteDetallePdf(
         canvas.drawText("Fecha", xFecha + 4f, textBaselineHeader, paintHeaderText)
         canvas.drawText("Destino", xDestino + 4f, textBaselineHeader, paintHeaderText)
         canvas.drawText("Comb.", xComb + 4f, textBaselineHeader, paintHeaderText)
+        canvas.drawText("Galones", xGalones + 4f, textBaselineHeader, paintHeaderText)
         canvas.drawText("Monto (L)", xMonto + 4f, textBaselineHeader, paintHeaderText)
         currentY += headerHeight
 
@@ -488,6 +583,7 @@ suspend fun generarReporteDetallePdf(
                 canvas.drawText("Fecha", xFecha + 4f, textBaselineHeader, paintHeaderText)
                 canvas.drawText("Destino", xDestino + 4f, textBaselineHeader, paintHeaderText)
                 canvas.drawText("Comb.", xComb + 4f, textBaselineHeader, paintHeaderText)
+                canvas.drawText("Galones", xGalones + 4f, textBaselineHeader, paintHeaderText)
                 canvas.drawText("Monto (L)", xMonto + 4f, textBaselineHeader, paintHeaderText)
                 currentY += headerHeight
             }
@@ -515,6 +611,9 @@ suspend fun generarReporteDetallePdf(
             ).toString()
             canvas.drawText(combEllipsized, xComb + 4f, textBaselineRow, paintRowText)
 
+            val galText = orden.galones_estimados?.let { String.format(Locale.US, "≈ %.2f", it) } ?: "N/D"
+            canvas.drawText(galText, xGalones + 4f, textBaselineRow, paintRowText)
+
             val montoStr = String.format(Locale.US, "%,.2f", orden.monto)
             val montoWidth = paintRowText.measureText(montoStr)
             canvas.drawText(montoStr, (xMonto + colMontoW - 4f) - montoWidth, textBaselineRow, paintRowText)
@@ -538,6 +637,8 @@ suspend fun generarReporteDetallePdf(
         val totalGeneralStr = String.format(Locale.US, "%,.2f", totalMontoGeneral)
         val totalWidth = paintTotalText.measureText(totalGeneralStr)
         canvas.drawText(totalGeneralStr, (xMonto + colMontoW - 4f) - totalWidth, textBaselineTotal, paintTotalText)
+
+        canvas.drawText("Galones y km estimados con el precio oficial vigente al asignar cada orden.", pageWidth / 2f, pageHeight - 25f, paintFooterNote)
 
         document.finishPage(page)
 

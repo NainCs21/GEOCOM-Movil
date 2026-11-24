@@ -234,6 +234,15 @@
                             app:cornerRadius="12dp"
                             tools:ignore="HardcodedText" />
                     </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/textEstimacionVehiculo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:textColor="@color/texto_secundario"
+                        android:textSize="13sp"
+                        android:visibility="gone" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -335,6 +344,15 @@
                             app:cornerRadius="12dp"
                             tools:ignore="HardcodedText" />
                     </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/textEstimacionMgp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:textColor="@color/texto_secundario"
+                        android:textSize="13sp"
+                        android:visibility="gone" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

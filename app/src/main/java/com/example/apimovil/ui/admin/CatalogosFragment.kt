@@ -11,6 +11,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -27,7 +28,6 @@ import com.example.apimovil.data.models.Vehiculo
 import com.example.apimovil.databinding.FragmentCatalogosBinding
 import com.example.apimovil.ui.common.configurarNavegacionAdmin
 import com.example.apimovil.ui.common.configurarNavegacionSupervisor
-import com.example.apimovil.ui.common.formatoCargo
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -101,9 +101,8 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                             FilaDoble(
                                 id = it.id,
                                 titulo = it.usuario?.name ?: getString(R.string.conductor_numero, it.id),
-                                subtitulo = "${it.telefono} · ${formatoCargo(it.cargo)}" +
-                                    if (!it.activo) " · " + getString(R.string.inactivo) else "",
-                                iconRes = R.drawable.ic_person
+                                subtitulo = "${it.telefono} · ${it.cargo}" +
+                                    if (!it.activo) " · " + getString(R.string.inactivo) else ""
                             )
                         })
                     }
@@ -129,9 +128,7 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                             FilaDoble(
                                 id = it.id,
                                 titulo = it.nombre,
-                                subtitulo = "${it.direccion ?: "—"} · QR: ${it.codigo_qr}" +
-                                    if (!it.activo) " · " + getString(R.string.inactivo) else "",
-                                iconRes = R.drawable.ic_gas_pump
+                                subtitulo = "${it.direccion ?: "—"} · QR: ${it.codigo_qr}"
                             )
                         })
                     }
@@ -375,24 +372,49 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                     }
                 }
 
+                val inputRendimiento = TextInputEditText(context).apply {
+                    hint = getString(R.string.rendimiento_km_litro)
+                    inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
+                    setText(veh?.rendimiento_km_litro?.toString() ?: "")
+                }
+
+                val textAyuda = TextView(context).apply {
+                    text = getString(R.string.rendimiento_ayuda)
+                    textSize = 12f
+                    setTextColor(ContextCompat.getColor(context, R.color.texto_secundario))
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply {
+                        setMargins(0, 4, 0, 8)
+                    }
+                }
+
                 layout.addView(campoTexto(inputPlaca))
                 layout.addView(campoTexto(inputMarca))
                 layout.addView(campoTexto(inputModelo))
                 layout.addView(campoTexto(inputAnio))
-                layout.addView(campoTexto(inputCombustible, 0))
+                layout.addView(campoTexto(inputCombustible))
+                layout.addView(campoTexto(inputRendimiento, 0))
+                layout.addView(textAyuda)
 
                 builder.setView(layout)
                 builder.setPositiveButton(R.string.guardar) { _, _ ->
                     val anioVal = inputAnio.text?.toString()?.toIntOrNull()
                     val seleccionCombustible = inputCombustible.text?.toString()?.trim()
                     val tipoCombustibleVal = mapaCombustible[seleccionCombustible] ?: "diesel"
-                    val map = mapOf(
+                    val rendimientoVal = inputRendimiento.text?.toString()?.trim()?.toDoubleOrNull()
+
+                    val map = mutableMapOf<String, Any?>(
                         "placa" to inputPlaca.text?.toString()?.trim(),
                         "marca" to inputMarca.text?.toString()?.trim(),
                         "modelo" to inputModelo.text?.toString()?.trim(),
                         "anio" to anioVal,
                         "tipo_combustible" to tipoCombustibleVal
                     )
+                    if (rendimientoVal != null && rendimientoVal > 0.0 && rendimientoVal < 100.0) {
+                        map["rendimiento_km_litro"] = rendimientoVal
+                    }
                     if (esEdicion && veh != null) {
                         model.editarVehiculo(veh.id, map)
                     } else {
@@ -454,7 +476,6 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         val b = _binding ?: return
         b.toggleCatalogo.check(R.id.btnVehiculos)
         b.layoutFiltrosVehiculos.isVisible = true
-        b.btnNuevo.text = getString(R.string.nuevo_vehiculo_btn)
         if (b.toggleFiltroCombustible.checkedButtonId == View.NO_ID) {
             b.toggleFiltroCombustible.check(R.id.btnFiltroTodos)
         }
@@ -492,10 +513,11 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         }
 
         return filtrados.map {
+            val rendimientoStr = " · ${it.rendimiento_km_litro ?: 8.0} km/L"
             FilaDoble(
                 id = it.id,
                 titulo = "${it.placa} · ${it.marca} ${it.modelo}",
-                subtitulo = it.tipo_combustible +
+                subtitulo = it.tipo_combustible + rendimientoStr +
                     if (!it.activo) " · " + getString(R.string.inactivo) else "",
                 iconRes = R.drawable.ic_vehiculo
             )
