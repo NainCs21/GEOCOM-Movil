@@ -10,7 +10,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
+        android:layout_marginBottom="8dp"
         android:text="@string/rehabilitar_orden"
         android:textColor="@color/texto_principal"
         android:textSize="18sp"
@@ -25,6 +25,7 @@
         android:textSize="13sp" />
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/layoutHoras"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -9,6 +9,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -23,6 +24,7 @@ import com.example.apimovil.databinding.FragmentAsignarMontoBinding
 import com.example.apimovil.ui.common.formatearFechaIsoShort
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.launch
 
 class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
@@ -37,12 +39,6 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
 
     private var galonesVehiculo: Double = 0.0
     private var galonesMgp: Double = 0.0
-
-    private val actualizarTotal = object : TextWatcher {
-        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-        override fun afterTextChanged(s: Editable?) = recalcularTotal()
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentAsignarMontoBinding.bind(view)
@@ -76,15 +72,65 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
         binding.tarjetaMontoVehiculo.isVisible = esVehiculo
         binding.tarjetaMontoMgp.isVisible = esMgp
 
-        binding.inputMontoVehiculo.addTextChangedListener(actualizarTotal)
-        binding.inputMontoMgp.addTextChangedListener(actualizarTotal)
+        binding.inputMontoVehiculo.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                binding.layoutMontoVehiculo.error = null
+                binding.textError.isVisible = false
+            }
+            override fun afterTextChanged(s: Editable?) = recalcularTotal()
+        })
 
-        binding.btnMonto500Vehiculo.setOnClickListener { binding.inputMontoVehiculo.setText("500") }
-        binding.btnMonto1000Vehiculo.setOnClickListener { binding.inputMontoVehiculo.setText("1000") }
-        binding.btnMonto1500Vehiculo.setOnClickListener { binding.inputMontoVehiculo.setText("1500") }
-        binding.btnMonto500Mgp.setOnClickListener { binding.inputMontoMgp.setText("500") }
-        binding.btnMonto1000Mgp.setOnClickListener { binding.inputMontoMgp.setText("1000") }
-        binding.btnMonto1500Mgp.setOnClickListener { binding.inputMontoMgp.setText("1500") }
+        binding.inputMontoMgp.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                binding.layoutMontoMgp.error = null
+                binding.textError.isVisible = false
+            }
+            override fun afterTextChanged(s: Editable?) = recalcularTotal()
+        })
+
+        binding.btnMonto100Vehiculo.setOnClickListener {
+            binding.inputMontoVehiculo.setText(R.string.monto_100)
+            binding.layoutMontoVehiculo.error = null
+            recalcularTotal()
+        }
+        binding.btnMonto200Vehiculo.setOnClickListener {
+            binding.inputMontoVehiculo.setText(R.string.monto_200)
+            binding.layoutMontoVehiculo.error = null
+            recalcularTotal()
+        }
+        binding.btnMonto500Vehiculo.setOnClickListener {
+            binding.inputMontoVehiculo.setText(R.string.monto_500)
+            binding.layoutMontoVehiculo.error = null
+            recalcularTotal()
+        }
+        binding.btnMonto1000Vehiculo.setOnClickListener {
+            binding.inputMontoVehiculo.setText(R.string.monto_1000)
+            binding.layoutMontoVehiculo.error = null
+            recalcularTotal()
+        }
+
+        binding.btnMonto100Mgp.setOnClickListener {
+            binding.inputMontoMgp.setText(R.string.monto_100)
+            binding.layoutMontoMgp.error = null
+            recalcularTotal()
+        }
+        binding.btnMonto200Mgp.setOnClickListener {
+            binding.inputMontoMgp.setText(R.string.monto_200)
+            binding.layoutMontoMgp.error = null
+            recalcularTotal()
+        }
+        binding.btnMonto500Mgp.setOnClickListener {
+            binding.inputMontoMgp.setText(R.string.monto_500)
+            binding.layoutMontoMgp.error = null
+            recalcularTotal()
+        }
+        binding.btnMonto1000Mgp.setOnClickListener {
+            binding.inputMontoMgp.setText(R.string.monto_1000)
+            binding.layoutMontoMgp.error = null
+            recalcularTotal()
+        }
 
         recalcularTotal()
 
@@ -221,20 +267,31 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
                 return@setOnClickListener
             }
 
+            var hasAmountError = false
             val detalles = mutableListOf<DetalleLineaRequest>()
             if (esVehiculo) {
                 val monto = binding.inputMontoVehiculo.text?.toString()?.toDoubleOrNull()
-                if (monto != null && monto > 0) {
+                if (monto == null || monto <= 0.0) {
+                    binding.layoutMontoVehiculo.error = getString(R.string.monto_mayor_a_cero_error)
+                    hasAmountError = true
+                } else {
+                    binding.layoutMontoVehiculo.error = null
                     val targetVehiculoId = vehiculoId ?: listaVehiculos.firstOrNull()?.id ?: 1
                     detalles += DetalleLineaRequest("vehiculo", vehiculo_id = targetVehiculoId, monto = monto)
                 }
             }
             if (esMgp) {
                 val monto = binding.inputMontoMgp.text?.toString()?.toDoubleOrNull()
-                if (monto != null && monto > 0) {
+                if (monto == null || monto <= 0.0) {
+                    binding.layoutMontoMgp.error = getString(R.string.monto_mayor_a_cero_error)
+                    hasAmountError = true
+                } else {
+                    binding.layoutMontoMgp.error = null
                     detalles += DetalleLineaRequest("mgp", descripcion_mgp = descripcionMgp, monto = monto)
                 }
             }
+
+            if (hasAmountError) return@setOnClickListener
 
             if (detalles.isEmpty()) {
                 binding.textError.isVisible = true
@@ -254,8 +311,11 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
     ) {
         val dialogView = layoutInflater.inflate(R.layout.dialog_confirmar_contrasena, null)
         val inputContrasena = dialogView.findViewById<TextInputEditText>(R.id.inputContrasenaAdmin)
+        val layoutContrasena = dialogView.findViewById<TextInputLayout>(R.id.layoutContrasenaAdmin)
         val progress = dialogView.findViewById<ProgressBar>(R.id.progressVerificacion)
         val textError = dialogView.findViewById<TextView>(R.id.textErrorVerificacion)
+
+        inputContrasena.addTextChangedListener { layoutContrasena.error = null }
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.dialog_confirmar_contrasena_titulo)
@@ -275,10 +335,10 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             val contrasena = inputContrasena.text?.toString()?.trim().orEmpty()
             if (contrasena.isEmpty()) {
-                textError.isVisible = true
-                textError.text = getString(R.string.contrasena_requerida)
+                layoutContrasena.error = getString(R.string.contrasena_requerida)
                 return@setOnClickListener
             }
+            layoutContrasena.error = null
             textError.isVisible = false
             progress.isVisible = true
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
@@ -302,8 +362,7 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
                     inputContrasena.isEnabled = buttonsEnabled
 
                     if (estado.error != null) {
-                        textError.isVisible = true
-                        textError.text = estado.error
+                        layoutContrasena.error = getString(R.string.contrasena_incorrecta)
                         inputContrasena.setText("")
                     }
                 }

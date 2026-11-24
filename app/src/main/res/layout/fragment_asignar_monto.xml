@@ -57,6 +57,48 @@
             android:orientation="vertical"
             android:padding="20dp">
 
+            <!-- Encabezado con ícono en círculo -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_tarjeta_info"
+                    android:contentDescription="@null"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_nav_mas"
+                    app:tint="@color/marca" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/asignar_monto"
+                        android:textColor="@color/texto_principal"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/subtitulo_asignar_monto"
+                        android:textColor="@color/texto_secundario"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </LinearLayout>
+
             <!-- Resumen de la solicitud card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -163,6 +205,7 @@
                         android:textStyle="bold" />
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutMontoVehiculo"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -171,69 +214,65 @@
                         app:boxCornerRadiusBottomEnd="12dp"
                         app:boxCornerRadiusBottomStart="12dp"
                         app:boxCornerRadiusTopEnd="12dp"
-                        app:boxCornerRadiusTopStart="12dp">
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:prefixText="L ">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/inputMontoVehiculo"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="numberDecimal" />
+                            android:inputType="numberDecimal"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <LinearLayout
+                    <!-- Chips de montos rápidos (100, 200, 500, 1000) -->
+                    <com.google.android.material.chip.ChipGroup
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:orientation="horizontal">
+                        app:singleSelection="true">
 
-                        <com.google.android.material.button.MaterialButton
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/btnMonto100Vehiculo"
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/monto_100"
+                            android:textColor="@color/marca"
+                            app:chipBackgroundColor="@color/marca_claro"
+                            app:chipCornerRadius="10dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/btnMonto200Vehiculo"
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/monto_200"
+                            android:textColor="@color/marca"
+                            app:chipBackgroundColor="@color/marca_claro"
+                            app:chipCornerRadius="10dp" />
+
+                        <com.google.android.material.chip.Chip
                             android:id="@+id/btnMonto500Vehiculo"
-                            style="@style/Widget.App.Button.Outlined"
-                            android:layout_width="0dp"
-                            android:layout_height="36dp"
-                            android:layout_marginEnd="4dp"
-                            android:layout_weight="1"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            android:paddingStart="2dp"
-                            android:paddingEnd="2dp"
-                            android:text="500"
-                            android:textSize="11sp"
-                            app:cornerRadius="12dp"
-                            tools:ignore="HardcodedText" />
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/monto_500"
+                            android:textColor="@color/marca"
+                            app:chipBackgroundColor="@color/marca_claro"
+                            app:chipCornerRadius="10dp" />
 
-                        <com.google.android.material.button.MaterialButton
+                        <com.google.android.material.chip.Chip
                             android:id="@+id/btnMonto1000Vehiculo"
-                            style="@style/Widget.App.Button.Outlined"
-                            android:layout_width="0dp"
-                            android:layout_height="36dp"
-                            android:layout_marginHorizontal="4dp"
-                            android:layout_weight="1"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            android:paddingStart="2dp"
-                            android:paddingEnd="2dp"
-                            android:text="1000"
-                            android:textSize="11sp"
-                            app:cornerRadius="12dp"
-                            tools:ignore="HardcodedText" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnMonto1500Vehiculo"
-                            style="@style/Widget.App.Button.Outlined"
-                            android:layout_width="0dp"
-                            android:layout_height="36dp"
-                            android:layout_marginStart="4dp"
-                            android:layout_weight="1"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            android:paddingStart="2dp"
-                            android:paddingEnd="2dp"
-                            android:text="1500"
-                            android:textSize="11sp"
-                            app:cornerRadius="12dp"
-                            tools:ignore="HardcodedText" />
-                    </LinearLayout>
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/monto_1000"
+                            android:textColor="@color/marca"
+                            app:chipBackgroundColor="@color/marca_claro"
+                            app:chipCornerRadius="10dp" />
+                    </com.google.android.material.chip.ChipGroup>
 
                     <TextView
                         android:id="@+id/textEstimacionVehiculo"
@@ -273,6 +312,7 @@
                         android:textStyle="bold" />
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutMontoMgp"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -281,69 +321,65 @@
                         app:boxCornerRadiusBottomEnd="12dp"
                         app:boxCornerRadiusBottomStart="12dp"
                         app:boxCornerRadiusTopEnd="12dp"
-                        app:boxCornerRadiusTopStart="12dp">
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:prefixText="L ">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/inputMontoMgp"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="numberDecimal" />
+                            android:inputType="numberDecimal"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <LinearLayout
+                    <!-- Chips de montos rápidos MGP -->
+                    <com.google.android.material.chip.ChipGroup
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:orientation="horizontal">
+                        app:singleSelection="true">
 
-                        <com.google.android.material.button.MaterialButton
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/btnMonto100Mgp"
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/monto_100"
+                            android:textColor="@color/marca"
+                            app:chipBackgroundColor="@color/marca_claro"
+                            app:chipCornerRadius="10dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/btnMonto200Mgp"
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/monto_200"
+                            android:textColor="@color/marca"
+                            app:chipBackgroundColor="@color/marca_claro"
+                            app:chipCornerRadius="10dp" />
+
+                        <com.google.android.material.chip.Chip
                             android:id="@+id/btnMonto500Mgp"
-                            style="@style/Widget.App.Button.Outlined"
-                            android:layout_width="0dp"
-                            android:layout_height="36dp"
-                            android:layout_marginEnd="4dp"
-                            android:layout_weight="1"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            android:paddingStart="2dp"
-                            android:paddingEnd="2dp"
-                            android:text="500"
-                            android:textSize="11sp"
-                            app:cornerRadius="12dp"
-                            tools:ignore="HardcodedText" />
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/monto_500"
+                            android:textColor="@color/marca"
+                            app:chipBackgroundColor="@color/marca_claro"
+                            app:chipCornerRadius="10dp" />
 
-                        <com.google.android.material.button.MaterialButton
+                        <com.google.android.material.chip.Chip
                             android:id="@+id/btnMonto1000Mgp"
-                            style="@style/Widget.App.Button.Outlined"
-                            android:layout_width="0dp"
-                            android:layout_height="36dp"
-                            android:layout_marginHorizontal="4dp"
-                            android:layout_weight="1"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            android:paddingStart="2dp"
-                            android:paddingEnd="2dp"
-                            android:text="1000"
-                            android:textSize="11sp"
-                            app:cornerRadius="12dp"
-                            tools:ignore="HardcodedText" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnMonto1500Mgp"
-                            style="@style/Widget.App.Button.Outlined"
-                            android:layout_width="0dp"
-                            android:layout_height="36dp"
-                            android:layout_marginStart="4dp"
-                            android:layout_weight="1"
-                            android:insetLeft="0dp"
-                            android:insetRight="0dp"
-                            android:paddingStart="2dp"
-                            android:paddingEnd="2dp"
-                            android:text="1500"
-                            android:textSize="11sp"
-                            app:cornerRadius="12dp"
-                            tools:ignore="HardcodedText" />
-                    </LinearLayout>
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/monto_1000"
+                            android:textColor="@color/marca"
+                            app:chipBackgroundColor="@color/marca_claro"
+                            app:chipCornerRadius="10dp" />
+                    </com.google.android.material.chip.ChipGroup>
 
                     <TextView
                         android:id="@+id/textEstimacionMgp"
@@ -379,11 +415,11 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnAsignar"
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
+                android:layout_height="52dp"
                 android:layout_marginTop="20dp"
                 android:text="@string/asignar_y_generar_orden"
                 app:backgroundTint="@color/marca"
-                app:cornerRadius="16dp" />
+                app:cornerRadius="14dp" />
 
             <ProgressBar
                 android:id="@+id/progress"

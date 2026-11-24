@@ -10,7 +10,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
+        android:layout_marginBottom="8dp"
         android:text="@string/justificacion_tardanza"
         android:textColor="@color/texto_principal"
         android:textSize="18sp"
@@ -25,6 +25,7 @@
         android:textSize="13sp" />
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/layoutJustificacion"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -34,14 +35,14 @@
         app:boxCornerRadiusTopEnd="12dp"
         app:boxCornerRadiusTopStart="12dp"
         app:counterEnabled="true"
-        app:counterMaxLength="500">
+        app:counterMaxLength="255">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/inputJustificacion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textMultiLine"
-            android:maxLength="500"
+            android:maxLength="255"
             android:minLines="3" />
     </com.google.android.material.textfield.TextInputLayout>
 

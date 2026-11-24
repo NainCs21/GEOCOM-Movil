@@ -383,4 +383,8 @@
     <string name="error_rendimiento_invalido">Rendimiento entre 0.1 y 99.9</string>
     <string name="error_gasolinera_nombre">Ingresa el nombre de la gasolinera</string>
     <string name="error_qr_requerido">El código QR es obligatorio</string>
+    <string name="asignar_monto">Asignar monto</string>
+    <string name="subtitulo_asignar_monto">Asigna combustible y autoriza la orden</string>
+    <string name="confirma_tu_contrasena_para_continuar">Confirma tu contraseña para continuar</string>
+    <string name="contrasena_incorrecta">Contraseña incorrecta</string>
 </resources>
