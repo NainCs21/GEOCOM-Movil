@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
  * popUpTo al destino raíz de esa pestaña para no apilar pantallas repetidas.
  */
 fun BottomNavigationView.configurarNavegacionAdmin(nav: NavController, destinoActual: Int) {
+    isSaveEnabled = false
     menu.findItem(destinoActualAItemAdmin(destinoActual))?.isChecked = true
 
     setOnItemSelectedListener { item ->
@@ -50,6 +51,7 @@ private fun destinoActualAItemAdmin(destino: Int): Int = when (destino) {
 
 /** Igual que la de arriba, para la barra de Supervisor (destinos distintos). */
 fun BottomNavigationView.configurarNavegacionSupervisor(nav: NavController, destinoActual: Int) {
+    isSaveEnabled = false
     menu.findItem(destinoActualAItemSupervisor(destinoActual))?.isChecked = true
 
     setOnItemSelectedListener { item ->
@@ -81,9 +83,9 @@ private fun destinoActualAItemSupervisor(destino: Int): Int = when (destino) {
 
 fun BottomNavigationView.configurarNavegacionConductor(
     nav: NavController,
-    destinoActual: Int,
-    onEscanearClick: () -> Unit
+    destinoActual: Int
 ) {
+    isSaveEnabled = false
     menu.findItem(destinoActualAItemConductor(destinoActual))?.isChecked = true
 
     setOnItemSelectedListener { item ->
@@ -94,10 +96,6 @@ fun BottomNavigationView.configurarNavegacionConductor(
                     nav.navigate(R.id.homeConductorFragment, null, opciones)
                 }
                 true
-            }
-            R.id.nav_conductor_escanear -> {
-                onEscanearClick()
-                false
             }
             R.id.nav_conductor_historial -> {
                 if (destinoActual != R.id.historialFragment) {
@@ -156,4 +154,3 @@ fun BottomNavigationView.vincularBadgeSolicitudes(owner: LifecycleOwner, itemId:
         }
     }
 }
-

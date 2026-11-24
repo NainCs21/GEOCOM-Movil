@@ -25,6 +25,11 @@ class PerfilConductorFragment : Fragment(R.layout.fragment_perfil_conductor) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentPerfilConductorBinding.bind(view)
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
+
+        val bottomNav = binding.root.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.incluirNavInferior)
+            ?: binding.root.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavConductor)
+        bottomNav?.configurarNavegacionConductor(findNavController(), R.id.perfilConductorFragment)
+
         binding.textNombre.text = SessionManager.nombre ?: ""
         binding.textCorreo.text = SessionManager.correo ?: ""
 

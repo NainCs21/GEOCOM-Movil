@@ -31,6 +31,11 @@ class HistorialFragment : Fragment(R.layout.fragment_historial) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentHistorialBinding.bind(view)
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
+
+        val bottomNav = binding.root.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.incluirNavInferior)
+            ?: binding.root.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavConductor)
+        bottomNav?.configurarNavegacionConductor(findNavController(), R.id.historialFragment)
+
         binding.recyclerHistorial.layoutManager = LinearLayoutManager(requireContext())
         binding.recyclerHistorial.adapter = adapter
 

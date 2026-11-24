@@ -276,7 +276,6 @@
     <string name="aviso_orden_rehabilitada_conductor">Orden rehabilitada. Tienes poco tiempo para subir las evidencias que faltan.</string>
     <string name="motivo_rehabilitacion">Motivo: %1$s</string>
     <string name="error_justificacion_obligatoria">La justificación es obligatoria.</string>
-    <string name="tienes_una_orden_pendiente">Tienes una orden pendiente</string>
     <string name="no_tienes_ordenes_activas">No tienes órdenes activas</string>
     <string name="destino_vehiculo">Vehículo</string>
     <string name="destino_mgp">Planta MGP</string>
@@ -386,4 +385,7 @@
     <string name="subtitulo_asignar_monto">Asigna combustible y autoriza la orden</string>
     <string name="confirma_tu_contrasena_para_continuar">Confirma tu contraseña para continuar</string>
     <string name="contrasena_incorrecta">Contraseña incorrecta</string>
+    <string name="tus_ordenes_pendientes">Tus órdenes pendientes</string>
+    <string name="subtitulo_ordenes_pendientes">Toca una orden para ver sus detalles y escanear el QR</string>
+    <string name="logo_geocom_desc">Logo GEOCOM</string>
 </resources>

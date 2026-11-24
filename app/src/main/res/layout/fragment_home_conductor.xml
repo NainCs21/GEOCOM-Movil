@@ -39,51 +39,59 @@
             </com.google.android.material.appbar.MaterialToolbar>
         </com.google.android.material.appbar.AppBarLayout>
 
-        <!-- Tarjeta destacada si hay orden pendiente -->
+        <!-- Encabezado con logo y texto -->
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardBannerPendiente"
+            android:id="@+id/cardEncabezado"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="20dp"
             android:layout_marginTop="16dp"
-            android:visibility="gone"
-            app:cardBackgroundColor="@color/marca_claro"
-            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="@color/blanco"
+            app:cardCornerRadius="20dp"
             app:cardElevation="0dp"
             app:contentPadding="16dp"
-            app:strokeWidth="0dp">
+            app:strokeColor="@color/borde"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-                <TextView
-                    android:layout_width="match_parent"
+                <ImageView
+                    android:id="@+id/imgLogo"
+                    android:layout_width="96dp"
+                    android:layout_height="64dp"
+                    android:contentDescription="@string/logo_geocom_desc"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/logo_geocom" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="@string/tienes_una_orden_pendiente"
-                    android:textColor="@color/marca_oscuro"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/escanea_el_qr_de_la_gasolinera"
-                    android:textColor="@color/texto_secundario"
-                    android:textSize="13sp" />
+                    <TextView
+                        android:id="@+id/textTituloPendientes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/tus_ordenes_pendientes"
+                        android:textColor="@color/texto_principal"
+                        android:textSize="22sp"
+                        android:textStyle="bold" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnEscanearBanner"
-                    style="@style/Widget.MaterialComponents.Button"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="12dp"
-                    android:text="@string/escanear_qr_de_gasolinera"
-                    app:backgroundTint="@color/marca"
-                    app:cornerRadius="12dp"
-                    app:icon="@android:drawable/ic_menu_camera" />
+                    <TextView
+                        android:id="@+id/textSubtituloPendientes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/subtitulo_ordenes_pendientes"
+                        android:textColor="@color/texto_secundario"
+                        android:textSize="14sp" />
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -103,7 +111,7 @@
                     android:layout_height="match_parent"
                     android:clipToPadding="false"
                     android:paddingHorizontal="20dp"
-                    android:paddingTop="16dp"
+                    android:paddingTop="12dp"
                     android:paddingBottom="88dp" />
 
                 <ProgressBar
