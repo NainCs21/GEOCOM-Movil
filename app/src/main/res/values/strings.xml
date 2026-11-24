@@ -363,4 +363,24 @@
     <string name="ver_ordenes_flecha">Ver órdenes &#62;</string>
     <string name="no_se_encontraron_conductores">No se encontraron conductores</string>
     <string name="hint_buscar_conductor">Buscar conductor por nombre</string>
+    <string name="editar_conductor">Editar conductor</string>
+    <string name="editar_vehiculo">Editar vehículo</string>
+    <string name="editar_gasolinera">Editar gasolinera</string>
+    <string name="subtitulo_form_conductor">Datos de acceso y contacto del conductor</string>
+    <string name="subtitulo_form_vehiculo">Datos del vehículo y su rendimiento</string>
+    <string name="subtitulo_form_gasolinera">Ubicación y código QR de la estación</string>
+    <string name="contrasena_opcional_hint">Contraseña (déjala vacía para no cambiarla)</string>
+    <string name="qr_generado_helper">Se genera automáticamente</string>
+    <string name="error_nombre_requerido">Ingresa el nombre</string>
+    <string name="error_correo_invalido">Ingresa un correo electrónico válido</string>
+    <string name="error_contrasena_min_8">La contraseña debe tener al menos 8 caracteres</string>
+    <string name="error_telefono_requerido">Ingresa el teléfono</string>
+    <string name="error_cargo_requerido">Ingresa el cargo</string>
+    <string name="error_placa_requerida">Ingresa la placa</string>
+    <string name="error_marca_requerida">Ingresa la marca</string>
+    <string name="error_modelo_requerido">Ingresa el modelo</string>
+    <string name="error_anio_invalido">Año inválido (1980 - actual+1)</string>
+    <string name="error_rendimiento_invalido">Rendimiento entre 0.1 y 99.9</string>
+    <string name="error_gasolinera_nombre">Ingresa el nombre de la gasolinera</string>
+    <string name="error_qr_requerido">El código QR es obligatorio</string>
 </resources>

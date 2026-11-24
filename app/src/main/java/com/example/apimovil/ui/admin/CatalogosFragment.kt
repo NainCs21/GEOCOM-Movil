@@ -3,16 +3,19 @@ package com.example.apimovil.ui.admin
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Editable
-import android.text.InputType
 import android.text.TextWatcher
 import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -25,6 +28,9 @@ import com.example.apimovil.data.SessionManager
 import com.example.apimovil.data.models.Conductor
 import com.example.apimovil.data.models.Gasolinera
 import com.example.apimovil.data.models.Vehiculo
+import com.example.apimovil.databinding.DialogFormConductorBinding
+import com.example.apimovil.databinding.DialogFormGasolineraBinding
+import com.example.apimovil.databinding.DialogFormVehiculoBinding
 import com.example.apimovil.databinding.FragmentCatalogosBinding
 import com.example.apimovil.ui.common.configurarNavegacionAdmin
 import com.example.apimovil.ui.common.configurarNavegacionSupervisor
@@ -35,6 +41,7 @@ import com.google.zxing.BarcodeFormat
 import com.journeyapps.barcodescanner.BarcodeEncoder
 import kotlinx.coroutines.launch
 import java.text.Normalizer
+import java.util.Calendar
 
 /**
  * Catálogos de solo lectura (consulta rápida desde el celular). La gestión
@@ -338,190 +345,271 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         }
     }
 
-    private fun campoTexto(view: View, bottomMarginDp: Int = 16): TextInputLayout {
-        val density = resources.displayMetrics.density
-        return TextInputLayout(
-            requireContext(), null, com.google.android.material.R.attr.textInputOutlinedStyle
-        ).apply {
-            addView(view)
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { bottomMargin = (bottomMarginDp * density).toInt() }
-        }
-    }
-
     private fun mostrarDialogoFormulario(item: Any?) {
         val context = requireContext()
-        val builder = MaterialAlertDialogBuilder(context)
-        val layout = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            val d = resources.displayMetrics.density
-            setPadding((24 * d).toInt(), (16 * d).toInt(), (24 * d).toInt(), (8 * d).toInt())
-        }
-
         val esEdicion = item != null
 
-        when (binding.toggleCatalogo.checkedButtonId) {
+        val dialog: AlertDialog? = when (binding.toggleCatalogo.checkedButtonId) {
             R.id.btnConductores -> {
                 val cond = item as? Conductor
-                builder.setTitle(if (esEdicion) "Editar conductor" else getString(R.string.nuevo_conductor))
-                val inputNombre = TextInputEditText(context).apply { hint = getString(R.string.nombre); setText(cond?.usuario?.name) }
-                val inputCorreo = TextInputEditText(context).apply { hint = getString(R.string.correo); inputType = InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS; setText(cond?.usuario?.email) }
-                val inputPassword = TextInputEditText(context).apply { hint = getString(R.string.contrasena) + if (esEdicion) " (opcional)" else ""; inputType = InputType.TYPE_TEXT_VARIATION_PASSWORD }
-                val inputTelefono = TextInputEditText(context).apply { hint = getString(R.string.telefono); inputType = InputType.TYPE_CLASS_PHONE; setText(cond?.telefono) }
-                val inputCargo = TextInputEditText(context).apply { hint = getString(R.string.cargo); setText(cond?.cargo) }
+                val diagBinding = DialogFormConductorBinding.inflate(LayoutInflater.from(context))
+                if (esEdicion && cond != null) {
+                    diagBinding.inputNombre.setText(cond.usuario?.name)
+                    diagBinding.inputCorreo.setText(cond.usuario?.email)
+                    diagBinding.inputPassword.hint = getString(R.string.contrasena_opcional_hint)
+                    diagBinding.inputTelefono.setText(cond.telefono)
+                    diagBinding.inputCargo.setText(cond.cargo)
+                }
 
-                layout.addView(campoTexto(inputNombre))
-                layout.addView(campoTexto(inputCorreo))
-                layout.addView(campoTexto(inputPassword))
-                layout.addView(campoTexto(inputTelefono))
-                layout.addView(campoTexto(inputCargo, 0))
+                diagBinding.inputNombre.addTextChangedListener { diagBinding.layoutNombre.error = null }
+                diagBinding.inputCorreo.addTextChangedListener { diagBinding.layoutCorreo.error = null }
+                diagBinding.inputPassword.addTextChangedListener { diagBinding.layoutPassword.error = null }
+                diagBinding.inputTelefono.addTextChangedListener { diagBinding.layoutTelefono.error = null }
+                diagBinding.inputCargo.addTextChangedListener { diagBinding.layoutCargo.error = null }
 
-                builder.setView(layout)
-                builder.setPositiveButton(R.string.guardar) { _, _ ->
-                    val pass = inputPassword.text?.toString()
-                    val map = mutableMapOf<String, Any?>(
-                        "nombre" to inputNombre.text?.toString()?.trim(),
-                        "correo" to inputCorreo.text?.toString()?.trim(),
-                        "telefono" to inputTelefono.text?.toString()?.trim(),
-                        "cargo" to inputCargo.text?.toString()?.trim()
-                    )
-                    if (!pass.isNullOrBlank()) {
-                        map["contrasena"] = pass
-                    }
-                    if (esEdicion && cond != null) {
-                        model.editarConductor(cond.id, map)
-                    } else {
-                        model.crearConductor(map)
+                val d = MaterialAlertDialogBuilder(context)
+                    .setTitle(if (esEdicion) getString(R.string.editar_conductor) else getString(R.string.nuevo_conductor))
+                    .setView(diagBinding.root)
+                    .setPositiveButton(R.string.guardar, null)
+                    .setNegativeButton(R.string.cancelar, null)
+                    .create()
+
+                d.setOnShowListener {
+                    d.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener {
+                        val nombre = diagBinding.inputNombre.text?.toString()?.trim().orEmpty()
+                        val correo = diagBinding.inputCorreo.text?.toString()?.trim().orEmpty()
+                        val pass = diagBinding.inputPassword.text?.toString() ?: ""
+                        val telefono = diagBinding.inputTelefono.text?.toString()?.trim().orEmpty()
+                        val cargo = diagBinding.inputCargo.text?.toString()?.trim().orEmpty()
+
+                        var hasError = false
+                        if (nombre.isBlank()) {
+                            diagBinding.layoutNombre.error = getString(R.string.error_nombre_requerido)
+                            hasError = true
+                        }
+                        if (correo.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(correo).matches()) {
+                            diagBinding.layoutCorreo.error = getString(R.string.error_correo_invalido)
+                            hasError = true
+                        }
+                        if (!esEdicion) {
+                            if (pass.isBlank() || pass.length < 8) {
+                                diagBinding.layoutPassword.error = getString(R.string.error_contrasena_min_8)
+                                hasError = true
+                            }
+                        } else {
+                            if (pass.isNotBlank() && pass.length < 8) {
+                                diagBinding.layoutPassword.error = getString(R.string.error_contrasena_min_8)
+                                hasError = true
+                            }
+                        }
+                        if (telefono.isBlank()) {
+                            diagBinding.layoutTelefono.error = getString(R.string.error_telefono_requerido)
+                            hasError = true
+                        }
+                        if (cargo.isBlank()) {
+                            diagBinding.layoutCargo.error = getString(R.string.error_cargo_requerido)
+                            hasError = true
+                        }
+
+                        if (!hasError) {
+                            val map = mutableMapOf<String, Any?>(
+                                "nombre" to nombre,
+                                "correo" to correo,
+                                "telefono" to telefono,
+                                "cargo" to cargo
+                            )
+                            if (pass.isNotBlank()) {
+                                map["contrasena"] = pass
+                            }
+                            if (esEdicion && cond != null) {
+                                model.editarConductor(cond.id, map)
+                            } else {
+                                model.crearConductor(map)
+                            }
+                            d.dismiss()
+                        }
                     }
                 }
+                d
             }
             R.id.btnVehiculos -> {
                 val veh = item as? Vehiculo
-                builder.setTitle(if (esEdicion) "Editar vehículo" else getString(R.string.nuevo_vehiculo))
-                val inputPlaca = TextInputEditText(context).apply { hint = getString(R.string.placa); setText(veh?.placa) }
-                val inputMarca = TextInputEditText(context).apply { hint = getString(R.string.marca); setText(veh?.marca) }
-                val inputModelo = TextInputEditText(context).apply { hint = getString(R.string.modelo); setText(veh?.modelo) }
-                val inputAnio = TextInputEditText(context).apply { hint = getString(R.string.anio); inputType = InputType.TYPE_CLASS_NUMBER; setText(veh?.anio?.toString()) }
+                val diagBinding = DialogFormVehiculoBinding.inflate(LayoutInflater.from(context))
 
                 val opcionesCombustible = arrayOf("Diesel", "Gasolina")
                 val mapaCombustible = mapOf("Diesel" to "diesel", "Gasolina" to "gasolina", "Diésel" to "diesel")
-                val textoInicialCombustible = if (esEdicion && veh != null) {
-                    when (veh.tipo_combustible.lowercase()) {
+                val adapterCombustible = ArrayAdapter(context, android.R.layout.simple_list_item_1, opcionesCombustible)
+                diagBinding.inputCombustible.setAdapter(adapterCombustible)
+
+                if (esEdicion && veh != null) {
+                    diagBinding.inputPlaca.setText(veh.placa)
+                    diagBinding.inputAnio.setText(veh.anio?.toString() ?: "")
+                    diagBinding.inputMarca.setText(veh.marca)
+                    diagBinding.inputModelo.setText(veh.modelo)
+                    val combText = when (veh.tipo_combustible.lowercase()) {
                         "gasolina" -> "Gasolina"
-                        else -> "Diesel"
+                        else -> getString(R.string.diesel_combustible)
                     }
+                    diagBinding.inputCombustible.setText(combText, false)
+                    diagBinding.inputRendimiento.setText(veh.rendimiento_km_litro?.toString() ?: "")
                 } else {
-                    ""
+                    diagBinding.inputCombustible.setText(getString(R.string.diesel_combustible), false)
                 }
 
-                val inputCombustible = TextInputEditText(context).apply {
-                    hint = getString(R.string.tipo_combustible)
-                    setText(textoInicialCombustible)
-                    isFocusable = false
-                    isClickable = true
-                    keyListener = null
-                    setOnClickListener {
-                        MaterialAlertDialogBuilder(context)
-                            .setTitle(getString(R.string.tipo_combustible))
-                            .setItems(opcionesCombustible) { _, which ->
-                                setText(opcionesCombustible[which])
+                diagBinding.inputPlaca.addTextChangedListener { diagBinding.layoutPlaca.error = null }
+                diagBinding.inputMarca.addTextChangedListener { diagBinding.layoutMarca.error = null }
+                diagBinding.inputModelo.addTextChangedListener { diagBinding.layoutModelo.error = null }
+                diagBinding.inputAnio.addTextChangedListener { diagBinding.layoutAnio.error = null }
+                diagBinding.inputRendimiento.addTextChangedListener { diagBinding.layoutRendimiento.error = null }
+
+                val currentYear = Calendar.getInstance().get(Calendar.YEAR) + 1
+
+                val d = MaterialAlertDialogBuilder(context)
+                    .setTitle(if (esEdicion) getString(R.string.editar_vehiculo) else getString(R.string.nuevo_vehiculo))
+                    .setView(diagBinding.root)
+                    .setPositiveButton(R.string.guardar, null)
+                    .setNegativeButton(R.string.cancelar, null)
+                    .create()
+
+                d.setOnShowListener {
+                    d.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener {
+                        val placa = diagBinding.inputPlaca.text?.toString()?.trim().orEmpty()
+                        val marca = diagBinding.inputMarca.text?.toString()?.trim().orEmpty()
+                        val modelo = diagBinding.inputModelo.text?.toString()?.trim().orEmpty()
+                        val anioStr = diagBinding.inputAnio.text?.toString()?.trim().orEmpty()
+                        val comb = diagBinding.inputCombustible.text?.toString()?.trim().orEmpty()
+                        val rendimientoStr = diagBinding.inputRendimiento.text?.toString()?.trim().orEmpty()
+
+                        var hasError = false
+                        if (placa.isBlank()) {
+                            diagBinding.layoutPlaca.error = getString(R.string.error_placa_requerida)
+                            hasError = true
+                        }
+                        if (marca.isBlank()) {
+                            diagBinding.layoutMarca.error = getString(R.string.error_marca_requerida)
+                            hasError = true
+                        }
+                        if (modelo.isBlank()) {
+                            diagBinding.layoutModelo.error = getString(R.string.error_modelo_requerido)
+                            hasError = true
+                        }
+
+                        var anioVal: Int? = null
+                        if (anioStr.isNotBlank()) {
+                            val anioParsed = anioStr.toIntOrNull()
+                            if (anioParsed == null || anioParsed !in 1980..currentYear) {
+                                diagBinding.layoutAnio.error = getString(R.string.error_anio_invalido)
+                                hasError = true
+                            } else {
+                                anioVal = anioParsed
                             }
-                            .show()
+                        }
+
+                        var rendimientoVal: Double? = null
+                        if (rendimientoStr.isNotBlank()) {
+                            val rendParsed = rendimientoStr.toDoubleOrNull()
+                            if (rendParsed == null || rendParsed !in 0.1..99.9) {
+                                diagBinding.layoutRendimiento.error = getString(R.string.error_rendimiento_invalido)
+                                hasError = true
+                            } else {
+                                rendimientoVal = rendParsed
+                            }
+                        }
+
+                        if (!hasError) {
+                            val tipoCombustibleVal = mapaCombustible[comb] ?: "diesel"
+                            val map = mutableMapOf<String, Any?>(
+                                "placa" to placa,
+                                "marca" to marca,
+                                "modelo" to modelo,
+                                "anio" to anioVal,
+                                "tipo_combustible" to tipoCombustibleVal
+                            )
+                            if (rendimientoVal != null) {
+                                map["rendimiento_km_litro"] = rendimientoVal
+                            }
+                            if (esEdicion && veh != null) {
+                                model.editarVehiculo(veh.id, map)
+                            } else {
+                                model.crearVehiculo(map)
+                            }
+                            d.dismiss()
+                        }
                     }
                 }
-
-                val inputRendimiento = TextInputEditText(context).apply {
-                    hint = getString(R.string.rendimiento_km_litro)
-                    inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_FLAG_DECIMAL
-                    setText(veh?.rendimiento_km_litro?.toString() ?: "")
-                }
-
-                val textAyuda = TextView(context).apply {
-                    text = getString(R.string.rendimiento_ayuda)
-                    textSize = 12f
-                    setTextColor(ContextCompat.getColor(context, R.color.texto_secundario))
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    ).apply {
-                        setMargins(0, 4, 0, 8)
-                    }
-                }
-
-                layout.addView(campoTexto(inputPlaca))
-                layout.addView(campoTexto(inputMarca))
-                layout.addView(campoTexto(inputModelo))
-                layout.addView(campoTexto(inputAnio))
-                layout.addView(campoTexto(inputCombustible))
-                layout.addView(campoTexto(inputRendimiento, 0))
-                layout.addView(textAyuda)
-
-                builder.setView(layout)
-                builder.setPositiveButton(R.string.guardar) { _, _ ->
-                    val anioVal = inputAnio.text?.toString()?.toIntOrNull()
-                    val seleccionCombustible = inputCombustible.text?.toString()?.trim()
-                    val tipoCombustibleVal = mapaCombustible[seleccionCombustible] ?: "diesel"
-                    val rendimientoVal = inputRendimiento.text?.toString()?.trim()?.toDoubleOrNull()
-
-                    val map = mutableMapOf<String, Any?>(
-                        "placa" to inputPlaca.text?.toString()?.trim(),
-                        "marca" to inputMarca.text?.toString()?.trim(),
-                        "modelo" to inputModelo.text?.toString()?.trim(),
-                        "anio" to anioVal,
-                        "tipo_combustible" to tipoCombustibleVal
-                    )
-                    if (rendimientoVal != null && rendimientoVal > 0.0 && rendimientoVal < 100.0) {
-                        map["rendimiento_km_litro"] = rendimientoVal
-                    }
-                    if (esEdicion && veh != null) {
-                        model.editarVehiculo(veh.id, map)
-                    } else {
-                        model.crearVehiculo(map)
-                    }
-                }
+                d
             }
             R.id.btnGasolineras -> {
                 val gas = item as? Gasolinera
-                builder.setTitle(if (esEdicion) "Editar gasolinera" else getString(R.string.nueva_gasolinera))
-                val inputNombre = TextInputEditText(context).apply { hint = getString(R.string.nombre); setText(gas?.nombre) }
-                val inputDireccion = TextInputEditText(context).apply { hint = getString(R.string.direccion); setText(gas?.direccion) }
-                val inputQr = TextInputEditText(context).apply { hint = getString(R.string.codigo_qr); setText(gas?.codigo_qr) }
+                val diagBinding = DialogFormGasolineraBinding.inflate(LayoutInflater.from(context))
 
-                if (!esEdicion) {
-                    inputNombre.addTextChangedListener(object : TextWatcher {
-                        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (esEdicion && gas != null) {
+                    diagBinding.inputNombre.setText(gas.nombre)
+                    diagBinding.inputDireccion.setText(gas.direccion)
+                    diagBinding.inputQr.isEnabled = true
+                    diagBinding.inputQr.setText(gas.codigo_qr)
+                } else {
+                    diagBinding.inputQr.isEnabled = false
+                }
+
+                diagBinding.inputNombre.addTextChangedListener(object : TextWatcher {
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                        diagBinding.layoutNombre.error = null
+                        if (!esEdicion) {
                             val nombre = s?.toString()?.trim().orEmpty()
                             val generatedQr = "QR-" + nombre.uppercase().replace(Regex("[^A-Z0-9]+"), "_").trim('_')
-                            inputQr.setText(generatedQr)
+                            diagBinding.inputQr.setText(generatedQr)
                         }
-                        override fun afterTextChanged(s: Editable?) {}
-                    })
-                }
+                    }
+                    override fun afterTextChanged(s: Editable?) {}
+                })
+                diagBinding.inputQr.addTextChangedListener { diagBinding.layoutQr.error = null }
 
-                layout.addView(campoTexto(inputNombre))
-                layout.addView(campoTexto(inputDireccion))
-                layout.addView(campoTexto(inputQr, 0))
+                val d = MaterialAlertDialogBuilder(context)
+                    .setTitle(if (esEdicion) getString(R.string.editar_gasolinera) else getString(R.string.nueva_gasolinera))
+                    .setView(diagBinding.root)
+                    .setPositiveButton(R.string.guardar, null)
+                    .setNegativeButton(R.string.cancelar, null)
+                    .create()
 
-                builder.setView(layout)
-                builder.setPositiveButton(R.string.guardar) { _, _ ->
-                    val map = mapOf(
-                        "nombre"     to inputNombre.text?.toString()?.trim(),
-                        "direccion"  to inputDireccion.text?.toString()?.trim(),
-                        "codigo_qr"  to inputQr.text?.toString()?.trim()
-                    )
-                    if (esEdicion && gas != null) {
-                        model.editarGasolinera(gas.id, map)
-                    } else {
-                        model.crearGasolinera(map)
+                d.setOnShowListener {
+                    d.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener {
+                        val nombre = diagBinding.inputNombre.text?.toString()?.trim().orEmpty()
+                        val direccion = diagBinding.inputDireccion.text?.toString()?.trim()
+                        val qr = diagBinding.inputQr.text?.toString()?.trim().orEmpty()
+
+                        var hasError = false
+                        if (nombre.isBlank()) {
+                            diagBinding.layoutNombre.error = getString(R.string.error_gasolinera_nombre)
+                            hasError = true
+                        }
+                        if (qr.isBlank()) {
+                            diagBinding.layoutQr.error = getString(R.string.error_qr_requerido)
+                            hasError = true
+                        }
+
+                        if (!hasError) {
+                            val map = mapOf(
+                                "nombre" to nombre,
+                                "direccion" to direccion,
+                                "codigo_qr" to qr
+                            )
+                            if (esEdicion && gas != null) {
+                                model.editarGasolinera(gas.id, map)
+                            } else {
+                                model.crearGasolinera(map)
+                            }
+                            d.dismiss()
+                        }
                     }
                 }
+                d
             }
+            else -> null
         }
-        builder.setNegativeButton(R.string.cancelar, null)
-        builder.show()
+
+        dialog?.show()
     }
 
     private fun mostrarConductores() {
