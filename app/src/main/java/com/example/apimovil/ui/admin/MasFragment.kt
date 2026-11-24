@@ -2,6 +2,7 @@ package com.example.apimovil.ui.admin
 
 import android.os.Bundle
 import android.view.View
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -53,6 +54,8 @@ class MasFragment : Fragment(R.layout.fragment_mas) {
         }
 
         binding.opcionNotificaciones.setOnClickListener { findNavController().navigate(R.id.notificacionesFragment) }
+        binding.opcionCatalogos.isVisible = SessionManager.esAdmin
+        binding.opcionCatalogos.setOnClickListener { findNavController().navigate(R.id.catalogosFragment) }
         binding.opcionReportes.setOnClickListener { findNavController().navigate(R.id.reportesFragment) }
         binding.opcionCajaChica.setOnClickListener { findNavController().navigate(R.id.cajaChicaFragment) }
         binding.opcionPerfil.setOnClickListener { findNavController().navigate(R.id.perfilAdminFragment) }

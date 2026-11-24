@@ -344,4 +344,5 @@
     <string name="precio_promedio_label">Precio promedio</string>
     <string name="equivale_a_galones">Equivale a ≈ %,.1f galones</string>
     <string name="pie_pdf_precio_oficial">Galones y km estimados con el precio oficial vigente al asignar cada orden.</string>
+    <string name="catalogos_subtitulo">Conductores, vehículos y gasolineras</string>
 </resources>
