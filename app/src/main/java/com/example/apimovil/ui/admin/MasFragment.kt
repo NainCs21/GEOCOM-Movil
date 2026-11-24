@@ -56,7 +56,6 @@ class MasFragment : Fragment(R.layout.fragment_mas) {
         binding.opcionNotificaciones.setOnClickListener { findNavController().navigate(R.id.notificacionesFragment) }
         binding.opcionCatalogos.isVisible = SessionManager.esAdmin
         binding.opcionCatalogos.setOnClickListener { findNavController().navigate(R.id.catalogosFragment) }
-        binding.opcionReportes.setOnClickListener { findNavController().navigate(R.id.reportesFragment) }
         binding.opcionCajaChica.setOnClickListener { findNavController().navigate(R.id.cajaChicaFragment) }
         binding.opcionPerfil.setOnClickListener { findNavController().navigate(R.id.perfilAdminFragment) }
     }

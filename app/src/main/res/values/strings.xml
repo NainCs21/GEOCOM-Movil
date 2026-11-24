@@ -162,7 +162,6 @@
     <!-- Admin/Supervisor: más opciones -->
     <string name="mas_opciones">Más opciones</string>
     <string name="notificaciones_subtitulo">Avisos y alertas del sistema</string>
-    <string name="reportes_subtitulo">Estadísticas y consumos</string>
     <string name="caja_chica_subtitulo">Entregas extraordinarias</string>
     <string name="datos_de_mi_cuenta">Datos de mi cuenta</string>
     <string name="notificaciones_titulo">Avisos</string>
