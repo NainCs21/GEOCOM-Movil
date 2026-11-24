@@ -194,3 +194,32 @@ data class VerificarContrasenaResponse(
     val rol: String? = null,
     val mensaje: String? = null
 )
+
+data class ResumenReporte(
+    val monto_total: Double, val cantidad_ordenes: Int, val promedio_orden: Double,
+    val completadas_tarde: Int, val vencidas: Int, val cumplimiento_pct: Double
+)
+data class PuntoMes(val mes: String, val monto_total: Double, val cantidad_ordenes: Int)
+data class PuntoCombustible(val tipo_combustible: String, val monto_total: Double, val cantidad_ordenes: Int)
+data class PuntoRanking(val id: Int, val nombre: String, val monto_total: Double, val cantidad_ordenes: Int)
+data class OrdenReporte(
+    val orden_id: Int, val numero_orden: String, val fecha_completada: String, val estado: String,
+    val gasolinera: String, val conductor: String, val destino: String,
+    val tipo_combustible: String, val monto: Double
+)
+data class ConductorInfo(val id: Int, val nombre: String, val cargo: String?, val activo: Boolean)
+data class GasolineraInfo(val id: Int, val nombre: String, val direccion: String?, val activo: Boolean)
+data class ReporteResumenResp(
+    val resumen: ResumenReporte, val por_mes: List<PuntoMes>, val por_combustible: List<PuntoCombustible>,
+    val top_conductores: List<PuntoRanking>, val top_gasolineras: List<PuntoRanking>
+)
+data class ReporteConductorDetalleResp(
+    val conductor: ConductorInfo, val resumen: ResumenReporte, val por_mes: List<PuntoMes>,
+    val por_combustible: List<PuntoCombustible>, val por_gasolinera: List<PuntoRanking>,
+    val ordenes: List<OrdenReporte>
+)
+data class ReporteGasolineraDetalleResp(
+    val gasolinera: GasolineraInfo, val resumen: ResumenReporte, val por_mes: List<PuntoMes>,
+    val por_combustible: List<PuntoCombustible>, val por_conductor: List<PuntoRanking>,
+    val ordenes: List<OrdenReporte>
+)

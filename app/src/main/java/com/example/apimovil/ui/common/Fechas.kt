@@ -116,3 +116,14 @@ fun formatoCargo(cargo: String?): String {
         else -> cargo?.replace("_", " ")?.replaceFirstChar { it.uppercase() } ?: "Técnico"
     }
 }
+
+fun formatearMes(mes: String): String {
+    return try {
+        val parser = SimpleDateFormat("yyyy-MM", Locale.US)
+        val formatter = SimpleDateFormat("MMM yyyy", Locale("es"))
+        val date = parser.parse(mes.trim())
+        if (date != null) formatter.format(date) else mes
+    } catch (_: Exception) {
+        mes
+    }
+}

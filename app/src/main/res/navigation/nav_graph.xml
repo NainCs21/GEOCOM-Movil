@@ -81,7 +81,23 @@
     <fragment
         android:id="@+id/reportesFragment"
         android:name="com.example.apimovil.ui.admin.ReportesFragment"
-        android:label="Reportes" />
+        android:label="Reportes">
+        <action
+            android:id="@+id/action_reportes_to_detalle"
+            app:destination="@id/reporteDetalleFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/reporteDetalleFragment"
+        android:name="com.example.apimovil.ui.admin.ReporteDetalleFragment"
+        android:label="Detalle de reporte">
+        <argument
+            android:name="tipo"
+            app:argType="string" />
+        <argument
+            android:name="entidadId"
+            app:argType="integer" />
+    </fragment>
 
     <fragment
         android:id="@+id/ordenDetalleAdminFragment"

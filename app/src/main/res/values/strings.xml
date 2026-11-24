@@ -306,4 +306,19 @@
     <string name="completada_tarde_badge">COMPLETADA TARDE</string>
     <string name="sin_ordenes_activas_titulo">Aquí se mostrarán tus órdenes</string>
     <string name="sin_ordenes_activas_subtitulo">No tienes órdenes activas en este momento. Cuando tengas solicitudes aprobadas o autorizadas para retirar combustible aparecerán aquí.</string>
+    <string name="detalle_reporte">Detalle de reporte</string>
+    <string name="gasto_total">Gasto total</string>
+    <string name="ordenes_mayus">Órdenes</string>
+    <string name="promedio_por_orden">Promedio por orden</string>
+    <string name="cumplimiento">Cumplimiento</string>
+    <string name="tardes_vencidas_formato">%1$d completadas tarde · %2$d vencidas</string>
+    <string name="gasto_por_mes">Gasto por mes</string>
+    <string name="todos">Todos</string>
+    <string name="top_conductores_por_gasto">Top conductores por gasto</string>
+    <string name="top_gasolineras_por_gasto">Top gasolineras por gasto</string>
+    <string name="promedio_cumplimiento_formato">Promedio: L %1$,.2f · Cumplimiento: %2$.1f%%</string>
+    <string name="gasto_por_combustible">Gasto por combustible</string>
+    <string name="gasolineras_donde_cargo">Gasolineras donde cargó</string>
+    <string name="conductores_que_la_usan">Conductores que la usan</string>
+    <string name="ordenes_del_periodo">Órdenes del periodo</string>
 </resources>

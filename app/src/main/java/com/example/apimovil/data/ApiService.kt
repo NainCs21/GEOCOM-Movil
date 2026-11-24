@@ -139,11 +139,29 @@ interface ApiService {
     suspend fun reportePorConductor(
         @Query("desde") desde: String? = null,
         @Query("hasta") hasta: String? = null,
+        @Query("conductor_id") conductorId: Int? = null,
     ): List<ReporteConductor>
 
     @GET("reportes/por-gasolinera")
     suspend fun reportePorGasolinera(
         @Query("desde") desde: String? = null,
         @Query("hasta") hasta: String? = null,
+        @Query("gasolinera_id") gasolineraId: Int? = null,
     ): List<ReporteGasolinera>
+
+    @GET("reportes/resumen")
+    suspend fun reporteResumen(
+        @Query("desde") desde: String?, @Query("hasta") hasta: String?,
+        @Query("conductor_id") conductorId: Int? = null, @Query("gasolinera_id") gasolineraId: Int? = null
+    ): ReporteResumenResp
+
+    @GET("reportes/conductor/{id}")
+    suspend fun reporteDetalleConductor(
+        @Path("id") id: Int, @Query("desde") desde: String?, @Query("hasta") hasta: String?
+    ): ReporteConductorDetalleResp
+
+    @GET("reportes/gasolinera/{id}")
+    suspend fun reporteDetalleGasolinera(
+        @Path("id") id: Int, @Query("desde") desde: String?, @Query("hasta") hasta: String?
+    ): ReporteGasolineraDetalleResp
 }

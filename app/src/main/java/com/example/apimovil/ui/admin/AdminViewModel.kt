@@ -258,11 +258,42 @@ class AdminViewModel : ViewModel() {
     var desdePeriodo: String? = obtenerInicioMesString()
     var hastaPeriodo: String? = obtenerFechaActualString()
 
+    var conductorFiltroId: Int? = null
+    var conductorFiltroNombre: String? = null
+    var gasolineraFiltroId: Int? = null
+    var gasolineraFiltroNombre: String? = null
+
     private val _reporteConductor = MutableStateFlow(UiState<List<ReporteConductor>>())
     val reporteConductor = _reporteConductor.asStateFlow()
 
     private val _reporteGasolinera = MutableStateFlow(UiState<List<ReporteGasolinera>>())
     val reporteGasolinera = _reporteGasolinera.asStateFlow()
+
+    private val _reporteResumen = MutableStateFlow(UiState<ReporteResumenResp>())
+    val reporteResumen = _reporteResumen.asStateFlow()
+
+    private val _detalleConductor = MutableStateFlow(UiState<ReporteConductorDetalleResp>())
+    val detalleConductor = _detalleConductor.asStateFlow()
+
+    private val _detalleGasolinera = MutableStateFlow(UiState<ReporteGasolineraDetalleResp>())
+    val detalleGasolinera = _detalleGasolinera.asStateFlow()
+
+    private val _conductoresSinFiltro = MutableStateFlow<List<ReporteConductor>>(emptyList())
+    val conductoresSinFiltro = _conductoresSinFiltro.asStateFlow()
+
+    private val _gasolinerasSinFiltro = MutableStateFlow<List<ReporteGasolinera>>(emptyList())
+    val gasolinerasSinFiltro = _gasolinerasSinFiltro.asStateFlow()
+
+    fun cargarListasSinFiltro(desde: String? = desdePeriodo, hasta: String? = hastaPeriodo) {
+        viewModelScope.launch {
+            try {
+                _conductoresSinFiltro.value = ApiClient.api.reportePorConductor(desde, hasta, null)
+            } catch (_: Exception) {}
+            try {
+                _gasolinerasSinFiltro.value = ApiClient.api.reportePorGasolinera(desde, hasta, null)
+            } catch (_: Exception) {}
+        }
+    }
 
     fun cargarReportePorConductor(desde: String? = desdePeriodo, hasta: String? = hastaPeriodo) {
         desdePeriodo = desde
@@ -270,7 +301,13 @@ class AdminViewModel : ViewModel() {
         viewModelScope.launch {
             _reporteConductor.value = UiState(loading = true)
             try {
-                _reporteConductor.value = UiState(data = ApiClient.api.reportePorConductor(desde, hasta))
+                val lista = ApiClient.api.reportePorConductor(desde, hasta, conductorFiltroId)
+                _reporteConductor.value = UiState(data = lista)
+                if (conductorFiltroId == null) {
+                    _conductoresSinFiltro.value = lista
+                } else if (_conductoresSinFiltro.value.isEmpty()) {
+                    _conductoresSinFiltro.value = ApiClient.api.reportePorConductor(desde, hasta, null)
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -285,11 +322,69 @@ class AdminViewModel : ViewModel() {
         viewModelScope.launch {
             _reporteGasolinera.value = UiState(loading = true)
             try {
-                _reporteGasolinera.value = UiState(data = ApiClient.api.reportePorGasolinera(desde, hasta))
+                val lista = ApiClient.api.reportePorGasolinera(desde, hasta, gasolineraFiltroId)
+                _reporteGasolinera.value = UiState(data = lista)
+                if (gasolineraFiltroId == null) {
+                    _gasolinerasSinFiltro.value = lista
+                } else if (_gasolinerasSinFiltro.value.isEmpty()) {
+                    _gasolinerasSinFiltro.value = ApiClient.api.reportePorGasolinera(desde, hasta, null)
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 _reporteGasolinera.value = UiState(error = mensajeDeError(e))
+            }
+        }
+    }
+
+    fun cargarReporteResumen(desde: String? = desdePeriodo, hasta: String? = hastaPeriodo, porConductor: Boolean) {
+        desdePeriodo = desde
+        hastaPeriodo = hasta
+        viewModelScope.launch {
+            _reporteResumen.value = UiState(loading = true)
+            try {
+                _reporteResumen.value = UiState(
+                    data = ApiClient.api.reporteResumen(
+                        desde = desde,
+                        hasta = hasta,
+                        conductorId = if (porConductor) conductorFiltroId else null,
+                        gasolineraId = if (!porConductor) gasolineraFiltroId else null
+                    )
+                )
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _reporteResumen.value = UiState(error = mensajeDeError(e))
+            }
+        }
+    }
+
+    fun cargarDetalleConductor(id: Int, desde: String? = desdePeriodo, hasta: String? = hastaPeriodo) {
+        desdePeriodo = desde
+        hastaPeriodo = hasta
+        viewModelScope.launch {
+            _detalleConductor.value = UiState(loading = true)
+            try {
+                _detalleConductor.value = UiState(data = ApiClient.api.reporteDetalleConductor(id, desde, hasta))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _detalleConductor.value = UiState(error = mensajeDeError(e))
+            }
+        }
+    }
+
+    fun cargarDetalleGasolinera(id: Int, desde: String? = desdePeriodo, hasta: String? = hastaPeriodo) {
+        desdePeriodo = desde
+        hastaPeriodo = hasta
+        viewModelScope.launch {
+            _detalleGasolinera.value = UiState(loading = true)
+            try {
+                _detalleGasolinera.value = UiState(data = ApiClient.api.reporteDetalleGasolinera(id, desde, hasta))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _detalleGasolinera.value = UiState(error = mensajeDeError(e))
             }
         }
     }

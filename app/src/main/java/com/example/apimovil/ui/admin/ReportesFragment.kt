@@ -17,14 +17,11 @@ import com.example.apimovil.R
 import com.example.apimovil.data.SessionManager
 import com.example.apimovil.databinding.FragmentReportesBinding
 import com.example.apimovil.ui.common.*
-import com.google.android.material.datepicker.MaterialDatePicker
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.flow.map
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class ReportesFragment : Fragment(R.layout.fragment_reportes) {
 
@@ -36,8 +33,8 @@ class ReportesFragment : Fragment(R.layout.fragment_reportes) {
         _binding = FragmentReportesBinding.bind(view)
         binding.recycler.layoutManager = LinearLayoutManager(requireContext())
 
-        val bottomNav = binding.root.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.incluirNavInferior)
-            ?: binding.root.findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavAdmin)
+        val bottomNav = binding.root.findViewById<BottomNavigationView>(R.id.incluirNavInferior)
+            ?: binding.root.findViewById<BottomNavigationView>(R.id.bottomNavAdmin)
         if (SessionManager.esAdmin) {
             bottomNav?.menu?.clear()
             bottomNav?.inflateMenu(R.menu.bottom_nav_admin)
@@ -54,62 +51,65 @@ class ReportesFragment : Fragment(R.layout.fragment_reportes) {
 
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
         binding.btnPeriodo.text = model.periodoSeleccionadoEtiqueta
+        actualizarBotonFiltroEntidad()
 
         binding.btnPeriodo.setOnClickListener {
-            val opciones = arrayOf(
-                getString(R.string.periodo_todo),
-                getString(R.string.periodo_este_mes),
-                getString(R.string.periodo_mes_anterior),
-                getString(R.string.periodo_ultimos_7_dias),
-                getString(R.string.periodo_personalizado),
-            )
-            MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Seleccionar periodo")
-                .setItems(opciones) { _, which ->
-                    when (which) {
-                        0 -> {
-                            model.periodoSeleccionadoEtiqueta = getString(R.string.periodo_todo)
-                            binding.btnPeriodo.text = model.periodoSeleccionadoEtiqueta
-                            cargarReporteActual(null, null)
-                        }
-                        1 -> {
-                            val desde = obtenerInicioMesString()
-                            val hasta = obtenerFechaActualString()
-                            model.periodoSeleccionadoEtiqueta = getString(R.string.periodo_este_mes)
-                            binding.btnPeriodo.text = model.periodoSeleccionadoEtiqueta
-                            cargarReporteActual(desde, hasta)
-                        }
-                        2 -> {
-                            val (desdeMesAnt, hastaMesAnt) = obtenerMesAnteriorRango()
-                            val etiqueta = "${formatearFechaIsoShort(desdeMesAnt)} - ${formatearFechaIsoShort(hastaMesAnt)}"
-                            model.periodoSeleccionadoEtiqueta = etiqueta
-                            binding.btnPeriodo.text = etiqueta
-                            cargarReporteActual(desdeMesAnt, hastaMesAnt)
-                        }
-                        3 -> {
-                            val (desde7d, hasta7d) = obtenerUltimos7DiasRango()
-                            val etiqueta = "${formatearFechaIsoShort(desde7d)} - ${formatearFechaIsoShort(hasta7d)}"
-                            model.periodoSeleccionadoEtiqueta = etiqueta
-                            binding.btnPeriodo.text = etiqueta
-                            cargarReporteActual(desde7d, hasta7d)
-                        }
-                        4 -> {
-                            val picker = MaterialDatePicker.Builder.dateRangePicker()
-                                .setTitleText("Seleccionar rango de fechas")
-                                .build()
-                            picker.addOnPositiveButtonClickListener { selection ->
-                                val desde = convertirMillisAFecha(selection.first)
-                                val hasta = convertirMillisAFecha(selection.second)
-                                val etiqueta = "${formatearFechaIsoShort(desde)} - ${formatearFechaIsoShort(hasta)}"
-                                model.periodoSeleccionadoEtiqueta = etiqueta
-                                binding.btnPeriodo.text = etiqueta
-                                cargarReporteActual(desde, hasta)
+            mostrarSelectorPeriodo(this) { desde, hasta, etiqueta ->
+                model.periodoSeleccionadoEtiqueta = etiqueta
+                binding.btnPeriodo.text = etiqueta
+                model.cargarListasSinFiltro(desde, hasta)
+                cargarReporteActual(desde, hasta)
+                cargarResumenActual(desde, hasta)
+            }
+        }
+
+        binding.btnFiltroEntidad.setOnClickListener {
+            val porConductor = binding.toggleReporte.checkedButtonId == R.id.btnPorConductor
+            if (porConductor) {
+                val lista = model.conductoresSinFiltro.value.sortedBy { it.nombre_conductor }
+                val nombres = mutableListOf(getString(R.string.todos_los_conductores))
+                nombres.addAll(lista.map { it.nombre_conductor })
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.filtrar_por_conductor)
+                    .setItems(nombres.toTypedArray()) { _, which ->
+                        if (which == 0) {
+                            model.conductorFiltroId = null
+                            model.conductorFiltroNombre = null
+                        } else {
+                            val sel = lista.getOrNull(which - 1)
+                            if (sel != null) {
+                                model.conductorFiltroId = sel.conductor_id
+                                model.conductorFiltroNombre = sel.nombre_conductor
                             }
-                            picker.show(parentFragmentManager, "dateRangePicker")
                         }
+                        actualizarBotonFiltroEntidad()
+                        cargarReporteActual(model.desdePeriodo, model.hastaPeriodo)
+                        cargarResumenActual(model.desdePeriodo, model.hastaPeriodo)
                     }
-                }
-                .show()
+                    .show()
+            } else {
+                val lista = model.gasolinerasSinFiltro.value.sortedBy { it.nombre_gasolinera }
+                val nombres = mutableListOf(getString(R.string.todas_las_gasolineras))
+                nombres.addAll(lista.map { it.nombre_gasolinera })
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.filtrar_por_gasolinera)
+                    .setItems(nombres.toTypedArray()) { _, which ->
+                        if (which == 0) {
+                            model.gasolineraFiltroId = null
+                            model.gasolineraFiltroNombre = null
+                        } else {
+                            val sel = lista.getOrNull(which - 1)
+                            if (sel != null) {
+                                model.gasolineraFiltroId = sel.gasolinera_id
+                                model.gasolineraFiltroNombre = sel.nombre_gasolinera
+                            }
+                        }
+                        actualizarBotonFiltroEntidad()
+                        cargarReporteActual(model.desdePeriodo, model.hastaPeriodo)
+                        cargarResumenActual(model.desdePeriodo, model.hastaPeriodo)
+                    }
+                    .show()
+            }
         }
 
         binding.btnExportarPdf.setOnClickListener {
@@ -146,7 +146,9 @@ class ReportesFragment : Fragment(R.layout.fragment_reportes) {
                     montoTotalGeneral = montoTotal,
                     esConductor = esConductor,
                     desde = model.desdePeriodo,
-                    hasta = model.hastaPeriodo
+                    hasta = model.hastaPeriodo,
+                    resumen = model.reporteResumen.value.data,
+                    nombreEntidadFiltro = if (esConductor) model.conductorFiltroNombre else model.gasolineraFiltroNombre
                 )
 
                 if (pdfFile != null && pdfFile.exists()) {
@@ -172,15 +174,21 @@ class ReportesFragment : Fragment(R.layout.fragment_reportes) {
         }
 
         binding.toggleReporte.check(R.id.btnPorConductor)
-        model.cargarReportePorConductor(model.desdePeriodo, model.hastaPeriodo)
+        model.cargarListasSinFiltro(model.desdePeriodo, model.hastaPeriodo)
+        cargarReporteActual(model.desdePeriodo, model.hastaPeriodo)
+        cargarResumenActual(model.desdePeriodo, model.hastaPeriodo)
 
         binding.btnPorConductor.setOnClickListener {
             binding.toggleReporte.check(R.id.btnPorConductor)
-            model.cargarReportePorConductor(model.desdePeriodo, model.hastaPeriodo)
+            actualizarBotonFiltroEntidad()
+            cargarReporteActual(model.desdePeriodo, model.hastaPeriodo)
+            cargarResumenActual(model.desdePeriodo, model.hastaPeriodo)
         }
         binding.btnPorGasolinera.setOnClickListener {
             binding.toggleReporte.check(R.id.btnPorGasolinera)
-            model.cargarReportePorGasolinera(model.desdePeriodo, model.hastaPeriodo)
+            actualizarBotonFiltroEntidad()
+            cargarReporteActual(model.desdePeriodo, model.hastaPeriodo)
+            cargarResumenActual(model.desdePeriodo, model.hastaPeriodo)
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -215,12 +223,13 @@ class ReportesFragment : Fragment(R.layout.fragment_reportes) {
                         binding.recycler.adapter = FilaDobleAdapter(items) { id, _ ->
                             val rep = data.find { it.conductor_id == id }
                             if (rep != null) {
-                                val montoFmt = String.format(Locale.US, "%,.2f", rep.monto_total)
-                                MaterialAlertDialogBuilder(requireContext())
-                                    .setTitle(rep.nombre_conductor)
-                                    .setMessage("ID Conductor: ${rep.conductor_id}\nÓrdenes totales: ${rep.cantidad_ordenes}\nMonto total: L $montoFmt")
-                                    .setPositiveButton(R.string.aceptar, null)
-                                    .show()
+                                model.conductorFiltroId = rep.conductor_id
+                                model.conductorFiltroNombre = rep.nombre_conductor
+                                val bundle = Bundle().apply {
+                                    putString("tipo", "conductor")
+                                    putInt("entidadId", rep.conductor_id)
+                                }
+                                findNavController().navigate(R.id.action_reportes_to_detalle, bundle)
                             }
                         }
                     }
@@ -260,17 +269,54 @@ class ReportesFragment : Fragment(R.layout.fragment_reportes) {
                         binding.recycler.adapter = FilaDobleAdapter(items) { id, _ ->
                             val rep = data.find { it.gasolinera_id == id }
                             if (rep != null) {
-                                val montoFmt = String.format(Locale.US, "%,.2f", rep.monto_total)
-                                MaterialAlertDialogBuilder(requireContext())
-                                    .setTitle(rep.nombre_gasolinera)
-                                    .setMessage("ID Gasolinera: ${rep.gasolinera_id}\nÓrdenes totales: ${rep.cantidad_ordenes}\nMonto total: L $montoFmt")
-                                    .setPositiveButton(R.string.aceptar, null)
-                                    .show()
+                                model.gasolineraFiltroId = rep.gasolinera_id
+                                model.gasolineraFiltroNombre = rep.nombre_gasolinera
+                                val bundle = Bundle().apply {
+                                    putString("tipo", "gasolinera")
+                                    putInt("entidadId", rep.gasolinera_id)
+                                }
+                                findNavController().navigate(R.id.action_reportes_to_detalle, bundle)
                             }
                         }
                     }
                 }
             }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                model.reporteResumen.collect { estado ->
+                    val resp = estado.data
+                    if (resp != null) {
+                        binding.textPromedioYCumplimiento.text = getString(
+                            R.string.promedio_cumplimiento_formato,
+                            resp.resumen.promedio_orden,
+                            resp.resumen.cumplimiento_pct
+                        )
+                        binding.chartMesesGeneral.setDatos(resp.por_mes.map { BarChartView.Barra(formatearMes(it.mes), it.monto_total) })
+
+                        val porConductor = binding.toggleReporte.checkedButtonId == R.id.btnPorConductor
+                        if (porConductor) {
+                            binding.textTituloRankingGeneral.text = getString(R.string.top_conductores_por_gasto)
+                            binding.chartRankingGeneral.horizontal = true
+                            binding.chartRankingGeneral.setDatos(resp.top_conductores.take(8).map { BarChartView.Barra(it.nombre, it.monto_total) })
+                        } else {
+                            binding.textTituloRankingGeneral.text = getString(R.string.top_gasolineras_por_gasto)
+                            binding.chartRankingGeneral.horizontal = true
+                            binding.chartRankingGeneral.setDatos(resp.top_gasolineras.take(8).map { BarChartView.Barra(it.nombre, it.monto_total) })
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun actualizarBotonFiltroEntidad() {
+        val porConductor = binding.toggleReporte.checkedButtonId == R.id.btnPorConductor
+        if (porConductor) {
+            binding.btnFiltroEntidad.text = model.conductorFiltroNombre ?: getString(R.string.todos_los_conductores)
+        } else {
+            binding.btnFiltroEntidad.text = model.gasolineraFiltroNombre ?: getString(R.string.todas_las_gasolineras)
         }
     }
 
@@ -282,11 +328,9 @@ class ReportesFragment : Fragment(R.layout.fragment_reportes) {
         }
     }
 
-    private fun convertirMillisAFecha(millis: Long): String {
-        val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply {
-            timeZone = TimeZone.getTimeZone("UTC")
-        }
-        return formatter.format(Date(millis))
+    private fun cargarResumenActual(desde: String?, hasta: String?) {
+        val porConductor = binding.toggleReporte.checkedButtonId == R.id.btnPorConductor
+        model.cargarReporteResumen(desde, hasta, porConductor)
     }
 
     override fun onDestroyView() {
