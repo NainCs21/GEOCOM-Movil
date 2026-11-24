@@ -43,7 +43,7 @@ class OrdenesAdminFragment : Fragment(R.layout.fragment_ordenes_admin) {
     private val model: AdminViewModel by viewModels()
     private var _binding: FragmentOrdenesAdminBinding? = null
     private val binding get() = _binding!!
-    private val adapter = OrdenAdapter { orden ->
+    private val adapter = OrdenAdapter(mostrarConductor = true) { orden ->
         val bundle = Bundle().apply { putInt("ordenId", orden.id) }
         findNavController().navigate(R.id.ordenDetalleAdminFragment, bundle)
     }

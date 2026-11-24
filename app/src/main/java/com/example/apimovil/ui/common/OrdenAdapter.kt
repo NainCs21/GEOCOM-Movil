@@ -49,6 +49,7 @@ fun etiquetaDeEstado(context: Context, estado: String): String = when (estado) {
 
 // Adapter para la lista de ordenes en RecyclerView
 class OrdenAdapter(
+    private val mostrarConductor: Boolean = false,
     private val onClick: (Orden) -> Unit
 ) : ListAdapter<Orden, OrdenAdapter.Holder>(DIFF) {
 
@@ -62,8 +63,18 @@ class OrdenAdapter(
     override fun onBindViewHolder(holder: Holder, position: Int) {
         val orden = getItem(position)
         val ctx = holder.binding.root.context
-        holder.binding.textNumeroOrden.text = ctx.getString(R.string.orden_numero, orden.numero_orden)
-        holder.binding.textGasolinera.text = orden.gasolinera?.nombre ?: ctx.getString(R.string.gasolinera_por_definir)
+        val gasolinera = orden.gasolinera?.nombre ?: ctx.getString(R.string.gasolinera_por_definir)
+        val numero = "#${orden.numero_orden}"
+        val nombreConductor = orden.conductor?.usuario?.name
+        if (mostrarConductor && !nombreConductor.isNullOrBlank()) {
+            // Admin/contabilidad: lo importante es de quién es la orden
+            holder.binding.textTitulo.text = nombreConductor
+            holder.binding.textSubtitulo.text = "$numero · $gasolinera"
+        } else {
+            // Pantallas del conductor: igual que antes, número arriba y gasolinera abajo
+            holder.binding.textTitulo.text = numero
+            holder.binding.textSubtitulo.text = gasolinera
+        }
         holder.binding.textEstado.text = etiquetaDeEstado(ctx, orden.estado)
         holder.binding.textEstado.setTextColor(colorDeEstado(ctx, orden.estado))
         holder.binding.textEstado.setBackgroundResource(fondoBadgeDeEstado(orden.estado))
