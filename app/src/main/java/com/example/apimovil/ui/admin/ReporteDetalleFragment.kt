@@ -1,9 +1,13 @@
 package com.example.apimovil.ui.admin
 
 import android.content.Intent
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.View
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -15,8 +19,10 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.apimovil.R
 import com.example.apimovil.data.SessionManager
+import com.example.apimovil.data.models.PuntoMes
 import com.example.apimovil.data.models.ReporteConductorDetalleResp
 import com.example.apimovil.data.models.ReporteGasolineraDetalleResp
+import com.example.apimovil.data.models.ResumenReporte
 import com.example.apimovil.databinding.FragmentReporteDetalleBinding
 import com.example.apimovil.ui.common.*
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -168,6 +174,17 @@ class ReporteDetalleFragment : Fragment(R.layout.fragment_reporte_detalle) {
         }
     }
 
+    private fun pintarCombustible(resumen: ResumenReporte, porMes: List<PuntoMes>) {
+        binding.textGalonesTotal.text = String.format(Locale.US, "%,.1f", resumen.galones_total)
+        binding.textPrecioPromedio.text = resumen.precio_promedio_galon
+            ?.let { String.format(Locale.US, "L %,.2f/gal", it) } ?: "N/D"
+        val galonesMes = porMes.sumOf { it.galones_total }
+        binding.textEquivaleGalonesMes.isVisible = galonesMes > 0
+        if (galonesMes > 0) {
+            binding.textEquivaleGalonesMes.text = getString(R.string.equivale_a_galones, galonesMes)
+        }
+    }
+
     private fun pintarDetalleConductor(resp: ReporteConductorDetalleResp) {
         binding.textNombre.text = resp.conductor.nombre
         binding.textSubtitulo.text = formatoCargo(resp.conductor.cargo)
@@ -184,6 +201,8 @@ class ReporteDetalleFragment : Fragment(R.layout.fragment_reporte_detalle) {
         binding.textCumplimiento.text = String.format(Locale.US, "%.1f%%", resp.resumen.cumplimiento_pct)
         binding.textTardesVencidas.text = getString(R.string.tardes_vencidas_formato, resp.resumen.completadas_tarde, resp.resumen.vencidas)
 
+        pintarCombustible(resp.resumen, resp.por_mes)
+
         // Graficas
         binding.chartMeses.setDatos(resp.por_mes.map { BarChartView.Barra(formatearMes(it.mes), it.monto_total) })
         binding.chartCombustible.horizontal = true
@@ -195,6 +214,35 @@ class ReporteDetalleFragment : Fragment(R.layout.fragment_reporte_detalle) {
         binding.textTituloRanking.text = getString(R.string.gasolineras_donde_cargo)
         binding.chartRanking.horizontal = true
         binding.chartRanking.setDatos(resp.por_gasolinera.map { BarChartView.Barra(it.nombre, it.monto_total) })
+
+        val vehiculos = resp.por_vehiculo
+        binding.cardVehiculos.isVisible = vehiculos.isNotEmpty()
+        binding.contenedorVehiculos.removeAllViews()
+        val density = resources.displayMetrics.density
+        vehiculos.forEach { v ->
+            val layout = LinearLayout(requireContext()).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(0, 0, 0, (12 * density).toInt())
+            }
+            val tvTitulo = TextView(requireContext()).apply {
+                text = "${v.placa} · ${v.descripcion}"
+                textSize = 14f
+                typeface = Typeface.DEFAULT_BOLD
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.texto_principal))
+            }
+            val montoFmt = String.format(Locale.US, "%,.2f", v.monto_total)
+            val galonesFmt = String.format(Locale.US, "%.1f", v.galones_total)
+            val kmFmt = String.format(Locale.US, "%,.0f", v.km_total)
+            val rendFmt = String.format(Locale.US, "%.1f", v.rendimiento_km_litro ?: 8.0)
+            val tvSubtitulo = TextView(requireContext()).apply {
+                text = "L $montoFmt · ≈ $galonesFmt gal · ≈ $kmFmt km · $rendFmt km/L"
+                textSize = 12f
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.texto_secundario))
+            }
+            layout.addView(tvTitulo)
+            layout.addView(tvSubtitulo)
+            binding.contenedorVehiculos.addView(layout)
+        }
 
         ordenAdapter.submitList(resp.ordenes)
     }
@@ -215,6 +263,8 @@ class ReporteDetalleFragment : Fragment(R.layout.fragment_reporte_detalle) {
         binding.textCumplimiento.text = String.format(Locale.US, "%.1f%%", resp.resumen.cumplimiento_pct)
         binding.textTardesVencidas.text = getString(R.string.tardes_vencidas_formato, resp.resumen.completadas_tarde, resp.resumen.vencidas)
 
+        pintarCombustible(resp.resumen, resp.por_mes)
+
         // Graficas
         binding.chartMeses.setDatos(resp.por_mes.map { BarChartView.Barra(formatearMes(it.mes), it.monto_total) })
         binding.chartCombustible.horizontal = true
@@ -226,6 +276,8 @@ class ReporteDetalleFragment : Fragment(R.layout.fragment_reporte_detalle) {
         binding.textTituloRanking.text = getString(R.string.conductores_que_la_usan)
         binding.chartRanking.horizontal = true
         binding.chartRanking.setDatos(resp.por_conductor.map { BarChartView.Barra(it.nombre, it.monto_total) })
+
+        binding.cardVehiculos.isVisible = false
 
         ordenAdapter.submitList(resp.ordenes)
     }
