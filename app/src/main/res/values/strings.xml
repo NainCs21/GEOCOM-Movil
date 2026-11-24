@@ -361,4 +361,6 @@
     <string name="resumen_entrega_conductor">Entregarás L %1$s a %2$s</string>
     <string name="resumen_entrega_general">Entregarás L %1$s (entrega general)</string>
     <string name="ver_ordenes_flecha">Ver órdenes &#62;</string>
+    <string name="no_se_encontraron_conductores">No se encontraron conductores</string>
+    <string name="hint_buscar_conductor">Buscar conductor por nombre</string>
 </resources>

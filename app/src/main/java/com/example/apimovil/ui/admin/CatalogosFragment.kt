@@ -34,6 +34,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.google.zxing.BarcodeFormat
 import com.journeyapps.barcodescanner.BarcodeEncoder
 import kotlinx.coroutines.launch
+import java.text.Normalizer
 
 /**
  * Catálogos de solo lectura (consulta rápida desde el celular). La gestión
@@ -72,6 +73,18 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         binding.btnVehiculos.setOnClickListener { mostrarVehiculos() }
         binding.btnGasolineras.setOnClickListener { mostrarGasolineras() }
 
+        binding.inputBuscarConductor.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val b = _binding ?: return
+                if (b.toggleCatalogo.checkedButtonId == R.id.btnConductores) {
+                    val estado = model.conductores.value
+                    pintarConductores(estado.loading, estado.error, aplicarFiltroConductores(estado.data))
+                }
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
         binding.inputBuscarVehiculo.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
@@ -97,14 +110,7 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                 model.conductores.collect { estado ->
                     val b = _binding ?: return@collect
                     if (b.toggleCatalogo.checkedButtonId == R.id.btnConductores) {
-                        pintar(estado.loading, estado.error, estado.data?.map {
-                            FilaDoble(
-                                id = it.id,
-                                titulo = it.usuario?.name ?: getString(R.string.conductor_numero, it.id),
-                                subtitulo = "${it.telefono} · ${it.cargo}" +
-                                    if (!it.activo) " · " + getString(R.string.inactivo) else ""
-                            )
-                        })
+                        pintarConductores(estado.loading, estado.error, aplicarFiltroConductores(estado.data))
                     }
                 }
             }
@@ -128,7 +134,10 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                             FilaDoble(
                                 id = it.id,
                                 titulo = it.nombre,
-                                subtitulo = "${it.direccion ?: "—"} · QR: ${it.codigo_qr}"
+                                subtitulo = "${it.direccion ?: "—"} · QR: ${it.codigo_qr}" +
+                                    if (!it.activo) " · " + getString(R.string.inactivo) else "",
+                                iconRes = R.drawable.ic_gas_pump,
+                                tintRes = if (!it.activo) R.color.texto_secundario else null
                             )
                         })
                     }
@@ -151,6 +160,57 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                     }
                 }
             }
+        }
+    }
+
+    private fun normalizarTexto(texto: String?): String {
+        if (texto.isNullOrBlank()) return ""
+        val nfd = Normalizer.normalize(texto, Normalizer.Form.NFD)
+        return nfd.replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "").lowercase().trim()
+    }
+
+    private fun aplicarFiltroConductores(lista: List<Conductor>?): List<FilaDoble> {
+        val b = _binding ?: return emptyList()
+        val query = normalizarTexto(b.inputBuscarConductor.text?.toString())
+
+        val filtrados = lista.orEmpty().filter { cond ->
+            if (query.isEmpty()) return@filter true
+            val nombreNorm = normalizarTexto(cond.usuario?.name)
+            val telefonoNorm = normalizarTexto(cond.telefono)
+            val cargoNorm = normalizarTexto(cond.cargo)
+            nombreNorm.contains(query) || telefonoNorm.contains(query) || cargoNorm.contains(query)
+        }
+
+        return filtrados.map { cond ->
+            FilaDoble(
+                id = cond.id,
+                titulo = cond.usuario?.name ?: getString(R.string.conductor_numero, cond.id),
+                subtitulo = "${cond.telefono} · ${cond.cargo}" +
+                    if (!cond.activo) " · " + getString(R.string.inactivo) else "",
+                iconRes = R.drawable.ic_person,
+                tintRes = if (!cond.activo) R.color.texto_secundario else null
+            )
+        }
+    }
+
+    private fun pintarConductores(loading: Boolean, error: String?, items: List<FilaDoble>?) {
+        val b = _binding ?: return
+        b.progress.isVisible = loading
+        val query = b.inputBuscarConductor.text?.toString()?.trim().orEmpty()
+        val sinResultadosPorBusqueda = !loading && error == null && items.isNullOrEmpty() && query.isNotEmpty()
+
+        if (sinResultadosPorBusqueda) {
+            b.textError.isVisible = true
+            b.textError.text = getString(R.string.no_se_encontraron_conductores)
+            b.textError.setTextColor(ContextCompat.getColor(requireContext(), R.color.texto_secundario))
+        } else {
+            b.textError.isVisible = error != null
+            b.textError.text = error
+            b.textError.setTextColor(ContextCompat.getColor(requireContext(), R.color.estado_vencida))
+        }
+
+        b.recycler.adapter = FilaDobleAdapter(items.orEmpty()) { id, titulo ->
+            mostrarDialogoOpciones(id, titulo)
         }
     }
 
@@ -467,15 +527,24 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
     private fun mostrarConductores() {
         val b = _binding ?: return
         b.toggleCatalogo.check(R.id.btnConductores)
+        b.layoutFiltrosConductores.isVisible = true
         b.layoutFiltrosVehiculos.isVisible = false
+        b.inputBuscarVehiculo.setText("")
         b.btnNuevo.text = getString(R.string.nuevo_conductor_btn)
+        val estado = model.conductores.value
+        if (estado.data != null) {
+            pintarConductores(estado.loading, estado.error, aplicarFiltroConductores(estado.data))
+        }
         model.cargarConductores()
     }
 
     private fun mostrarVehiculos() {
         val b = _binding ?: return
         b.toggleCatalogo.check(R.id.btnVehiculos)
+        b.layoutFiltrosConductores.isVisible = false
         b.layoutFiltrosVehiculos.isVisible = true
+        b.inputBuscarConductor.setText("")
+        b.btnNuevo.text = getString(R.string.nuevo_vehiculo_btn)
         if (b.toggleFiltroCombustible.checkedButtonId == View.NO_ID) {
             b.toggleFiltroCombustible.check(R.id.btnFiltroTodos)
         }
@@ -489,7 +558,10 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
     private fun mostrarGasolineras() {
         val b = _binding ?: return
         b.toggleCatalogo.check(R.id.btnGasolineras)
+        b.layoutFiltrosConductores.isVisible = false
         b.layoutFiltrosVehiculos.isVisible = false
+        b.inputBuscarConductor.setText("")
+        b.inputBuscarVehiculo.setText("")
         b.btnNuevo.text = getString(R.string.nuevo_gasolinera_btn)
         model.cargarGasolineras()
     }
@@ -519,7 +591,8 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                 titulo = "${it.placa} · ${it.marca} ${it.modelo}",
                 subtitulo = it.tipo_combustible + rendimientoStr +
                     if (!it.activo) " · " + getString(R.string.inactivo) else "",
-                iconRes = R.drawable.ic_vehiculo
+                iconRes = R.drawable.ic_vehiculo,
+                tintRes = if (!it.activo) R.color.texto_secundario else null
             )
         }
     }
@@ -529,6 +602,7 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         b.progress.isVisible = loading
         b.textError.isVisible = error != null
         b.textError.text = error
+        b.textError.setTextColor(ContextCompat.getColor(requireContext(), R.color.estado_vencida))
         b.recycler.adapter = FilaDobleAdapter(items.orEmpty()) { id, titulo ->
             mostrarDialogoOpciones(id, titulo)
         }
