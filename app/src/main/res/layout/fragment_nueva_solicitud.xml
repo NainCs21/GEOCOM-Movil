@@ -80,9 +80,11 @@
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_weight="1"
+                    android:maxLines="1"
                     android:text="@string/destino_vehiculo"
+                    android:textAllCaps="false"
                     android:textColor="@color/selector_toggle_button_text"
-                    android:textSize="12sp"
+                    android:textSize="14sp"
                     app:backgroundTint="@color/selector_toggle_button_bg"
                     app:cornerRadius="12dp"
                     app:strokeColor="@color/borde" />
@@ -93,9 +95,11 @@
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_weight="1"
+                    android:maxLines="1"
                     android:text="@string/destino_mgp"
+                    android:textAllCaps="false"
                     android:textColor="@color/selector_toggle_button_text"
-                    android:textSize="12sp"
+                    android:textSize="14sp"
                     app:backgroundTint="@color/selector_toggle_button_bg"
                     app:cornerRadius="12dp"
                     app:strokeColor="@color/borde" />
@@ -106,9 +110,11 @@
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_weight="1"
+                    android:maxLines="1"
                     android:text="@string/destino_ambos"
+                    android:textAllCaps="false"
                     android:textColor="@color/selector_toggle_button_text"
-                    android:textSize="12sp"
+                    android:textSize="14sp"
                     app:backgroundTint="@color/selector_toggle_button_bg"
                     app:cornerRadius="12dp"
                     app:strokeColor="@color/borde" />
@@ -120,7 +126,7 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="12dp"
                 android:hint="@string/vehiculo"
                 app:boxCornerRadiusBottomEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
@@ -149,7 +155,11 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputDescripcionMgp"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="wrap_content"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:maxLines="4"
+                    android:minLines="2" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -161,13 +171,16 @@
                 app:boxCornerRadiusBottomEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusTopStart="12dp">
+                app:boxCornerRadiusTopStart="12dp"
+                app:placeholderText="@string/hint_actividad_ejemplo">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputActividad"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="@string/hint_actividad_ejemplo"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine|textCapSentences"
+                    android:maxLines="6"
                     android:minLines="3" />
             </com.google.android.material.textfield.TextInputLayout>
 
