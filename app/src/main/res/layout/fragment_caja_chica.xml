@@ -72,75 +72,282 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <TextView
+                    <!-- Encabezado de la card -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/bg_tarjeta_info"
+                            android:contentDescription="@null"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_nav_mas"
+                            app:tint="@color/marca" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="@string/registrar_caja_chica"
+                                android:textColor="@color/texto_principal"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/subtitulo_nueva_entrega"
+                                android:textColor="@color/texto_secundario"
+                                android:textSize="13sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Campo 1: Para quién -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutConductor"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
-                        android:text="@string/registrar_caja_chica"
-                        android:textColor="@color/texto_principal"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:hint="@string/id_conductor_opcional"
+                        android:hint="@string/hint_para_quien"
                         app:boxCornerRadiusBottomEnd="12dp"
                         app:boxCornerRadiusBottomStart="12dp"
                         app:boxCornerRadiusTopEnd="12dp"
-                        app:boxCornerRadiusTopStart="12dp">
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:startIconDrawable="@drawable/ic_person"
+                        app:startIconTint="@color/marca">
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/inputConductorId"
+                        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                            android:id="@+id/inputConductor"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="number" />
+                            android:inputType="none" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- Campo 2: Monto -->
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutMonto"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
+                        android:layout_marginBottom="8dp"
                         android:hint="@string/monto_lempiras_hint"
                         app:boxCornerRadiusBottomEnd="12dp"
                         app:boxCornerRadiusBottomStart="12dp"
                         app:boxCornerRadiusTopEnd="12dp"
-                        app:boxCornerRadiusTopStart="12dp">
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:prefixText="L ">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/inputMonto"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="numberDecimal" />
+                            android:inputType="numberDecimal"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- Chips de montos rápidos -->
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/groupChipsMonto"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        app:singleSelection="true">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipMonto100"
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/monto_100"
+                            android:textColor="@color/marca"
+                            app:chipBackgroundColor="@color/marca_claro"
+                            app:chipCornerRadius="10dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipMonto200"
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/monto_200"
+                            android:textColor="@color/marca"
+                            app:chipBackgroundColor="@color/marca_claro"
+                            app:chipCornerRadius="10dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipMonto500"
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/monto_500"
+                            android:textColor="@color/marca"
+                            app:chipBackgroundColor="@color/marca_claro"
+                            app:chipCornerRadius="10dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipMonto1000"
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/monto_1000"
+                            android:textColor="@color/marca"
+                            app:chipBackgroundColor="@color/marca_claro"
+                            app:chipCornerRadius="10dp" />
+                    </com.google.android.material.chip.ChipGroup>
+
+                    <!-- Chips de motivos frecuentes -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:text="@string/descripcion"
+                        android:textColor="@color/texto_principal"
+                        android:textSize="12sp" />
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/groupChipsMotivo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        app:singleSelection="true">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipMotivoViaticos"
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/motivo_viaticos"
+                            android:textColor="@color/texto_principal"
+                            app:chipBackgroundColor="@color/fondo"
+                            app:chipCornerRadius="10dp"
+                            app:chipStrokeColor="@color/borde"
+                            app:chipStrokeWidth="1dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipMotivoCombustible"
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/motivo_combustible"
+                            android:textColor="@color/texto_principal"
+                            app:chipBackgroundColor="@color/fondo"
+                            app:chipCornerRadius="10dp"
+                            app:chipStrokeColor="@color/borde"
+                            app:chipStrokeWidth="1dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipMotivoMantenimiento"
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/motivo_mantenimiento"
+                            android:textColor="@color/texto_principal"
+                            app:chipBackgroundColor="@color/fondo"
+                            app:chipCornerRadius="10dp"
+                            app:chipStrokeColor="@color/borde"
+                            app:chipStrokeWidth="1dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipMotivoCompra"
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/motivo_compra"
+                            android:textColor="@color/texto_principal"
+                            app:chipBackgroundColor="@color/fondo"
+                            app:chipCornerRadius="10dp"
+                            app:chipStrokeColor="@color/borde"
+                            app:chipStrokeWidth="1dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chipMotivoOtro"
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/motivo_otro"
+                            android:textColor="@color/texto_principal"
+                            app:chipBackgroundColor="@color/fondo"
+                            app:chipCornerRadius="10dp"
+                            app:chipStrokeColor="@color/borde"
+                            app:chipStrokeWidth="1dp" />
+                    </com.google.android.material.chip.ChipGroup>
+
+                    <!-- Campo 3: Motivo -->
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutDescripcion"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:hint="@string/descripcion"
+                        android:layout_marginBottom="12dp"
                         app:boxCornerRadiusBottomEnd="12dp"
                         app:boxCornerRadiusBottomStart="12dp"
                         app:boxCornerRadiusTopEnd="12dp"
-                        app:boxCornerRadiusTopStart="12dp">
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:counterEnabled="true"
+                        app:counterMaxLength="255">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/inputDescripcion"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content" />
+                            android:layout_height="wrap_content"
+                            android:maxLines="4"
+                            android:minLines="2" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- Campo 4: Fecha de entrega -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/layoutFecha"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:hint="@string/fecha_de_entrega"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:startIconDrawable="@android:drawable/ic_menu_today"
+                        app:startIconTint="@color/marca">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/inputFecha"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="false" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Resumen antes de enviar -->
+                    <TextView
+                        android:id="@+id/textResumenEntrega"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:textColor="@color/marca_oscuro"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <!-- Botón enviar -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnRegistrar"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="16dp"
+                        android:layout_height="52dp"
                         android:text="@string/registrar"
                         app:backgroundTint="@color/marca"
-                        app:cornerRadius="12dp" />
+                        app:cornerRadius="14dp" />
 
                     <ProgressBar
                         android:id="@+id/progress"

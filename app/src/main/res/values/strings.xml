@@ -201,6 +201,8 @@
     <string name="rechazar">Rechazar</string>
     <string name="confirmar_rechazo_solicitud">¿Estás seguro de que deseas rechazar esta solicitud?</string>
     <string name="solicitud_rechazada">Solicitud rechazada con éxito</string>
+    <string name="monto_100">100</string>
+    <string name="monto_200">200</string>
     <string name="monto_500">500</string>
     <string name="monto_1000">1000</string>
     <string name="monto_1500">1500</string>
@@ -251,7 +253,7 @@
     <string name="conductor_numero">Conductor #%1$d</string>
     <string name="planta_generadora">Planta generadora (MGP)</string>
     <string name="total_de_la_solicitud">Total de la solicitud: L %1$.2f</string>
-    <string name="monto_y_descripcion">Monto y descripción requeridos</string>
+    <string name="monto_y_descripcion">L %1$,.2f · %2$s</string>
     <string name="inactivo">Inactivo</string>
     <string name="ver_codigo_qr">Ver código QR</string>
     <string name="cargo">Cargo</string>
@@ -345,4 +347,17 @@
     <string name="equivale_a_galones">Equivale a ≈ %,.1f galones</string>
     <string name="pie_pdf_precio_oficial">Galones y km estimados con el precio oficial vigente al asignar cada orden.</string>
     <string name="catalogos_subtitulo">Conductores, vehículos y gasolineras</string>
+    <string name="subtitulo_nueva_entrega">Registra el dinero que entregas en efectivo</string>
+    <string name="hint_para_quien">¿Para quién es?</string>
+    <string name="entrega_general">Entrega general (sin conductor)</string>
+    <string name="monto_mayor_a_cero_error">Ingresa un monto mayor a 0</string>
+    <string name="motivo_requerido_error">Escribe el motivo de la entrega</string>
+    <string name="motivo_viaticos">Viáticos</string>
+    <string name="motivo_combustible">Combustible</string>
+    <string name="motivo_mantenimiento">Mantenimiento</string>
+    <string name="motivo_compra">Compra</string>
+    <string name="motivo_otro">Otro</string>
+    <string name="fecha_de_entrega">Fecha de entrega</string>
+    <string name="resumen_entrega_conductor">Entregarás L %1$s a %2$s</string>
+    <string name="resumen_entrega_general">Entregarás L %1$s (entrega general)</string>
 </resources>
