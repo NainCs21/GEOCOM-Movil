@@ -146,6 +146,30 @@ class AdminViewModel : ViewModel() {
         }
     }
 
+    private val _conteosOrdenes = MutableStateFlow(UiState<Triple<Int, Int, Int>>())
+    val conteosOrdenes = _conteosOrdenes.asStateFlow()
+
+    fun cargarConteosOrdenes() {
+        viewModelScope.launch {
+            _conteosOrdenes.value = UiState(loading = true, data = _conteosOrdenes.value.data)
+            try {
+                val resAbiertas = ApiClient.api.listarOrdenes(estado = "abierta,abierta_tarde")
+                val resCompletadas = ApiClient.api.listarOrdenes(estado = "completada,completada_tarde")
+                val resVencidas = ApiClient.api.listarOrdenes(estado = "vencida")
+
+                val totalAbiertas = resAbiertas.total ?: resAbiertas.data.size
+                val totalCompletadas = resCompletadas.total ?: resCompletadas.data.size
+                val totalVencidas = resVencidas.total ?: resVencidas.data.size
+
+                _conteosOrdenes.value = UiState(data = Triple(totalAbiertas, totalCompletadas, totalVencidas))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _conteosOrdenes.value = UiState(error = mensajeDeError(e))
+            }
+        }
+    }
+
     // Rehabilita una orden vencida
     private val _rehabilitacion = MutableStateFlow(UiState<Boolean>())
     val rehabilitacion = _rehabilitacion.asStateFlow()

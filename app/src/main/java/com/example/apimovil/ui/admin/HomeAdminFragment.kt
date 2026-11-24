@@ -3,12 +3,14 @@ package com.example.apimovil.ui.admin
 import android.os.Bundle
 import android.view.View
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import androidx.annotation.OptIn
 import com.example.apimovil.R
@@ -93,8 +95,21 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
             mostrarBottomSheetPrecios()
         }
 
+        binding.cardAbiertas.setOnClickListener { irAlHistorial("abierta,abierta_tarde") }
+        binding.cardCompletadas.setOnClickListener { irAlHistorial("completada,completada_tarde") }
+        binding.cardVencidas.setOnClickListener { irAlHistorial("vencida") }
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    model.conteosOrdenes.collect { estado ->
+                        estado.data?.let { (abiertas, completadas, vencidas) ->
+                            binding.textAbiertas.text = abiertas.toString()
+                            binding.textCompletadas.text = completadas.toString()
+                            binding.textVencidas.text = vencidas.toString()
+                        }
+                    }
+                }
                 launch {
                     model.solicitudesPendientes.collect { estado ->
                         binding.textConteoPendientes.text = (estado.data?.size ?: 0).toString()
@@ -103,9 +118,6 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
                 launch {
                     model.ordenes.collect { estado ->
                         val ordenes = estado.data.orEmpty()
-                        binding.textAbiertas.text = ordenes.count { esAbierta(it.estado) }.toString()
-                        binding.textCompletadas.text = ordenes.count { esCompletada(it.estado) }.toString()
-                        binding.textVencidas.text = ordenes.count { it.estado == "vencida" }.toString()
 
                         val proxima = ordenes
                             .filter { esAbierta(it.estado) && it.vence_apertura != null }
@@ -183,6 +195,7 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
             }
         }
 
+        model.cargarConteosOrdenes()
         model.cargarSolicitudesPendientes()
         model.cargarOrdenes()
         model.cargarPrecios()
@@ -259,10 +272,22 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
 
     override fun onResume() {
         super.onResume()
+        model.cargarConteosOrdenes()
         model.cargarSolicitudesPendientes()
         model.cargarOrdenes()
         model.cargarPrecios()
         model.cargarHistorialPrecios()
+    }
+
+    private fun irAlHistorial(filtroEstado: String) {
+        val opciones = NavOptions.Builder()
+            .setPopUpTo(R.id.homeAdminFragment, false)
+            .build()
+        findNavController().navigate(
+            R.id.ordenesAdminFragment,
+            bundleOf("filtroEstado" to filtroEstado),
+            opciones
+        )
     }
 
     override fun onDestroyView() {

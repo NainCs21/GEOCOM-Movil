@@ -91,7 +91,6 @@ class OrdenesAdminFragment : Fragment(R.layout.fragment_ordenes_admin) {
         val estadoArg = arguments?.getString("filtroEstado")
         if (estadoArg != null) {
             estadoSeleccionado = estadoArg
-            aplicarFiltros()
         }
 
         binding.swipeRefresh.setOnRefreshListener {

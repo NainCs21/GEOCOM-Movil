@@ -197,6 +197,15 @@
                             android:text="@string/abierta_badge"
                             android:textColor="@color/texto_secundario"
                             android:textSize="12sp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/ver_ordenes_flecha"
+                            android:textColor="@color/marca"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -235,6 +244,15 @@
                             android:text="@string/completada_badge"
                             android:textColor="@color/texto_secundario"
                             android:textSize="12sp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/ver_ordenes_flecha"
+                            android:textColor="@color/marca"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -273,6 +291,15 @@
                             android:text="@string/vencida_badge"
                             android:textColor="@color/texto_secundario"
                             android:textSize="12sp" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/ver_ordenes_flecha"
+                            android:textColor="@color/marca"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
