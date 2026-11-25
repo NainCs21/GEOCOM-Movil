@@ -41,7 +41,7 @@ fun mensajeDeError(error: Exception): String {
     return when (error) {
         is JsonParseException,
         is MalformedJsonException -> "El servidor respondió algo inesperado. Intenta de nuevo."
-        is IOException -> "No se pudo conectar al servidor. Revisa que el backend Laravel esté activo."
+        is IOException -> "No se pudo conectar. Revisa tu conexión a internet e intenta de nuevo."
         else -> error.localizedMessage?.takeIf { it.isNotBlank() } ?: "Ocurrió un error inesperado. Intenta de nuevo."
     }
 }
