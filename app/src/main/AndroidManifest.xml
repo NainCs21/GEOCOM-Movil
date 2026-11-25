@@ -17,14 +17,7 @@
         android:label="@string/app_name"
         android:roundIcon="@drawable/ic_launcher"
         android:supportsRtl="true"
-        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.ApiMovil">
-
-        <!--
-            usesCleartextTraffic="true" es necesario porque en desarrollo el
-            backend corre en http:// (no https://). Quítalo si en producción
-            el backend ya sirve por HTTPS con certificado válido.
-        -->
 
         <activity
             android:name=".MainActivity"
