@@ -275,7 +275,8 @@ class ReporteDetalleFragment : Fragment(R.layout.fragment_reporte_detalle) {
 
         binding.textTituloRanking.text = getString(R.string.conductores_que_la_usan)
         binding.chartRanking.horizontal = true
-        binding.chartRanking.setDatos(resp.por_conductor.map { BarChartView.Barra(it.nombre, it.monto_total) })
+        val colores = PaletaGrafica.asignar(resp.por_conductor.map { it.id })
+        binding.chartRanking.setDatos(resp.por_conductor.mapIndexed { i, c -> BarChartView.Barra(c.nombre, c.monto_total, colores[i]) })
 
         binding.cardVehiculos.isVisible = false
 

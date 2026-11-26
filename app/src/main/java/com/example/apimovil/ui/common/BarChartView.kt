@@ -17,7 +17,7 @@ class BarChartView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyle: Int = 0
 ) : View(context, attrs, defStyle) {
 
-    data class Barra(val etiqueta: String, val valor: Double)
+    data class Barra(val etiqueta: String, val valor: Double, val color: Int? = null)
 
     /** true: barras horizontales (ranking). false: barras verticales (serie por mes). */
     var horizontal: Boolean = false
@@ -33,8 +33,10 @@ class BarChartView @JvmOverloads constructor(
         return if (context.theme.resolveAttribute(attr, tv, true)) tv.data else fallback
     }
 
+    private val colorBase = colorTema(R.attr.colorPrimary, 0xFF3F51B5.toInt())
+
     private val paintBarra = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = colorTema(R.attr.colorPrimary, 0xFF3F51B5.toInt())
+        color = colorBase
     }
     private val paintTexto = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         color = colorTema(com.google.android.material.R.attr.colorOnSurface, 0xFF222222.toInt())
@@ -74,6 +76,7 @@ class BarChartView @JvmOverloads constructor(
         barras.forEachIndexed { i, b ->
             val cx = izq + ranura * i + ranura / 2
             val alto = ((abajo - arriba) * (b.valor / maxValor)).toFloat()
+            paintBarra.color = b.color ?: colorBase
             canvas.drawRoundRect(RectF(cx - anchoBarra / 2, abajo - alto, cx + anchoBarra / 2, abajo), dp(4f), dp(4f), paintBarra)
             canvas.drawText(formatear(b.valor), cx, abajo - alto - dp(4f), paintTexto)
             val etiqueta = TextUtils.ellipsize(b.etiqueta, paintTexto, ranura, TextUtils.TruncateAt.END).toString()
@@ -95,6 +98,7 @@ class BarChartView @JvmOverloads constructor(
             val etiqueta = TextUtils.ellipsize(b.etiqueta, paintTexto, zonaEtiqueta, TextUtils.TruncateAt.END).toString()
             canvas.drawText(etiqueta, 0f, cy + paintTexto.textSize / 3, paintTexto)
             val largo = (maxAncho * (b.valor / maxValor)).toFloat().coerceAtLeast(dp(3f))
+            paintBarra.color = b.color ?: colorBase
             canvas.drawRoundRect(RectF(inicioBarra, cy - altoBarra / 2, inicioBarra + largo, cy + altoBarra / 2), dp(4f), dp(4f), paintBarra)
             canvas.drawText(formatear(b.valor), inicioBarra + largo + dp(6f), cy + paintTexto.textSize / 3, paintTexto)
         }

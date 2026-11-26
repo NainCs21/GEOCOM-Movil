@@ -317,7 +317,9 @@ class ReportesFragment : Fragment(R.layout.fragment_reportes) {
                         if (porConductor) {
                             binding.textTituloRankingGeneral.text = getString(R.string.top_conductores_por_gasto)
                             binding.chartRankingGeneral.horizontal = true
-                            binding.chartRankingGeneral.setDatos(resp.top_conductores.take(8).map { BarChartView.Barra(it.nombre, it.monto_total) })
+                            val top = resp.top_conductores.take(8)
+                            val colores = PaletaGrafica.asignar(top.map { it.id })
+                            binding.chartRankingGeneral.setDatos(top.mapIndexed { i, c -> BarChartView.Barra(c.nombre, c.monto_total, colores[i]) })
                         } else {
                             binding.textTituloRankingGeneral.text = getString(R.string.top_gasolineras_por_gasto)
                             binding.chartRankingGeneral.horizontal = true
