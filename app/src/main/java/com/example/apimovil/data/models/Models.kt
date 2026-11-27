@@ -185,8 +185,12 @@ data class PaginaRespuesta<T>(
 )
 
 // Respuesta de mensaje simple para manejo de errores
-data class MensajeResponse(val mensaje: String? = null, val message: String? = null) {
-    val texto: String get() = mensaje ?: message ?: "Ocurrio un error inesperado."
+data class MensajeResponse(
+    val mensaje: String? = null,
+    val message: String? = null,
+    val errors: Map<String, List<String>>? = null
+) {
+    val texto: String get() = mensaje ?: message ?: "Ocurrió un error inesperado."
 }
 
 // Modelos para verificación de contraseña de administrador
