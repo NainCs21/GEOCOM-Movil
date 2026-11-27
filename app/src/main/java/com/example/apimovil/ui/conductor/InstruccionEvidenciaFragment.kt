@@ -18,6 +18,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.apimovil.R
 import com.example.apimovil.databinding.FragmentInstruccionEvidenciaBinding
+import com.example.apimovil.ui.common.Validadores
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -35,14 +36,18 @@ class InstruccionEvidenciaFragment : Fragment(R.layout.fragment_instruccion_evid
     private var archivoFotoTemporal: File? = null
 
     private val lanzadorCamara = registerForActivityResult(ActivityResultContracts.TakePicture()) { exitoso ->
+        val archivo = archivoFotoTemporal
         if (exitoso) {
-            val archivo = archivoFotoTemporal
-            if (archivo != null && archivo.exists()) {
+            if (archivo != null && archivo.exists() && archivo.length() > 0) {
                 model.subirEvidencia(detalleId, tipo, justificacionTardanza, archivo, ordenId)
             } else {
-                Toast.makeText(requireContext(), "No se pudo acceder a la foto capturada.", Toast.LENGTH_SHORT).show()
+                archivo?.delete()
+                Toast.makeText(requireContext(), "La foto no se guardó bien. Vuelve a tomarla.", Toast.LENGTH_SHORT).show()
             }
+        } else {
+            archivo?.delete()
         }
+        archivoFotoTemporal = null
     }
 
     private val lanzadorPermisoCamara = registerForActivityResult(ActivityResultContracts.RequestPermission()) { concedido ->
@@ -53,13 +58,40 @@ class InstruccionEvidenciaFragment : Fragment(R.layout.fragment_instruccion_evid
         }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (savedInstanceState != null) {
+            val path = savedInstanceState.getString("archivoFotoTemporalPath")
+            if (!path.isNullOrBlank()) {
+                val f = File(path)
+                val evidenciasDir = File(requireContext().cacheDir, "evidencias")
+                if (f.canonicalPath.startsWith(evidenciasDir.canonicalPath)) {
+                    archivoFotoTemporal = f
+                }
+            }
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        archivoFotoTemporal?.let {
+            outState.putString("archivoFotoTemporalPath", it.absolutePath)
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentInstruccionEvidenciaBinding.bind(view)
 
         detalleId = arguments?.getInt("detalleId") ?: -1
         ordenId = arguments?.getInt("ordenId") ?: -1
-        tipo = arguments?.getString("tipo") ?: "bomba"
+        tipo = arguments?.getString("tipo").orEmpty()
         justificacionTardanza = arguments?.getString("justificacionTardanza")
+
+        if (!Validadores.idValido(detalleId) || !Validadores.idValido(ordenId) || !Validadores.tipoEvidenciaValido(tipo)) {
+            Toast.makeText(requireContext(), "No se pudo abrir esta pantalla. Vuelve a intentarlo.", Toast.LENGTH_SHORT).show()
+            findNavController().navigateUp()
+            return
+        }
 
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
 
@@ -125,7 +157,10 @@ class InstruccionEvidenciaFragment : Fragment(R.layout.fragment_instruccion_evid
     }
 
     private fun abrirCamara() {
-        val archivo = File.createTempFile("evidencia_${tipo}_${detalleId}_", ".jpg", requireContext().cacheDir)
+        val evidenciasDir = File(requireContext().cacheDir, "evidencias")
+        if (!evidenciasDir.exists()) evidenciasDir.mkdirs()
+
+        val archivo = File.createTempFile("evidencia_${tipo}_${detalleId}_", ".jpg", evidenciasDir)
         archivoFotoTemporal = archivo
         val uri: Uri = FileProvider.getUriForFile(
             requireContext(),

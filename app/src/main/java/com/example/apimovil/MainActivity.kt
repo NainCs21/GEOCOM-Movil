@@ -1,5 +1,6 @@
 package com.example.apimovil
 
+import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -23,8 +24,10 @@ import com.example.apimovil.data.notificaciones.NotificacionesStore
 import com.example.apimovil.data.notificaciones.cancelarSincronizacionNotificaciones
 import com.example.apimovil.data.notificaciones.programarSincronizacionNotificaciones
 import com.example.apimovil.databinding.ActivityMainBinding
+import com.example.apimovil.ui.common.Validadores
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
 import java.io.IOException
 
 class MainActivity : AppCompatActivity() {
@@ -35,6 +38,8 @@ class MainActivity : AppCompatActivity() {
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         super.onCreate(savedInstanceState)
         SessionManager.init(this)
+
+        limpiarCacheViejo(cacheDir)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -123,6 +128,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun limpiarCacheViejo(cacheDir: File) {
+        try {
+            val carpetas = listOf("evidencias", "facturas", "reportes")
+            val ahora = System.currentTimeMillis()
+            val limite24h = 24 * 60 * 60 * 1000L
+            for (nombreCarpet in carpetas) {
+                val dir = File(cacheDir, nombreCarpet)
+                if (dir.exists() && dir.isDirectory) {
+                    dir.listFiles()?.forEach { file ->
+                        if (ahora - file.lastModified() > limite24h) {
+                            file.delete()
+                        }
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -131,7 +154,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleNotificationIntent(intent: Intent, navController: NavController) {
-        val notifId = intent.getStringExtra("notif_id")
+        val notifIdRaw = intent.getStringExtra("notif_id")
+        val notifId = if (!notifIdRaw.isNullOrBlank() && notifIdRaw.length <= 100) notifIdRaw else null
         val destino = intent.getStringExtra("notif_destino")
         val ordenId = intent.getIntExtra("notif_orden_id", -1)
 
@@ -154,7 +178,7 @@ class MainActivity : AppCompatActivity() {
         try {
             when (destino) {
                 "orden" -> {
-                    if (ordenId != -1) {
+                    if (Validadores.idValido(ordenId)) {
                         val bundle = Bundle().apply { putInt("ordenId", ordenId) }
                         navController.navigate(R.id.ordenDetalleAdminFragment, bundle)
                     }
@@ -186,12 +210,12 @@ class MainActivity : AppCompatActivity() {
             if (SessionManager.haySesion && SessionManager.puedeConsultar) {
                 if (ContextCompat.checkSelfPermission(
                         this,
-                        android.Manifest.permission.POST_NOTIFICATIONS,
+                        Manifest.permission.POST_NOTIFICATIONS,
                     ) != PackageManager.PERMISSION_GRANTED
                 ) {
                     ActivityCompat.requestPermissions(
                         this,
-                        arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                        arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                         1001,
                     )
                 }

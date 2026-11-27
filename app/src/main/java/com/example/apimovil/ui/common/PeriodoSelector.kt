@@ -1,7 +1,10 @@
 package com.example.apimovil.ui.common
 
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.example.apimovil.R
+import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.DateValidatorPointBackward
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.text.SimpleDateFormat
@@ -44,12 +47,25 @@ fun mostrarSelectorPeriodo(
                     onElegido(desde7d, hasta7d, etiqueta)
                 }
                 4 -> {
+                    val constraints = CalendarConstraints.Builder()
+                        .setValidator(DateValidatorPointBackward.now())
+                        .build()
+
                     val picker = MaterialDatePicker.Builder.dateRangePicker()
+                        .setCalendarConstraints(constraints)
                         .setTitleText("Seleccionar rango de fechas")
                         .build()
+
                     picker.addOnPositiveButtonClickListener { selection ->
-                        val desde = convertirMillisAFecha(selection.first)
-                        val hasta = convertirMillisAFecha(selection.second)
+                        val m1 = selection.first
+                        val m2 = selection.second
+                        val diffDays = (m2 - m1) / (1000 * 60 * 60 * 24)
+                        if (diffDays > 366) {
+                            Toast.makeText(context, "El rango no puede ser mayor a un año.", Toast.LENGTH_SHORT).show()
+                            return@addOnPositiveButtonClickListener
+                        }
+                        val desde = convertirMillisAFecha(m1)
+                        val hasta = convertirMillisAFecha(m2)
                         val etiqueta = "${formatearFechaIsoShort(desde)} - ${formatearFechaIsoShort(hasta)}"
                         onElegido(desde, hasta, etiqueta)
                     }

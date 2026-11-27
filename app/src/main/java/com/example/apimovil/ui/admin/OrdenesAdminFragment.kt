@@ -6,6 +6,7 @@ import android.view.View
 import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -29,6 +30,8 @@ import com.example.apimovil.ui.common.configurarNavegacionSupervisor
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.chip.Chip
+import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.DateValidatorPointBackward
 import com.google.android.material.datepicker.MaterialDatePicker
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -354,7 +357,12 @@ class OrdenesAdminFragment : Fragment(R.layout.fragment_ordenes_admin) {
         actualizarTextoFechas()
 
         sheetBinding.inputRangoFechas.setOnClickListener {
+            val constraints = CalendarConstraints.Builder()
+                .setValidator(DateValidatorPointBackward.now())
+                .build()
+
             val picker = MaterialDatePicker.Builder.dateRangePicker()
+                .setCalendarConstraints(constraints)
                 .setTitleText(R.string.rango_de_fechas)
                 .build()
 
@@ -362,6 +370,11 @@ class OrdenesAdminFragment : Fragment(R.layout.fragment_ordenes_admin) {
                 val startUtc = selection.first
                 val endUtc = selection.second
                 if (startUtc != null && endUtc != null) {
+                    val diffDays = (endUtc - startUtc) / (1000 * 60 * 60 * 24)
+                    if (diffDays > 366) {
+                        Toast.makeText(requireContext(), "El rango no puede ser mayor a un año.", Toast.LENGTH_SHORT).show()
+                        return@addOnPositiveButtonClickListener
+                    }
                     val sdfApi = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
                     tempDesde = sdfApi.format(Date(startUtc))
                     tempHasta = sdfApi.format(Date(endUtc))

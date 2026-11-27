@@ -12,6 +12,7 @@ import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.net.URI
 import java.util.concurrent.TimeUnit
 
 // URL base del servicio API en la nube
@@ -23,7 +24,17 @@ private class AuthInterceptor : Interceptor {
         val original = chain.request()
         val requestBuilder = original.newBuilder().addHeader("Accept", "application/json")
         val path = original.url.encodedPath
-        if (!path.endsWith("/login")) {
+
+        val baseHost = try {
+            URI(BASE_URL).host
+        } catch (_: Exception) {
+            "geocom-production.up.railway.app"
+        }
+
+        val reqUrl = original.url
+        val esHttpsGeoCom = reqUrl.isHttps && reqUrl.host.equals(baseHost, ignoreCase = true)
+
+        if (!path.endsWith("/login") && esHttpsGeoCom) {
             val token = SessionManager.token
             if (!token.isNullOrBlank()) {
                 requestBuilder.addHeader("Authorization", "Bearer $token")
@@ -41,7 +52,9 @@ private class SessionExpiredInterceptor : Interceptor {
         if (response.code == 401 && SessionManager.haySesion) {
             val path = original.url.encodedPath
             if (!path.endsWith("/login") && !path.endsWith("/logout") && !path.endsWith("/verificar-contrasena")) {
-                Log.w("GeoComSync", "401 en ${original.url.encodedPath}: se cierra la sesión local")
+                if (BuildConfig.DEBUG) {
+                    Log.w("GeoComSync", "401 en ${original.url.encodedPath}: se cierra la sesión local")
+                }
                 SessionManager.cerrarSesion()
                 runBlocking {
                     SesionEventos.notificarSesionExpirada("Tu sesión expiró. Inicia sesión de nuevo.")
@@ -71,7 +84,10 @@ private val deserializadorGasolinera = JsonDeserializer { json, _, _ ->
 // Configura y provee la instancia unica de Retrofit
 object ApiClient {
     private val logging = HttpLoggingInterceptor().apply {
-        level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
+        level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
+        redactHeader("Authorization")
+        redactHeader("Cookie")
+        redactHeader("Set-Cookie")
     }
 
     val client: OkHttpClient = OkHttpClient.Builder()
