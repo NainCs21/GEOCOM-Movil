@@ -237,42 +237,6 @@ class AdminViewModel : ViewModel() {
         }
     }
 
-    // Registros de caja chica
-    private val _cajaChica = MutableStateFlow(UiState<List<CajaChica>>())
-    val cajaChica = _cajaChica.asStateFlow()
-
-    fun cargarCajaChica() {
-        viewModelScope.launch {
-            _cajaChica.value = UiState(loading = true)
-            try {
-                _cajaChica.value = UiState(data = ApiClient.api.listarCajaChica().data)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                _cajaChica.value = UiState(error = mensajeDeError(e))
-            }
-        }
-    }
-
-    private val _registroCajaChica = MutableStateFlow(UiState<Boolean>())
-    val registroCajaChica = _registroCajaChica.asStateFlow()
-
-    fun registrarCajaChica(conductorId: Int?, monto: Double, descripcion: String, fechaEntrega: String) {
-        viewModelScope.launch {
-            _registroCajaChica.value = UiState(loading = true)
-            try {
-                ApiClient.api.registrarCajaChica(
-                    CajaChicaRequest(conductorId, monto, descripcion, fechaEntrega)
-                )
-                _registroCajaChica.value = UiState(data = true)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                _registroCajaChica.value = UiState(error = mensajeDeError(e))
-            }
-        }
-    }
-
     // Reportes de consumo
     var periodoSeleccionadoEtiqueta: String = "Este mes"
     var desdePeriodo: String? = obtenerInicioMesString()

@@ -143,24 +143,6 @@ data class Orden(
     val detalles: List<DetalleOrden>? = null
 )
 
-// Modelos para caja chica
-data class CajaChicaRequest(
-    val conductor_id: Int?,
-    val monto: Double,
-    val descripcion: String,
-    val fecha_entrega: String
-)
-
-data class CajaChica(
-    val id: Int,
-    val conductor_id: Int?,
-    val registrado_por: Int,
-    val monto: Double,
-    val descripcion: String,
-    val fecha_entrega: String,
-    val conductor: Conductor? = null
-)
-
 // Modelos para reportes de consumo
 data class ReporteConductor(
     val conductor_id: Int,

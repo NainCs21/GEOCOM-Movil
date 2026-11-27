@@ -124,16 +124,6 @@ interface ApiService {
     @DELETE("gasolineras/{id}")
     suspend fun desactivarGasolinera(@Path("id") id: Int)
 
-    // Caja chica
-    @GET("caja-chica")
-    suspend fun listarCajaChica(): PaginaRespuesta<CajaChica>
-
-    @GET("caja-chica/{id}")
-    suspend fun verCajaChica(@Path("id") id: Int): CajaChica
-
-    @POST("caja-chica")
-    suspend fun registrarCajaChica(@Body body: CajaChicaRequest): CajaChica
-
     // Reportes
     @GET("reportes/por-conductor")
     suspend fun reportePorConductor(

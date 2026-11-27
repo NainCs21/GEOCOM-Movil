@@ -98,7 +98,6 @@
     <string name="quedan_n_min">Quedan %1$d min</string>
     <string name="accesos_rapidos">Accesos rápidos</string>
     <string name="catalogos_flecha">Catálogos</string>
-    <string name="mas_caja_chica">Caja chica</string>
 
     <!-- Admin/Supervisor: solicitudes pendientes -->
     <string name="solo_consulta_no_puedes_asignar">Modo solo consulta: contabilidad puede ver solicitudes pero la asignación de montos es exclusiva del administrador.</string>
@@ -144,16 +143,6 @@
     <string name="editar">Editar</string>
     <string name="eliminacion_exitosa">Elemento eliminado con éxito</string>
 
-    <!-- Admin/Supervisor: caja chica -->
-    <string name="caja_chica">Caja chica</string>
-    <string name="registrar_caja_chica">Nueva entrega</string>
-    <string name="id_conductor_opcional">ID del conductor (opcional)</string>
-    <string name="monto_lempiras_hint">Monto (Lempiras)</string>
-    <string name="descripcion">Descripción / Motivo</string>
-    <string name="registrar">Registrar entrega</string>
-    <string name="completa_monto_y_descripcion">Completa el monto y la descripción.</string>
-    <string name="entrega_registrada_exito">Entrega registrada con éxito</string>
-
     <!-- Admin/Supervisor: reportes -->
     <string name="reportes">Reportes</string>
     <string name="por_conductor">Por conductor</string>
@@ -162,7 +151,6 @@
     <!-- Admin/Supervisor: más opciones -->
     <string name="mas_opciones">Más opciones</string>
     <string name="notificaciones_subtitulo">Avisos y alertas del sistema</string>
-    <string name="caja_chica_subtitulo">Entregas extraordinarias</string>
     <string name="datos_de_mi_cuenta">Datos de mi cuenta</string>
     <string name="notificaciones_titulo">Avisos</string>
     <string name="notificaciones_nota">Se generan a partir de tus órdenes completadas y vencidas recientes.</string>
@@ -252,7 +240,6 @@
     <string name="conductor_numero">Conductor #%1$d</string>
     <string name="planta_generadora">Planta generadora (MGP)</string>
     <string name="total_de_la_solicitud">Total de la solicitud: L %1$.2f</string>
-    <string name="monto_y_descripcion">L %1$,.2f · %2$s</string>
     <string name="inactivo">Inactivo</string>
     <string name="ver_codigo_qr">Ver código QR</string>
     <string name="cargo">Cargo</string>
@@ -345,19 +332,6 @@
     <string name="equivale_a_galones">Equivale a ≈ %,.1f galones</string>
     <string name="pie_pdf_precio_oficial">Galones y km estimados con el precio oficial vigente al asignar cada orden.</string>
     <string name="catalogos_subtitulo">Conductores, vehículos y gasolineras</string>
-    <string name="subtitulo_nueva_entrega">Registra el dinero que entregas en efectivo</string>
-    <string name="hint_para_quien">¿Para quién es?</string>
-    <string name="entrega_general">Entrega general (sin conductor)</string>
-    <string name="monto_mayor_a_cero_error">Ingresa un monto mayor a 0</string>
-    <string name="motivo_requerido_error">Escribe el motivo de la entrega</string>
-    <string name="motivo_viaticos">Viáticos</string>
-    <string name="motivo_combustible">Combustible</string>
-    <string name="motivo_mantenimiento">Mantenimiento</string>
-    <string name="motivo_compra">Compra</string>
-    <string name="motivo_otro">Otro</string>
-    <string name="fecha_de_entrega">Fecha de entrega</string>
-    <string name="resumen_entrega_conductor">Entregarás L %1$s a %2$s</string>
-    <string name="resumen_entrega_general">Entregarás L %1$s (entrega general)</string>
     <string name="ver_ordenes_flecha">Ver órdenes &#62;</string>
     <string name="no_se_encontraron_conductores">No se encontraron conductores</string>
     <string name="hint_buscar_conductor">Buscar conductor por nombre</string>

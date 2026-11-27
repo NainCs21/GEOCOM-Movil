@@ -87,9 +87,6 @@ class HomeAdminFragment : Fragment(R.layout.fragment_home_admin) {
         binding.btnCatalogosRapido.setOnClickListener {
             findNavController().navigate(R.id.catalogosFragment)
         }
-        binding.btnCajaChicaRapido.setOnClickListener {
-            findNavController().navigate(R.id.cajaChicaFragment)
-        }
 
         binding.cardPreciosCombustible.setOnClickListener {
             mostrarBottomSheetPrecios()

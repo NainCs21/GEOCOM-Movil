@@ -27,11 +27,10 @@ Actualmente apunta al servidor de producción en Railway, por lo que funciona ta
   filtra para este rol).
 - **Administrador**: login → solicitudes pendientes → asignar monto y
   gasolinera (genera la orden) → ver todas las órdenes con filtro de
-  estado → catálogos de solo lectura → registrar y consultar caja chica →
+  estado → catálogos de solo lectura →
   reportes por conductor y por gasolinera.
 - **Contabilidad (hace de "supervisor" hasta que renombren el rol en el
-  backend)**: mismo panel que el administrador, pero sin el botón de
-  registrar caja chica, y sin poder tocar una solicitud para asignarle
+  backend)**: mismo panel que el administrador, y sin poder tocar una solicitud para asignarle
   monto (el backend igual lo rechazaría con 403 si se intentara).
 
 ## Decisiones de alcance (para no inflar el proyecto sin necesidad)
