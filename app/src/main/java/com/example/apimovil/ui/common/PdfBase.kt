@@ -178,7 +178,16 @@ internal fun renderizar(titulo: String, notaPie: String, contenido: (LienzoPdf) 
 
 internal fun guardarPdf(context: Context, document: PdfDocument, carpeta: String, nombre: String): File {
     val dir = File(context.cacheDir, carpeta).apply { mkdirs() }
-    val file = File(dir, nombre)
+    val nombreLimpio = nombreArchivoSeguro(nombre)
+    val nombreConExt = if (nombreLimpio.endsWith(".pdf", ignoreCase = true)) nombreLimpio else "$nombreLimpio.pdf"
+    val file = File(dir, nombreConExt)
+
+    val canonicalPath = file.canonicalPath
+    val dirCanonicalPath = dir.canonicalPath
+    if (!canonicalPath.startsWith(dirCanonicalPath)) {
+        throw SecurityException("Ruta de archivo no válida.")
+    }
+
     FileOutputStream(file).use { out ->
         document.writeTo(out)
     }

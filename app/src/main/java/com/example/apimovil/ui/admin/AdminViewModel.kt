@@ -96,17 +96,11 @@ class AdminViewModel : ViewModel() {
                 } else {
                     _verificacion.value = UiState(error = respuesta.mensaje ?: "Contraseña incorrecta.")
                 }
-            } catch (e: HttpException) {
-                val mensaje = when (e.code()) {
-                    401 -> "Contraseña incorrecta."
-                    403 -> "Tu cuenta no tiene un rol activo."
-                    else -> mensajeDeError(e)
-                }
-                _verificacion.value = UiState(error = mensaje)
-            } catch (e: IOException) {
-                _verificacion.value = UiState(error = "Sin conexión. Revisa tu internet e intenta de nuevo.")
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                _verificacion.value = UiState(error = mensajeDeError(e))
+                val interp = interpretarError(e)
+                _verificacion.value = UiState(error = interp.mensaje, camposError = interp.camposError)
             }
         }
     }
@@ -505,6 +499,10 @@ class AdminViewModel : ViewModel() {
     private val _accionCatalogo = MutableStateFlow(UiState<Boolean>())
     val accionCatalogo = _accionCatalogo.asStateFlow()
 
+    fun limpiarAccionCatalogo() {
+        _accionCatalogo.value = UiState()
+    }
+
     fun crearConductor(datos: Map<String, Any?>) {
         ultimoTipoAccion = "exito"
         viewModelScope.launch {
@@ -516,7 +514,8 @@ class AdminViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _accionCatalogo.value = UiState(error = mensajeDeError(e))
+                val interp = interpretarError(e)
+                _accionCatalogo.value = UiState(error = interp.mensaje, camposError = interp.camposError)
             }
         }
     }
@@ -532,7 +531,8 @@ class AdminViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _accionCatalogo.value = UiState(error = mensajeDeError(e))
+                val interp = interpretarError(e)
+                _accionCatalogo.value = UiState(error = interp.mensaje, camposError = interp.camposError)
             }
         }
     }
@@ -548,7 +548,8 @@ class AdminViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _accionCatalogo.value = UiState(error = mensajeDeError(e))
+                val interp = interpretarError(e)
+                _accionCatalogo.value = UiState(error = interp.mensaje, camposError = interp.camposError)
             }
         }
     }
@@ -564,7 +565,8 @@ class AdminViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _accionCatalogo.value = UiState(error = mensajeDeError(e))
+                val interp = interpretarError(e)
+                _accionCatalogo.value = UiState(error = interp.mensaje, camposError = interp.camposError)
             }
         }
     }
@@ -580,7 +582,8 @@ class AdminViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _accionCatalogo.value = UiState(error = mensajeDeError(e))
+                val interp = interpretarError(e)
+                _accionCatalogo.value = UiState(error = interp.mensaje, camposError = interp.camposError)
             }
         }
     }
@@ -596,7 +599,8 @@ class AdminViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _accionCatalogo.value = UiState(error = mensajeDeError(e))
+                val interp = interpretarError(e)
+                _accionCatalogo.value = UiState(error = interp.mensaje, camposError = interp.camposError)
             }
         }
     }
@@ -611,7 +615,8 @@ class AdminViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _accionCatalogo.value = UiState(error = mensajeDeError(e))
+                val interp = interpretarError(e)
+                _accionCatalogo.value = UiState(error = interp.mensaje, camposError = interp.camposError)
             }
         }
     }
@@ -626,7 +631,8 @@ class AdminViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _accionCatalogo.value = UiState(error = mensajeDeError(e))
+                val interp = interpretarError(e)
+                _accionCatalogo.value = UiState(error = interp.mensaje, camposError = interp.camposError)
             }
         }
     }
@@ -641,7 +647,8 @@ class AdminViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _accionCatalogo.value = UiState(error = mensajeDeError(e))
+                val interp = interpretarError(e)
+                _accionCatalogo.value = UiState(error = interp.mensaje, camposError = interp.camposError)
             }
         }
     }

@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -16,6 +17,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.view.isVisible
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -25,6 +27,7 @@ import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
+import com.example.apimovil.BuildConfig
 import com.example.apimovil.R
 import com.example.apimovil.data.ApiClient
 import com.example.apimovil.data.SessionManager
@@ -33,22 +36,13 @@ import com.example.apimovil.data.models.Orden
 import com.example.apimovil.databinding.DialogJustificacionTardanzaBinding
 import com.example.apimovil.databinding.FragmentOrdenDetalleBinding
 import com.example.apimovil.databinding.ItemLineaEvidenciaBinding
-import com.example.apimovil.ui.common.colorDeEstado
-import com.example.apimovil.ui.common.etiquetaDeEstado
-import com.example.apimovil.ui.common.fondoBadgeDeEstado
-import com.example.apimovil.ui.common.formatoLegible
-import com.example.apimovil.ui.common.formatoMoneda
-import com.example.apimovil.ui.common.normalizarUrlApi
-import com.example.apimovil.ui.common.parseFechaIso
-import com.example.apimovil.ui.common.esAbierta
-import com.example.apimovil.ui.common.esCompletada
+import com.example.apimovil.ui.common.*
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
-import java.io.File
 
 class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
 
@@ -64,9 +58,13 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
 
         val ordenId = arguments?.getInt("ordenId") ?: -1
-        if (ordenId != -1) {
-            model.cargarOrdenPorId(ordenId)
+        if (!Validadores.idValido(ordenId)) {
+            Toast.makeText(requireContext(), "No se pudo abrir esta pantalla. Vuelve a intentarlo.", Toast.LENGTH_SHORT).show()
+            findNavController().navigateUp()
+            return
         }
+
+        model.cargarOrdenPorId(ordenId)
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -138,7 +136,7 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
 
         val lineas = orden.detalles.orEmpty()
         val montoTotal = lineas.sumOf { it.monto }
-        binding.textMontoTotal.text = formatoMoneda(montoTotal)
+        binding.textMontoTotal.text = getString(R.string.monto_total_lempiras, montoTotal)
         binding.textCantidadLineas.text = getString(R.string.distribuido_en_n_lineas, lineas.size)
 
         binding.contenedorLineas.removeAllViews()
@@ -205,7 +203,7 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
         }
 
         itemBinding.textDestino.text = "$etiquetaDestino (${linea.tipo_combustible})"
-        itemBinding.textMonto.text = formatoMoneda(linea.monto)
+        itemBinding.textMonto.text = getString(R.string.monto_lempiras, linea.monto)
 
         val lineasList = ordenActual?.detalles.orEmpty()
         val todasCompletas = lineasList.isNotEmpty() && lineasList.all { l ->
@@ -230,12 +228,6 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
         val tableroSubida = isSubido("tablero") || esMgp
         val tanqueSubida = isSubido("tanque")
         val facturaSubida = isSubido("factura")
-
-        val totalFotosReq = if (esMgp) 3 else 4
-        val fotosSubidasCount = listOf(bombaSubida, if (!esMgp) tableroSubida else true, tanqueSubida, facturaSubida).count { it }
-        itemBinding.textProgresoFotos.text = getString(R.string.fotos_progreso_formato, fotosSubidasCount, totalFotosReq)
-        itemBinding.progressFotos.max = totalFotosReq
-        itemBinding.progressFotos.progress = fotosSubidasCount
 
         // 1. Bomba
         itemBinding.btnBomba.isVisible = isOpen && !bombaSubida
@@ -305,6 +297,11 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
 
         if (target is String) {
             val urlNormalizada = normalizarUrlApi(target)
+            if (!esUrlDeApi(urlNormalizada)) {
+                Toast.makeText(context, "No se puede abrir esta foto porque la dirección no es válida.", Toast.LENGTH_SHORT).show()
+                return
+            }
+
             val token = SessionManager.token
             val glideUrl = GlideUrl(
                 urlNormalizada,
@@ -329,14 +326,16 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
 
         if (target is String) {
             val urlNormalizada = normalizarUrlApi(target)
-            val btnDescargar = MaterialButton(context).apply {
-                text = getString(R.string.descargar_foto)
-                setIconResource(android.R.drawable.ic_menu_save)
-                setOnClickListener {
-                    descargarFoto(urlNormalizada)
+            if (esUrlDeApi(urlNormalizada)) {
+                val btnDescargar = MaterialButton(context).apply {
+                    text = getString(R.string.descargar_foto)
+                    setIconResource(android.R.drawable.ic_menu_save)
+                    setOnClickListener {
+                        descargarFoto(urlNormalizada)
+                    }
                 }
+                layout.addView(btnDescargar)
             }
-            layout.addView(btnDescargar)
         }
 
         MaterialAlertDialogBuilder(context)
@@ -348,6 +347,11 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
 
     private fun descargarFoto(urlEvidencia: String) {
         val urlNormalizada = normalizarUrlApi(urlEvidencia)
+        if (!esUrlDeApi(urlNormalizada)) {
+            Toast.makeText(requireContext(), "No se puede abrir esta foto porque la dirección no es válida.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val context = requireContext()
         Toast.makeText(context, "Descargando foto...", Toast.LENGTH_SHORT).show()
 
@@ -363,7 +367,7 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
                     val body = response.body
                     if (body != null) {
                         val bytes = body.bytes()
-                        val filename = "evidencia_${System.currentTimeMillis()}.jpg"
+                        val filename = nombreArchivoSeguro("evidencia_${System.currentTimeMillis()}") + ".jpg"
                         val saved = saveImageToGalleryOrDownloads(context, bytes, filename)
                         withContext(Dispatchers.Main) {
                             if (saved) {
@@ -383,6 +387,9 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
                     }
                 }
             } catch (e: Exception) {
+                if (BuildConfig.DEBUG) {
+                    Log.w("OrdenDetalleFragment", "Error al descargar foto: ${e.javaClass.simpleName}")
+                }
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                 }
@@ -417,7 +424,9 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
                 false
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            if (BuildConfig.DEBUG) {
+                Log.w("OrdenDetalleFragment", "Error al guardar en galería: ${e.javaClass.simpleName}")
+            }
             false
         }
     }
@@ -428,6 +437,10 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
             val context = requireContext()
             val dialogBinding = DialogJustificacionTardanzaBinding.inflate(LayoutInflater.from(context))
 
+            dialogBinding.inputJustificacion.addTextChangedListener {
+                dialogBinding.layoutJustificacion.error = null
+            }
+
             val dialog = MaterialAlertDialogBuilder(context)
                 .setView(dialogBinding.root)
                 .setPositiveButton(R.string.continuar, null)
@@ -437,22 +450,15 @@ class OrdenDetalleFragment : Fragment(R.layout.fragment_orden_detalle) {
             dialog.setOnShowListener {
                 val btnContinuar = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
                 btnContinuar.setOnClickListener {
-                    val justif = dialogBinding.inputJustificacion.text?.toString()?.trim().orEmpty()
-                    if (justif.isBlank()) {
-                        dialogBinding.inputJustificacion.error = getString(R.string.error_justificacion_obligatoria)
+                    val justifInput = dialogBinding.inputJustificacion.text?.toString()
+                    val resJustif = Validadores.textoLibre(justifInput, "la justificación de la entrega tardía", 5, 500, esObligatorio = true)
+                    if (!resJustif.esOk) {
+                        dialogBinding.layoutJustificacion.error = resJustif.mensajeError()
                         return@setOnClickListener
-                    } else {
-                        dialogBinding.inputJustificacion.error = null
                     }
-                    if (justif.length > 500) {
-                        dialogBinding.inputJustificacion.error = "Máximo 500 caracteres"
-                        return@setOnClickListener
-                    } else {
-                        dialogBinding.inputJustificacion.error = null
-                    }
-
+                    dialogBinding.layoutJustificacion.error = null
                     dialog.dismiss()
-                    irAInstruccion(detalleId, tipo, justif)
+                    irAInstruccion(detalleId, tipo, resJustif.valorOrNull())
                 }
             }
             dialog.show()

@@ -35,14 +35,14 @@
         app:boxCornerRadiusTopEnd="12dp"
         app:boxCornerRadiusTopStart="12dp"
         app:counterEnabled="true"
-        app:counterMaxLength="255">
+        app:counterMaxLength="500">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/inputJustificacion"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textMultiLine"
-            android:maxLength="255"
+            android:maxLength="500"
             android:minLines="3" />
     </com.google.android.material.textfield.TextInputLayout>
 

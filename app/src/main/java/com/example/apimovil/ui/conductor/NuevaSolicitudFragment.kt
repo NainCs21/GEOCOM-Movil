@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.core.view.isVisible
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -14,6 +15,8 @@ import androidx.navigation.fragment.findNavController
 import com.example.apimovil.R
 import com.example.apimovil.data.models.Vehiculo
 import com.example.apimovil.databinding.FragmentNuevaSolicitudBinding
+import com.example.apimovil.ui.common.FiltrosEntrada
+import com.example.apimovil.ui.common.Validadores
 import kotlinx.coroutines.launch
 
 /**
@@ -37,13 +40,30 @@ class NuevaSolicitudFragment : Fragment(R.layout.fragment_nueva_solicitud) {
         solicitudId = arguments?.getInt("solicitudId") ?: -1
         val esEdicion = solicitudId != -1
 
+        if (esEdicion && !Validadores.idValido(solicitudId)) {
+            Toast.makeText(requireContext(), "No se pudo abrir esta pantalla. Vuelve a intentarlo.", Toast.LENGTH_SHORT).show()
+            findNavController().navigateUp()
+            return
+        }
+
+        binding.inputDescripcionMgp.filters = FiltrosEntrada.limiteYLargo(150)
+        binding.inputActividad.filters = FiltrosEntrada.limiteYLargo(1000)
+
+        binding.inputActividad.addTextChangedListener {
+            binding.layoutActividad.error = null
+            binding.textError.isVisible = false
+        }
+        binding.inputDescripcionMgp.addTextChangedListener {
+            binding.layoutDescripcionMgp.error = null
+            binding.textError.isVisible = false
+        }
+
         if (esEdicion) {
             binding.textTitulo.text = getString(R.string.editar_solicitud)
             binding.btnEnviar.text = getString(R.string.guardar_cambios)
             model.cargarSolicitudPorId(solicitudId)
         }
 
-        // Configurar toggle de destino
         binding.toggleDestino.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
                 val codigo = when (checkedId) {
@@ -62,12 +82,12 @@ class NuevaSolicitudFragment : Fragment(R.layout.fragment_nueva_solicitud) {
         binding.spinnerVehiculo.setOnItemClickListener { _, _, position, _ ->
             if (position in listaVehiculos.indices) {
                 vehiculoSeleccionadoId = listaVehiculos[position].id
+                binding.layoutVehiculo.error = null
             }
         }
 
         binding.btnEnviar.setOnClickListener { enviarSolicitud() }
 
-        // Cargar vehículos (placas)
         model.cargarVehiculos()
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -152,8 +172,16 @@ class NuevaSolicitudFragment : Fragment(R.layout.fragment_nueva_solicitud) {
                             binding.textError.isVisible = estado.error != null
                             binding.textError.text = estado.error
 
-                            if (estado.error != null && estado.error.contains("422", ignoreCase = true)) {
-                                findNavController().navigateUp()
+                            if (estado.camposError.isNotEmpty()) {
+                                if (estado.camposError.containsKey("descripcion_actividad")) {
+                                    binding.layoutActividad.error = estado.camposError["descripcion_actividad"]
+                                }
+                                if (estado.camposError.containsKey("descripcion_mgp")) {
+                                    binding.layoutDescripcionMgp.error = estado.camposError["descripcion_mgp"]
+                                }
+                                if (estado.camposError.containsKey("vehiculo_id")) {
+                                    binding.layoutVehiculo.error = estado.camposError["vehiculo_id"]
+                                }
                             }
 
                             if (estado.data == true) {
@@ -169,6 +197,18 @@ class NuevaSolicitudFragment : Fragment(R.layout.fragment_nueva_solicitud) {
                             binding.btnEnviar.isEnabled = !estado.loading
                             binding.textError.isVisible = estado.error != null
                             binding.textError.text = estado.error
+
+                            if (estado.camposError.isNotEmpty()) {
+                                if (estado.camposError.containsKey("descripcion_actividad")) {
+                                    binding.layoutActividad.error = estado.camposError["descripcion_actividad"]
+                                }
+                                if (estado.camposError.containsKey("descripcion_mgp")) {
+                                    binding.layoutDescripcionMgp.error = estado.camposError["descripcion_mgp"]
+                                }
+                                if (estado.camposError.containsKey("vehiculo_id")) {
+                                    binding.layoutVehiculo.error = estado.camposError["vehiculo_id"]
+                                }
+                            }
 
                             if (estado.data == true) {
                                 findNavController().navigateUp()
@@ -189,6 +229,11 @@ class NuevaSolicitudFragment : Fragment(R.layout.fragment_nueva_solicitud) {
     }
 
     private fun enviarSolicitud() {
+        binding.layoutActividad.error = null
+        binding.layoutDescripcionMgp.error = null
+        binding.layoutVehiculo.error = null
+        binding.textError.isVisible = false
+
         val codigoDestino = when (binding.toggleDestino.checkedButtonId) {
             R.id.btnDestinoMgp -> "mgp"
             R.id.btnDestinoAmbos -> "ambos"
@@ -196,6 +241,8 @@ class NuevaSolicitudFragment : Fragment(R.layout.fragment_nueva_solicitud) {
         }
 
         val necesitaVehiculo = codigoDestino == "vehiculo" || codigoDestino == "ambos"
+        val necesitaMgp = codigoDestino == "mgp" || codigoDestino == "ambos"
+
         val vehiculoId = if (necesitaVehiculo) {
             vehiculoSeleccionadoId ?: run {
                 val txt = binding.spinnerVehiculo.text?.toString()?.trim().orEmpty()
@@ -203,29 +250,48 @@ class NuevaSolicitudFragment : Fragment(R.layout.fragment_nueva_solicitud) {
             }
         } else null
 
-        if (necesitaVehiculo && vehiculoId == null) {
-            binding.textError.isVisible = true
-            binding.textError.text = getString(R.string.elige_un_destino_valido)
-            return
+        var hasError = false
+
+        if (necesitaVehiculo && !Validadores.idValido(vehiculoId)) {
+            binding.layoutVehiculo.error = getString(R.string.elige_un_destino_valido)
+            hasError = true
         }
 
-        val descripcionMgp = binding.inputDescripcionMgp.text?.toString()?.trim()
-        val actividad = binding.inputActividad.text?.toString()?.trim().orEmpty()
+        val actividadInput = binding.inputActividad.text?.toString()
+        val resActividad = Validadores.textoLibre(actividadInput, "la actividad", 5, 1000, esObligatorio = true)
+        if (!resActividad.esOk) {
+            binding.layoutActividad.error = resActividad.mensajeError()
+            hasError = true
+        }
+
+        var descripcionMgpLimpia: String? = null
+        if (necesitaMgp) {
+            val mgpInput = binding.inputDescripcionMgp.text?.toString()
+            val resMgp = Validadores.textoLibre(mgpInput, "la descripción del equipo MGP", 3, 150, esObligatorio = true)
+            if (!resMgp.esOk) {
+                binding.layoutDescripcionMgp.error = resMgp.mensajeError()
+                hasError = true
+            } else {
+                descripcionMgpLimpia = resMgp.valorOrNull()
+            }
+        }
+
+        if (hasError) return
 
         if (solicitudId != -1) {
             model.editarSolicitud(
                 id = solicitudId,
                 tipoDestino = codigoDestino,
                 vehiculoId = vehiculoId,
-                descripcionMgp = descripcionMgp,
-                descripcionActividad = actividad
+                descripcionMgp = descripcionMgpLimpia,
+                descripcionActividad = resActividad.valorOrNull()!!
             )
         } else {
             model.crearSolicitud(
                 tipoDestino = codigoDestino,
                 vehiculoId = vehiculoId,
-                descripcionMgp = descripcionMgp,
-                descripcionActividad = actividad
+                descripcionMgp = descripcionMgpLimpia,
+                descripcionActividad = resActividad.valorOrNull()!!
             )
         }
     }

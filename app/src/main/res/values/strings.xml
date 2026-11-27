@@ -33,7 +33,7 @@
     <string name="descripcion_de_la_planta_mgp">Descripción de la planta generadora (MGP)</string>
     <string name="descripcion_de_la_actividad">Descripción de la actividad</string>
     <string name="enviar_solicitud">Enviar solicitud</string>
-    <string name="elige_un_destino_valido">Elige un destino válido: vehiculo, mgp o ambos.</string>
+    <string name="elige_un_destino_valido">Elige el vehículo para esta solicitud.</string>
 
     <!-- Conductor: escanear QR -->
     <string name="escanea_el_qr_de_la_gasolinera">Escanea el código QR de la gasolinera para ver tu orden</string>

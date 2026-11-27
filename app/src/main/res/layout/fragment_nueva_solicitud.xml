@@ -71,8 +71,7 @@
                 android:id="@+id/toggleDestino"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:singleSelection="true"
-                app:checkedButton="@+id/btnDestinoVehiculo">
+                app:singleSelection="true">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnDestinoVehiculo"
@@ -150,7 +149,9 @@
                 app:boxCornerRadiusBottomEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusTopStart="12dp">
+                app:boxCornerRadiusTopStart="12dp"
+                app:counterEnabled="true"
+                app:counterMaxLength="150">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/inputDescripcionMgp"
@@ -158,11 +159,13 @@
                     android:layout_height="wrap_content"
                     android:gravity="top|start"
                     android:inputType="textMultiLine|textCapSentences"
+                    android:maxLength="150"
                     android:maxLines="4"
                     android:minLines="2" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/layoutActividad"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -172,6 +175,8 @@
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
+                app:counterEnabled="true"
+                app:counterMaxLength="1000"
                 app:placeholderText="@string/hint_actividad_ejemplo">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -180,6 +185,7 @@
                     android:layout_height="wrap_content"
                     android:gravity="top|start"
                     android:inputType="textMultiLine|textCapSentences"
+                    android:maxLength="1000"
                     android:maxLines="6"
                     android:minLines="3" />
             </com.google.android.material.textfield.TextInputLayout>

@@ -13,7 +13,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
@@ -32,30 +31,33 @@ import com.example.apimovil.databinding.DialogFormConductorBinding
 import com.example.apimovil.databinding.DialogFormGasolineraBinding
 import com.example.apimovil.databinding.DialogFormVehiculoBinding
 import com.example.apimovil.databinding.FragmentCatalogosBinding
+import com.example.apimovil.ui.common.FiltrosEntrada
+import com.example.apimovil.ui.common.Validadores
 import com.example.apimovil.ui.common.configurarNavegacionAdmin
 import com.example.apimovil.ui.common.configurarNavegacionSupervisor
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.textfield.TextInputEditText
-import com.google.android.material.textfield.TextInputLayout
 import com.google.zxing.BarcodeFormat
 import com.journeyapps.barcodescanner.BarcodeEncoder
 import kotlinx.coroutines.launch
-import java.text.Normalizer
-import java.util.Calendar
 
-/**
- * Catálogos de solo lectura (consulta rápida desde el celular). La gestión
- * completa vive en el panel web; aquí solo se necesita ver la lista.
- */
 class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
 
     private val model: AdminViewModel by viewModels()
     private var _binding: FragmentCatalogosBinding? = null
     private val binding get() = _binding!!
 
+    private var activeDialog: AlertDialog? = null
+    private var activeDialogType: String? = null
+    private var activeConductorBinding: DialogFormConductorBinding? = null
+    private var activeVehiculoBinding: DialogFormVehiculoBinding? = null
+    private var activeGasolineraBinding: DialogFormGasolineraBinding? = null
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentCatalogosBinding.bind(view)
         binding.recycler.layoutManager = LinearLayoutManager(requireContext())
+
+        binding.inputBuscarConductor.filters = FiltrosEntrada.limiteYLargo(50)
+        binding.inputBuscarVehiculo.filters = FiltrosEntrada.limiteYLargo(50)
 
         val bottomNav = binding.incluirNavInferior.root
         if (SessionManager.esAdmin) {
@@ -114,111 +116,129 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                model.conductores.collect { estado ->
-                    val b = _binding ?: return@collect
-                    if (b.toggleCatalogo.checkedButtonId == R.id.btnConductores) {
-                        pintarConductores(estado.loading, estado.error, aplicarFiltroConductores(estado.data))
-                    }
-                }
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                model.vehiculos.collect { estado ->
-                    val b = _binding ?: return@collect
-                    if (b.toggleCatalogo.checkedButtonId == R.id.btnVehiculos) {
-                        pintar(estado.loading, estado.error, aplicarFiltrosVehiculos(estado.data))
-                    }
-                }
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                model.gasolineras.collect { estado ->
-                    val b = _binding ?: return@collect
-                    if (b.toggleCatalogo.checkedButtonId == R.id.btnGasolineras) {
-                        pintar(estado.loading, estado.error, estado.data?.map {
-                            FilaDoble(
-                                id = it.id,
-                                titulo = it.nombre,
-                                subtitulo = "${it.direccion ?: "—"} · QR: ${it.codigo_qr}" +
-                                    if (!it.activo) " · " + getString(R.string.inactivo) else "",
-                                iconRes = R.drawable.ic_gas_pump,
-                                tintRes = if (!it.activo) R.color.texto_secundario else null
-                            )
-                        })
-                    }
-                }
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                model.accionCatalogo.collect { estado ->
-                    if (_binding == null) return@collect
-                    if (estado.error != null) {
-                        Toast.makeText(requireContext(), estado.error, Toast.LENGTH_SHORT).show()
-                    } else if (estado.data == true) {
-                        val mensajeRes = if (model.ultimoTipoAccion == "reactivado") {
-                            R.string.registro_reactivado
-                        } else {
-                            R.string.registro_exitoso
+                launch {
+                    model.conductores.collect { estado ->
+                        val b = _binding ?: return@collect
+                        if (b.toggleCatalogo.checkedButtonId == R.id.btnConductores) {
+                            pintarConductores(estado.loading, estado.error, aplicarFiltroConductores(estado.data))
                         }
-                        Toast.makeText(requireContext(), mensajeRes, Toast.LENGTH_SHORT).show()
+                    }
+                }
+                launch {
+                    model.vehiculos.collect { estado ->
+                        val b = _binding ?: return@collect
+                        if (b.toggleCatalogo.checkedButtonId == R.id.btnVehiculos) {
+                            pintar(estado.loading, estado.error, aplicarFiltrosVehiculos(estado.data))
+                        }
+                    }
+                }
+                launch {
+                    model.gasolineras.collect { estado ->
+                        val b = _binding ?: return@collect
+                        if (b.toggleCatalogo.checkedButtonId == R.id.btnGasolineras) {
+                            pintar(estado.loading, estado.error, estado.data?.map {
+                                FilaDoble(
+                                    id = it.id,
+                                    titulo = it.nombre,
+                                    subtitulo = "${it.direccion ?: "—"} · QR: ${it.codigo_qr}"
+                                )
+                            })
+                        }
+                    }
+                }
+                launch {
+                    model.accionCatalogo.collect { estado ->
+                        val dlg = activeDialog
+                        if (dlg != null && dlg.isShowing) {
+                            val posBtn = dlg.getButton(AlertDialog.BUTTON_POSITIVE)
+                            posBtn?.isEnabled = !estado.loading
+
+                            if (estado.error != null) {
+                                val campos = estado.camposError
+                                when (activeDialogType) {
+                                    "conductor" -> {
+                                        activeConductorBinding?.let { cb ->
+                                            if (campos.containsKey("nombre")) cb.layoutNombre.error = campos["nombre"]
+                                            if (campos.containsKey("correo") || campos.containsKey("email")) cb.layoutCorreo.error = campos["correo"] ?: campos["email"]
+                                            if (campos.containsKey("contrasena") || campos.containsKey("password")) cb.layoutPassword.error = campos["contrasena"] ?: campos["password"]
+                                            if (campos.containsKey("telefono")) cb.layoutTelefono.error = campos["telefono"]
+                                            if (campos.containsKey("cargo")) cb.layoutCargo.error = campos["cargo"]
+                                        }
+                                    }
+                                    "vehiculo" -> {
+                                        activeVehiculoBinding?.let { vb ->
+                                            if (campos.containsKey("placa")) vb.layoutPlaca.error = campos["placa"]
+                                            if (campos.containsKey("marca")) vb.layoutMarca.error = campos["marca"]
+                                            if (campos.containsKey("modelo")) vb.layoutModelo.error = campos["modelo"]
+                                            if (campos.containsKey("anio")) vb.layoutAnio.error = campos["anio"]
+                                            if (campos.containsKey("rendimiento_km_litro")) vb.layoutRendimiento.error = campos["rendimiento_km_litro"]
+                                        }
+                                    }
+                                    "gasolinera" -> {
+                                        activeGasolineraBinding?.let { gb ->
+                                            if (campos.containsKey("nombre")) gb.layoutNombre.error = campos["nombre"]
+                                            if (campos.containsKey("direccion")) gb.layoutDireccion.error = campos["direccion"]
+                                            if (campos.containsKey("codigo_qr")) gb.layoutQr.error = campos["codigo_qr"]
+                                        }
+                                    }
+                                }
+                            } else if (estado.data == true) {
+                                val mensajeRes = if (model.ultimoTipoAccion == "reactivado") {
+                                    R.string.registro_reactivado
+                                } else {
+                                    R.string.registro_exitoso
+                                }
+                                Toast.makeText(requireContext(), mensajeRes, Toast.LENGTH_SHORT).show()
+                                dlg.dismiss()
+                                activeDialog = null
+                                activeDialogType = null
+                                activeConductorBinding = null
+                                activeVehiculoBinding = null
+                                activeGasolineraBinding = null
+                                model.limpiarAccionCatalogo()
+                            }
+                        } else if (estado.data == true) {
+                            val mensajeRes = if (model.ultimoTipoAccion == "reactivado") {
+                                R.string.registro_reactivado
+                            } else {
+                                R.string.registro_exitoso
+                            }
+                            Toast.makeText(requireContext(), mensajeRes, Toast.LENGTH_SHORT).show()
+                            model.limpiarAccionCatalogo()
+                        } else if (estado.error != null && _binding != null) {
+                            Toast.makeText(requireContext(), estado.error, Toast.LENGTH_SHORT).show()
+                            model.limpiarAccionCatalogo()
+                        }
                     }
                 }
             }
         }
     }
 
-    private fun normalizarTexto(texto: String?): String {
-        if (texto.isNullOrBlank()) return ""
-        val nfd = Normalizer.normalize(texto, Normalizer.Form.NFD)
-        return nfd.replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "").lowercase().trim()
-    }
-
-    private fun aplicarFiltroConductores(lista: List<Conductor>?): List<FilaDoble> {
+    private fun aplicarFiltroConductores(conductores: List<Conductor>?): List<FilaDoble> {
         val b = _binding ?: return emptyList()
-        val query = normalizarTexto(b.inputBuscarConductor.text?.toString())
+        val query = b.inputBuscarConductor.text?.toString()?.trim()?.lowercase().orEmpty()
 
-        val filtrados = lista.orEmpty().filter { cond ->
-            if (query.isEmpty()) return@filter true
-            val nombreNorm = normalizarTexto(cond.usuario?.name)
-            val telefonoNorm = normalizarTexto(cond.telefono)
-            val cargoNorm = normalizarTexto(cond.cargo)
-            nombreNorm.contains(query) || telefonoNorm.contains(query) || cargoNorm.contains(query)
+        val filtrados = conductores.orEmpty().filter { cond ->
+            val nombre = cond.usuario?.name.orEmpty().lowercase()
+            val cargo = cond.cargo.lowercase()
+            val telefono = cond.telefono.lowercase()
+
+            query.isEmpty() || nombre.contains(query) || cargo.contains(query) || telefono.contains(query)
         }
 
-        return filtrados.map { cond ->
+        return filtrados.map {
             FilaDoble(
-                id = cond.id,
-                titulo = cond.usuario?.name ?: getString(R.string.conductor_numero, cond.id),
-                subtitulo = "${cond.telefono} · ${cond.cargo}" +
-                    if (!cond.activo) " · " + getString(R.string.inactivo) else "",
-                iconRes = R.drawable.ic_person,
-                tintRes = if (!cond.activo) R.color.texto_secundario else null
+                id = it.id,
+                titulo = it.usuario?.name ?: getString(R.string.conductor_numero, it.id),
+                subtitulo = "${it.telefono} · ${it.cargo}" +
+                    if (!it.activo) " · " + getString(R.string.inactivo) else ""
             )
         }
     }
 
     private fun pintarConductores(loading: Boolean, error: String?, items: List<FilaDoble>?) {
-        val b = _binding ?: return
-        b.progress.isVisible = loading
-        val query = b.inputBuscarConductor.text?.toString()?.trim().orEmpty()
-        val sinResultadosPorBusqueda = !loading && error == null && items.isNullOrEmpty() && query.isNotEmpty()
-
-        if (sinResultadosPorBusqueda) {
-            b.textError.isVisible = true
-            b.textError.text = getString(R.string.no_se_encontraron_conductores)
-            b.textError.setTextColor(ContextCompat.getColor(requireContext(), R.color.texto_secundario))
-        } else {
-            b.textError.isVisible = error != null
-            b.textError.text = error
-            b.textError.setTextColor(ContextCompat.getColor(requireContext(), R.color.estado_vencida))
-        }
-
-        b.recycler.adapter = FilaDobleAdapter(items.orEmpty()) { id, titulo ->
-            mostrarDialogoOpciones(id, titulo)
-        }
+        pintar(loading, error, items)
     }
 
     private fun mostrarDialogoOpciones(id: Int, titulo: String) {
@@ -287,9 +307,7 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
             val barcodeEncoder = BarcodeEncoder()
             val bitmap = barcodeEncoder.encodeBitmap(gas.codigo_qr, BarcodeFormat.QR_CODE, 500, 500)
             imageView.setImageBitmap(bitmap)
-        } catch (e: Exception) {
-            // ignore
-        }
+        } catch (_: Exception) {}
 
         val textQr = TextView(context).apply {
             text = gas.codigo_qr
@@ -349,10 +367,17 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         val context = requireContext()
         val esEdicion = item != null
 
-        val dialog: AlertDialog? = when (binding.toggleCatalogo.checkedButtonId) {
+        when (binding.toggleCatalogo.checkedButtonId) {
             R.id.btnConductores -> {
                 val cond = item as? Conductor
                 val diagBinding = DialogFormConductorBinding.inflate(LayoutInflater.from(context))
+
+                diagBinding.inputNombre.filters = FiltrosEntrada.limiteYLargo(100, "^[\\p{L} .'-]+$")
+                diagBinding.inputCorreo.filters = FiltrosEntrada.limiteYLargo(254)
+                diagBinding.inputPassword.filters = FiltrosEntrada.limiteYLargo(128)
+                diagBinding.inputTelefono.filters = FiltrosEntrada.limiteYLargo(20, "^[0-9 \\-+()]+$")
+                diagBinding.inputCargo.filters = FiltrosEntrada.limiteYLargo(100, "^[\\p{L} .-]+$")
+
                 if (esEdicion && cond != null) {
                     diagBinding.inputNombre.setText(cond.usuario?.name)
                     diagBinding.inputCorreo.setText(cond.usuario?.email)
@@ -371,70 +396,69 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                     .setTitle(if (esEdicion) getString(R.string.editar_conductor) else getString(R.string.nuevo_conductor))
                     .setView(diagBinding.root)
                     .setPositiveButton(R.string.guardar, null)
-                    .setNegativeButton(R.string.cancelar, null)
+                    .setNegativeButton(R.string.cancelar) { dialog, _ ->
+                        dialog.dismiss()
+                        activeDialog = null
+                        activeDialogType = null
+                        activeConductorBinding = null
+                    }
                     .create()
 
+                activeDialog = d
+                activeDialogType = "conductor"
+                activeConductorBinding = diagBinding
+
                 d.setOnShowListener {
-                    d.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener {
-                        val nombre = diagBinding.inputNombre.text?.toString()?.trim().orEmpty()
-                        val correo = diagBinding.inputCorreo.text?.toString()?.trim().orEmpty()
-                        val pass = diagBinding.inputPassword.text?.toString() ?: ""
-                        val telefono = diagBinding.inputTelefono.text?.toString()?.trim().orEmpty()
-                        val cargo = diagBinding.inputCargo.text?.toString()?.trim().orEmpty()
+                    d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val nombreStr = diagBinding.inputNombre.text?.toString()
+                        val correoStr = diagBinding.inputCorreo.text?.toString()
+                        val passStr = diagBinding.inputPassword.text?.toString()
+                        val telefonoStr = diagBinding.inputTelefono.text?.toString()
+                        val cargoStr = diagBinding.inputCargo.text?.toString()
+
+                        val resNombre = Validadores.nombrePersona(nombreStr)
+                        val resCorreo = Validadores.correo(correoStr)
+                        val resPass = Validadores.contrasenaNueva(passStr, esEdicion)
+                        val resTelefono = Validadores.telefono(telefonoStr)
+                        val resCargo = Validadores.cargo(cargoStr)
 
                         var hasError = false
-                        if (nombre.isBlank()) {
-                            diagBinding.layoutNombre.error = getString(R.string.error_nombre_requerido)
-                            hasError = true
-                        }
-                        if (correo.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(correo).matches()) {
-                            diagBinding.layoutCorreo.error = getString(R.string.error_correo_invalido)
-                            hasError = true
-                        }
-                        if (!esEdicion) {
-                            if (pass.isBlank() || pass.length < 8) {
-                                diagBinding.layoutPassword.error = getString(R.string.error_contrasena_min_8)
-                                hasError = true
-                            }
-                        } else {
-                            if (pass.isNotBlank() && pass.length < 8) {
-                                diagBinding.layoutPassword.error = getString(R.string.error_contrasena_min_8)
-                                hasError = true
-                            }
-                        }
-                        if (telefono.isBlank()) {
-                            diagBinding.layoutTelefono.error = getString(R.string.error_telefono_requerido)
-                            hasError = true
-                        }
-                        if (cargo.isBlank()) {
-                            diagBinding.layoutCargo.error = getString(R.string.error_cargo_requerido)
-                            hasError = true
-                        }
+                        if (!resNombre.esOk) { diagBinding.layoutNombre.error = resNombre.mensajeError(); hasError = true }
+                        if (!resCorreo.esOk) { diagBinding.layoutCorreo.error = resCorreo.mensajeError(); hasError = true }
+                        if (!resPass.esOk) { diagBinding.layoutPassword.error = resPass.mensajeError(); hasError = true }
+                        if (!resTelefono.esOk) { diagBinding.layoutTelefono.error = resTelefono.mensajeError(); hasError = true }
+                        if (!resCargo.esOk) { diagBinding.layoutCargo.error = resCargo.mensajeError(); hasError = true }
 
                         if (!hasError) {
                             val map = mutableMapOf<String, Any?>(
-                                "nombre" to nombre,
-                                "correo" to correo,
-                                "telefono" to telefono,
-                                "cargo" to cargo
+                                "nombre" to resNombre.valorOrNull()!!,
+                                "correo" to resCorreo.valorOrNull()!!,
+                                "telefono" to resTelefono.valorOrNull()!!,
+                                "cargo" to resCargo.valorOrNull()!!
                             )
-                            if (pass.isNotBlank()) {
-                                map["contrasena"] = pass
+                            if (resPass.valorOrNull() != null) {
+                                map["contrasena"] = resPass.valorOrNull()!!
                             }
+                            d.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
                             if (esEdicion && cond != null) {
                                 model.editarConductor(cond.id, map)
                             } else {
                                 model.crearConductor(map)
                             }
-                            d.dismiss()
                         }
                     }
                 }
-                d
+                d.show()
             }
             R.id.btnVehiculos -> {
                 val veh = item as? Vehiculo
                 val diagBinding = DialogFormVehiculoBinding.inflate(LayoutInflater.from(context))
+
+                diagBinding.inputPlaca.filters = FiltrosEntrada.limiteYLargo(15, "^[a-zA-Z0-9 -]+$")
+                diagBinding.inputMarca.filters = FiltrosEntrada.limiteYLargo(50, "^[a-zA-Z0-9\\p{L} .\\-/+]+$")
+                diagBinding.inputModelo.filters = FiltrosEntrada.limiteYLargo(80, "^[a-zA-Z0-9\\p{L} .\\-/+]+$")
+                diagBinding.inputAnio.filters = FiltrosEntrada.limiteYLargo(4, "^[0-9]+$")
+                diagBinding.inputRendimiento.filters = FiltrosEntrada.limiteYLargo(5, "^[0-9.,]+$")
 
                 val opcionesCombustible = arrayOf("Diesel", "Gasolina")
                 val mapaCombustible = mapOf("Diesel" to "diesel", "Gasolina" to "gasolina", "Diésel" to "diesel")
@@ -462,86 +486,74 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                 diagBinding.inputAnio.addTextChangedListener { diagBinding.layoutAnio.error = null }
                 diagBinding.inputRendimiento.addTextChangedListener { diagBinding.layoutRendimiento.error = null }
 
-                val currentYear = Calendar.getInstance().get(Calendar.YEAR) + 1
-
                 val d = MaterialAlertDialogBuilder(context)
                     .setTitle(if (esEdicion) getString(R.string.editar_vehiculo) else getString(R.string.nuevo_vehiculo))
                     .setView(diagBinding.root)
                     .setPositiveButton(R.string.guardar, null)
-                    .setNegativeButton(R.string.cancelar, null)
+                    .setNegativeButton(R.string.cancelar) { dialog, _ ->
+                        dialog.dismiss()
+                        activeDialog = null
+                        activeDialogType = null
+                        activeVehiculoBinding = null
+                    }
                     .create()
 
+                activeDialog = d
+                activeDialogType = "vehiculo"
+                activeVehiculoBinding = diagBinding
+
                 d.setOnShowListener {
-                    d.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener {
-                        val placa = diagBinding.inputPlaca.text?.toString()?.trim().orEmpty()
-                        val marca = diagBinding.inputMarca.text?.toString()?.trim().orEmpty()
-                        val modelo = diagBinding.inputModelo.text?.toString()?.trim().orEmpty()
-                        val anioStr = diagBinding.inputAnio.text?.toString()?.trim().orEmpty()
-                        val comb = diagBinding.inputCombustible.text?.toString()?.trim().orEmpty()
-                        val rendimientoStr = diagBinding.inputRendimiento.text?.toString()?.trim().orEmpty()
+                    d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val placaStr = diagBinding.inputPlaca.text?.toString()
+                        val marcaStr = diagBinding.inputMarca.text?.toString()
+                        val modeloStr = diagBinding.inputModelo.text?.toString()
+                        val anioStr = diagBinding.inputAnio.text?.toString()
+                        val combStr = diagBinding.inputCombustible.text?.toString()
+                        val rendStr = diagBinding.inputRendimiento.text?.toString()
+
+                        val resPlaca = Validadores.placa(placaStr)
+                        val resMarca = Validadores.marcaModelo(marcaStr, "la marca", 50)
+                        val resModelo = Validadores.marcaModelo(modeloStr, "el modelo", 80)
+                        val resAnio = Validadores.anio(anioStr)
+                        val resRend = Validadores.rendimiento(rendStr)
 
                         var hasError = false
-                        if (placa.isBlank()) {
-                            diagBinding.layoutPlaca.error = getString(R.string.error_placa_requerida)
-                            hasError = true
-                        }
-                        if (marca.isBlank()) {
-                            diagBinding.layoutMarca.error = getString(R.string.error_marca_requerida)
-                            hasError = true
-                        }
-                        if (modelo.isBlank()) {
-                            diagBinding.layoutModelo.error = getString(R.string.error_modelo_requerido)
-                            hasError = true
-                        }
-
-                        var anioVal: Int? = null
-                        if (anioStr.isNotBlank()) {
-                            val anioParsed = anioStr.toIntOrNull()
-                            if (anioParsed == null || anioParsed !in 1980..currentYear) {
-                                diagBinding.layoutAnio.error = getString(R.string.error_anio_invalido)
-                                hasError = true
-                            } else {
-                                anioVal = anioParsed
-                            }
-                        }
-
-                        var rendimientoVal: Double? = null
-                        if (rendimientoStr.isNotBlank()) {
-                            val rendParsed = rendimientoStr.toDoubleOrNull()
-                            if (rendParsed == null || rendParsed !in 0.1..99.9) {
-                                diagBinding.layoutRendimiento.error = getString(R.string.error_rendimiento_invalido)
-                                hasError = true
-                            } else {
-                                rendimientoVal = rendParsed
-                            }
-                        }
+                        if (!resPlaca.esOk) { diagBinding.layoutPlaca.error = resPlaca.mensajeError(); hasError = true }
+                        if (!resMarca.esOk) { diagBinding.layoutMarca.error = resMarca.mensajeError(); hasError = true }
+                        if (!resModelo.esOk) { diagBinding.layoutModelo.error = resModelo.mensajeError(); hasError = true }
+                        if (!resAnio.esOk) { diagBinding.layoutAnio.error = resAnio.mensajeError(); hasError = true }
+                        if (!resRend.esOk) { diagBinding.layoutRendimiento.error = resRend.mensajeError(); hasError = true }
 
                         if (!hasError) {
-                            val tipoCombustibleVal = mapaCombustible[comb] ?: "diesel"
+                            val tipoCombustibleVal = mapaCombustible[combStr?.trim()] ?: "diesel"
                             val map = mutableMapOf<String, Any?>(
-                                "placa" to placa,
-                                "marca" to marca,
-                                "modelo" to modelo,
-                                "anio" to anioVal,
+                                "placa" to resPlaca.valorOrNull()!!,
+                                "marca" to resMarca.valorOrNull()!!,
+                                "modelo" to resModelo.valorOrNull()!!,
+                                "anio" to resAnio.valorOrNull(),
                                 "tipo_combustible" to tipoCombustibleVal
                             )
-                            if (rendimientoVal != null) {
-                                map["rendimiento_km_litro"] = rendimientoVal
+                            if (resRend.valorOrNull() != null) {
+                                map["rendimiento_km_litro"] = resRend.valorOrNull()!!
                             }
+                            d.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
                             if (esEdicion && veh != null) {
                                 model.editarVehiculo(veh.id, map)
                             } else {
                                 model.crearVehiculo(map)
                             }
-                            d.dismiss()
                         }
                     }
                 }
-                d
+                d.show()
             }
             R.id.btnGasolineras -> {
                 val gas = item as? Gasolinera
                 val diagBinding = DialogFormGasolineraBinding.inflate(LayoutInflater.from(context))
+
+                diagBinding.inputNombre.filters = FiltrosEntrada.limiteYLargo(100, "^[\\p{L}0-9 .,\\-&'#()]+$")
+                diagBinding.inputDireccion.filters = FiltrosEntrada.limiteYLargo(255, "^[\\p{L}0-9 .,\\-#/()]+$")
+                diagBinding.inputQr.filters = FiltrosEntrada.limiteYLargo(100, "^[a-zA-Z0-9_\\-:.]+$")
 
                 if (esEdicion && gas != null) {
                     diagBinding.inputNombre.setText(gas.nombre)
@@ -558,58 +570,64 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                         diagBinding.layoutNombre.error = null
                         if (!esEdicion) {
                             val nombre = s?.toString()?.trim().orEmpty()
-                            val generatedQr = "QR-" + nombre.uppercase().replace(Regex("[^A-Z0-9]+"), "_").trim('_')
+                            val generatedQr = ("QR-" + nombre.uppercase().replace(Regex("[^A-Z0-9]+"), "_").trim('_')).take(100)
                             diagBinding.inputQr.setText(generatedQr)
                         }
                     }
                     override fun afterTextChanged(s: Editable?) {}
                 })
                 diagBinding.inputQr.addTextChangedListener { diagBinding.layoutQr.error = null }
+                diagBinding.inputDireccion.addTextChangedListener { diagBinding.layoutDireccion.error = null }
 
                 val d = MaterialAlertDialogBuilder(context)
                     .setTitle(if (esEdicion) getString(R.string.editar_gasolinera) else getString(R.string.nueva_gasolinera))
                     .setView(diagBinding.root)
                     .setPositiveButton(R.string.guardar, null)
-                    .setNegativeButton(R.string.cancelar, null)
+                    .setNegativeButton(R.string.cancelar) { dialog, _ ->
+                        dialog.dismiss()
+                        activeDialog = null
+                        activeDialogType = null
+                        activeGasolineraBinding = null
+                    }
                     .create()
 
+                activeDialog = d
+                activeDialogType = "gasolinera"
+                activeGasolineraBinding = diagBinding
+
                 d.setOnShowListener {
-                    d.getButton(android.content.DialogInterface.BUTTON_POSITIVE).setOnClickListener {
-                        val nombre = diagBinding.inputNombre.text?.toString()?.trim().orEmpty()
-                        val direccion = diagBinding.inputDireccion.text?.toString()?.trim()
-                        val qr = diagBinding.inputQr.text?.toString()?.trim().orEmpty()
+                    d.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val nombreStr = diagBinding.inputNombre.text?.toString()
+                        val dirStr = diagBinding.inputDireccion.text?.toString()
+                        val qrStr = diagBinding.inputQr.text?.toString()
+
+                        val resNombre = Validadores.nombreGasolinera(nombreStr)
+                        val resDireccion = Validadores.direccion(dirStr)
+                        val resQr = Validadores.codigoQrNuevo(qrStr)
 
                         var hasError = false
-                        if (nombre.isBlank()) {
-                            diagBinding.layoutNombre.error = getString(R.string.error_gasolinera_nombre)
-                            hasError = true
-                        }
-                        if (qr.isBlank()) {
-                            diagBinding.layoutQr.error = getString(R.string.error_qr_requerido)
-                            hasError = true
-                        }
+                        if (!resNombre.esOk) { diagBinding.layoutNombre.error = resNombre.mensajeError(); hasError = true }
+                        if (!resDireccion.esOk) { diagBinding.layoutDireccion.error = resDireccion.mensajeError(); hasError = true }
+                        if (!resQr.esOk) { diagBinding.layoutQr.error = resQr.mensajeError(); hasError = true }
 
                         if (!hasError) {
                             val map = mapOf(
-                                "nombre" to nombre,
-                                "direccion" to direccion,
-                                "codigo_qr" to qr
+                                "nombre" to resNombre.valorOrNull()!!,
+                                "direccion" to resDireccion.valorOrNull(),
+                                "codigo_qr" to resQr.valorOrNull()!!
                             )
+                            d.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
                             if (esEdicion && gas != null) {
                                 model.editarGasolinera(gas.id, map)
                             } else {
                                 model.crearGasolinera(map)
                             }
-                            d.dismiss()
                         }
                     }
                 }
-                d
+                d.show()
             }
-            else -> null
         }
-
-        dialog?.show()
     }
 
     private fun mostrarConductores() {
@@ -648,8 +666,6 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         b.toggleCatalogo.check(R.id.btnGasolineras)
         b.layoutFiltrosConductores.isVisible = false
         b.layoutFiltrosVehiculos.isVisible = false
-        b.inputBuscarConductor.setText("")
-        b.inputBuscarVehiculo.setText("")
         b.btnNuevo.text = getString(R.string.nuevo_gasolinera_btn)
         model.cargarGasolineras()
     }
@@ -679,8 +695,7 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
                 titulo = "${it.placa} · ${it.marca} ${it.modelo}",
                 subtitulo = it.tipo_combustible + rendimientoStr +
                     if (!it.activo) " · " + getString(R.string.inactivo) else "",
-                iconRes = R.drawable.ic_vehiculo,
-                tintRes = if (!it.activo) R.color.texto_secundario else null
+                iconRes = R.drawable.ic_vehiculo
             )
         }
     }
@@ -690,7 +705,6 @@ class CatalogosFragment : Fragment(R.layout.fragment_catalogos) {
         b.progress.isVisible = loading
         b.textError.isVisible = error != null
         b.textError.text = error
-        b.textError.setTextColor(ContextCompat.getColor(requireContext(), R.color.estado_vencida))
         b.recycler.adapter = FilaDobleAdapter(items.orEmpty()) { id, titulo ->
             mostrarDialogoOpciones(id, titulo)
         }

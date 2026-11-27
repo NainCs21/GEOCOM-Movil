@@ -8,13 +8,13 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
-import java.io.File
 import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -26,6 +26,7 @@ import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
+import com.example.apimovil.BuildConfig
 import com.example.apimovil.R
 import com.example.apimovil.data.ApiClient
 import com.example.apimovil.data.SessionManager
@@ -34,15 +35,7 @@ import com.example.apimovil.data.models.Orden
 import com.example.apimovil.databinding.DialogRehabilitarOrdenBinding
 import com.example.apimovil.databinding.FragmentOrdenDetalleBinding
 import com.example.apimovil.databinding.ItemLineaEvidenciaBinding
-import com.example.apimovil.ui.common.colorDeEstado
-import com.example.apimovil.ui.common.etiquetaDeEstado
-import com.example.apimovil.ui.common.fondoBadgeDeEstado
-import com.example.apimovil.ui.common.mensajeDeError
-import com.example.apimovil.ui.common.normalizarUrlApi
-import com.example.apimovil.ui.common.esCompletada
-import com.example.apimovil.ui.common.esTarde
-import com.example.apimovil.ui.common.generarFacturaPdf
-import java.util.Locale
+import com.example.apimovil.ui.common.*
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +43,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
+import java.io.File
+import java.util.Locale
 
 class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
 
@@ -57,14 +52,20 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
     private var _binding: FragmentOrdenDetalleBinding? = null
     private val binding get() = _binding!!
 
+    private var pdfFacturaTemporal: File? = null
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentOrdenDetalleBinding.bind(view)
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
 
         val ordenId = arguments?.getInt("ordenId") ?: -1
-        if (ordenId != -1) {
-            cargarOrden(ordenId)
+        if (!Validadores.idValido(ordenId)) {
+            Toast.makeText(requireContext(), "No se pudo abrir esta pantalla. Vuelve a intentarlo.", Toast.LENGTH_SHORT).show()
+            findNavController().navigateUp()
+            return
         }
+
+        cargarOrden(ordenId)
     }
 
     private fun cargarOrden(ordenId: Int) {
@@ -139,49 +140,47 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
             binding.textJustificacionRehabilitacion.isVisible = false
         }
 
+        if (esCompletada(orden.estado)) {
+            configurarBotonFacturaPdf(orden)
+        } else {
+            binding.btnExportarPdf.isVisible = false
+            binding.btnVerFacturaPdf.isVisible = false
+        }
+    }
+
+    private fun configurarBotonFacturaPdf(orden: Orden) {
         val abrirFacturaPdf = {
-            if (isAdded && _binding != null) {
+            viewLifecycleOwner.lifecycleScope.launch {
                 binding.btnExportarPdf.isEnabled = false
                 binding.btnVerFacturaPdf.isEnabled = false
 
-                viewLifecycleOwner.lifecycleScope.launch {
+                val pdfFile = pdfFacturaTemporal ?: generarFacturaPdf(requireContext(), orden)
+                pdfFacturaTemporal = pdfFile
+
+                if (pdfFile != null && pdfFile.exists()) {
+                    val numSeguro = nombreArchivoSeguro(orden.numero_orden)
+                    guardarFacturaEnDescargas(requireContext(), pdfFile, numSeguro)
                     try {
-                        Toast.makeText(requireContext(), "Generando factura PDF...", Toast.LENGTH_SHORT).show()
-                        val pdfFile = generarFacturaPdf(requireContext(), orden)
-
-                        if (!isAdded || _binding == null) return@launch
-
-                        if (pdfFile != null && pdfFile.exists()) {
-                            val guardado = guardarFacturaEnDescargas(requireContext(), pdfFile, orden.numero_orden)
-                            if (guardado) {
-                                Toast.makeText(requireContext(), "Factura guardada en Descargas/GeoComFacturas", Toast.LENGTH_SHORT).show()
-                            }
-
-                            try {
-                                val uri = FileProvider.getUriForFile(
-                                    requireContext(),
-                                    "${requireContext().packageName}.fileprovider",
-                                    pdfFile
-                                )
-                                val intent = Intent(Intent.ACTION_SEND).apply {
-                                    type = "application/pdf"
-                                    putExtra(Intent.EXTRA_STREAM, uri)
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                }
-                                startActivity(Intent.createChooser(intent, "Compartir factura de orden"))
-                            } catch (_: Exception) {
-                                Toast.makeText(requireContext(), "No se pudo generar la factura PDF", Toast.LENGTH_SHORT).show()
-                            }
-                        } else {
-                            Toast.makeText(requireContext(), "No se pudo generar la factura PDF", Toast.LENGTH_SHORT).show()
+                        val uri = FileProvider.getUriForFile(
+                            requireContext(),
+                            "${requireContext().packageName}.fileprovider",
+                            pdfFile
+                        )
+                        val intent = Intent(Intent.ACTION_SEND).apply {
+                            type = "application/pdf"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         }
-                    } finally {
-                        if (isAdded && _binding != null) {
-                            binding.btnExportarPdf.isEnabled = true
-                            binding.btnVerFacturaPdf.isEnabled = true
-                        }
+                        startActivity(Intent.createChooser(intent, "Compartir Factura PDF"))
+                    } catch (_: Exception) {
+                        Toast.makeText(requireContext(), "No se pudo abrir el PDF", Toast.LENGTH_SHORT).show()
                     }
+                } else {
+                    Toast.makeText(requireContext(), "No se pudo generar la factura en PDF", Toast.LENGTH_SHORT).show()
                 }
+
+                binding.btnExportarPdf.isEnabled = true
+                binding.btnVerFacturaPdf.isEnabled = true
             }
         }
 
@@ -194,7 +193,8 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
 
     private fun guardarFacturaEnDescargas(context: Context, sourceFile: File, numeroOrden: String): Boolean {
         return try {
-            val filename = "factura_orden_$numeroOrden.pdf"
+            val nameSeguro = nombreArchivoSeguro(numeroOrden)
+            val filename = "factura_orden_$nameSeguro.pdf"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val contentValues = ContentValues().apply {
                     put(MediaStore.MediaColumns.DISPLAY_NAME, filename)
@@ -225,7 +225,9 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
                 true
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            if (BuildConfig.DEBUG) {
+                Log.w("OrdenDetalleAdminFragment", "Error al guardar factura en descargas: ${e.javaClass.simpleName}")
+            }
             false
         }
     }
@@ -252,10 +254,10 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
                 if (isEnviando) return@setOnClickListener
 
                 val horasStr = dialogBinding.inputHoras.text?.toString()?.trim().orEmpty()
-                val horas = horasStr.toIntOrNull()
+                val resHoras = Validadores.horasVigencia(horasStr)
 
-                if (horas == null || horas !in 1..3) {
-                    dialogBinding.inputHoras.error = getString(R.string.error_horas_vigencia)
+                if (!resHoras.esOk) {
+                    dialogBinding.inputHoras.error = resHoras.mensajeError()
                     return@setOnClickListener
                 } else {
                     dialogBinding.inputHoras.error = null
@@ -268,7 +270,7 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
                 dialog.getButton(DialogInterface.BUTTON_NEGATIVE)?.isEnabled = false
                 dialogBinding.inputHoras.isEnabled = false
 
-                model.rehabilitarOrden(ordenId, horas) {
+                model.rehabilitarOrden(ordenId, resHoras.valorOrNull()!!) {
                     // Success callback
                 }
             }
@@ -384,6 +386,12 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
     private fun mostrarDialogoVerEvidencia(urlEvidencia: String) {
         val urlNormalizada = normalizarUrlApi(urlEvidencia)
         val context = requireContext()
+
+        if (!esUrlDeApi(urlNormalizada)) {
+            Toast.makeText(context, "No se puede abrir esta foto porque la dirección no es válida.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val layout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
@@ -417,14 +425,16 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
 
         layout.addView(imageView)
 
-        val btnDescargar = MaterialButton(context).apply {
-            text = getString(R.string.descargar_foto)
-            setIconResource(android.R.drawable.ic_menu_save)
-            setOnClickListener {
-                descargarFoto(urlNormalizada)
+        if (esUrlDeApi(urlNormalizada)) {
+            val btnDescargar = MaterialButton(context).apply {
+                text = getString(R.string.descargar_foto)
+                setIconResource(android.R.drawable.ic_menu_save)
+                setOnClickListener {
+                    descargarFoto(urlNormalizada)
+                }
             }
+            layout.addView(btnDescargar)
         }
-        layout.addView(btnDescargar)
 
         MaterialAlertDialogBuilder(context)
             .setTitle(R.string.evidencia)
@@ -435,6 +445,11 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
 
     private fun descargarFoto(urlEvidencia: String) {
         val urlNormalizada = normalizarUrlApi(urlEvidencia)
+        if (!esUrlDeApi(urlNormalizada)) {
+            Toast.makeText(requireContext(), "No se puede abrir esta foto porque la dirección no es válida.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val context = requireContext()
         Toast.makeText(context, "Descargando foto...", Toast.LENGTH_SHORT).show()
 
@@ -450,7 +465,7 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
                     val body = response.body
                     if (body != null) {
                         val bytes = body.bytes()
-                        val filename = "evidencia_${System.currentTimeMillis()}.jpg"
+                        val filename = nombreArchivoSeguro("evidencia_${System.currentTimeMillis()}") + ".jpg"
                         val saved = saveImageToGalleryOrDownloads(context, bytes, filename)
                         withContext(Dispatchers.Main) {
                             if (saved) {
@@ -470,6 +485,9 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
                     }
                 }
             } catch (e: Exception) {
+                if (BuildConfig.DEBUG) {
+                    Log.w("OrdenDetalleAdminFragment", "Error al descargar foto: ${e.javaClass.simpleName}")
+                }
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                 }
@@ -504,7 +522,9 @@ class OrdenDetalleAdminFragment : Fragment(R.layout.fragment_orden_detalle) {
                 false
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            if (BuildConfig.DEBUG) {
+                Log.w("OrdenDetalleAdminFragment", "Error al guardar foto: ${e.javaClass.simpleName}")
+            }
             false
         }
     }
