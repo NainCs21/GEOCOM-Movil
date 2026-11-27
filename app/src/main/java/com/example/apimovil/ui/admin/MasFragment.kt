@@ -17,9 +17,10 @@ import com.example.apimovil.ui.common.configurarNavegacionSupervisor
 import com.example.apimovil.ui.common.vincularBadgeAvisos
 import com.google.android.material.badge.BadgeDrawable
 import com.google.android.material.badge.BadgeUtils
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.badge.ExperimentalBadgeUtils
 import kotlinx.coroutines.launch
 
+@ExperimentalBadgeUtils
 @Suppress("RestrictedApi")
 class MasFragment : Fragment(R.layout.fragment_mas) {
 
@@ -29,7 +30,7 @@ class MasFragment : Fragment(R.layout.fragment_mas) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentMasBinding.bind(view)
 
-        val bottomNav = binding.incluirNavInferior.root as BottomNavigationView
+        val bottomNav = binding.incluirNavInferior.root
         if (SessionManager.esAdmin) {
             bottomNav.menu.clear()
             bottomNav.inflateMenu(R.menu.bottom_nav_admin)

@@ -15,6 +15,7 @@ import com.example.apimovil.data.SesionEventos
 import com.example.apimovil.data.notificaciones.NotificacionesForegroundService
 import com.example.apimovil.data.notificaciones.programarSincronizacionNotificaciones
 import com.example.apimovil.databinding.FragmentLoginBinding
+import com.example.apimovil.ui.common.FiltrosEntrada
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 
@@ -27,6 +28,9 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentLoginBinding.bind(view)
 
+        binding.inputCorreo.filters = FiltrosEntrada.limiteYLargo(254)
+        binding.inputContrasena.filters = FiltrosEntrada.limiteYLargo(128)
+
         // Mostrar mensaje de sesion expirada o inactividad si existe
         val mensajeSalida = SessionManager.obtenerYLimpiarMensajeSalida()
         if (!mensajeSalida.isNullOrBlank()) {
@@ -35,8 +39,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         SesionEventos.reiniciarGuardia()
 
         binding.btnIngresar.setOnClickListener {
-            val correo = binding.inputCorreo.text?.toString().orEmpty()
-            val contrasena = binding.inputContrasena.text?.toString().orEmpty()
+            val correo = binding.inputCorreo.text?.toString()
+            val contrasena = binding.inputContrasena.text?.toString()
             model.login(correo, contrasena)
         }
 
@@ -64,7 +68,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     private fun irAHome() {
         val destino = when {
             SessionManager.esConductor -> R.id.homeConductorFragment
-            else -> R.id.homeAdminFragment // admin y contabilidad comparten el mismo panel de inicio
+            else -> R.id.homeAdminFragment
         }
         findNavController().navigate(destino)
     }

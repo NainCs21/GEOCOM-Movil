@@ -18,6 +18,10 @@ import com.example.apimovil.data.SessionManager
 import com.example.apimovil.data.models.Conductor
 import com.example.apimovil.databinding.FragmentCajaChicaBinding
 import com.example.apimovil.databinding.ItemFilaDobleBinding
+import com.example.apimovil.ui.common.FiltrosEntrada
+import com.example.apimovil.ui.common.Validadores
+import com.google.android.material.datepicker.CalendarConstraints
+import com.google.android.material.datepicker.DateValidatorPointBackward
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
@@ -44,12 +48,20 @@ class CajaChicaFragment : Fragment(R.layout.fragment_caja_chica) {
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
         binding.contenedorRegistro.isVisible = SessionManager.esAdmin
 
+        binding.inputMonto.filters = FiltrosEntrada.limiteYLargo(11, "^[0-9.,]+$")
+        binding.inputDescripcion.filters = FiltrosEntrada.limiteYLargo(255)
+
         val sdfDisplay = SimpleDateFormat("dd MMM yyyy", Locale("es", "HN"))
         binding.inputFecha.setText(sdfDisplay.format(Date()))
 
         // Listener para selector de fecha
         val abrirDatePicker = View.OnClickListener {
+            val constraints = CalendarConstraints.Builder()
+                .setValidator(DateValidatorPointBackward.now())
+                .build()
+
             val picker = MaterialDatePicker.Builder.datePicker()
+                .setCalendarConstraints(constraints)
                 .setTitleText(R.string.fecha_de_entrega)
                 .build()
 
@@ -63,6 +75,7 @@ class CajaChicaFragment : Fragment(R.layout.fragment_caja_chica) {
                 }
                 fechaEntregaApi = sdfApi.format(dateUtc)
                 binding.inputFecha.setText(sdfView.format(dateUtc))
+                binding.layoutFecha.error = null
             }
             picker.show(parentFragmentManager, "datePickerCajaChica")
         }
@@ -71,22 +84,22 @@ class CajaChicaFragment : Fragment(R.layout.fragment_caja_chica) {
 
         // Chips de montos rápidos
         binding.chipMonto100.setOnClickListener {
-            binding.inputMonto.setText(R.string.monto_100)
+            binding.inputMonto.setText("100")
             binding.layoutMonto.error = null
             actualizarResumen()
         }
         binding.chipMonto200.setOnClickListener {
-            binding.inputMonto.setText(R.string.monto_200)
+            binding.inputMonto.setText("200")
             binding.layoutMonto.error = null
             actualizarResumen()
         }
         binding.chipMonto500.setOnClickListener {
-            binding.inputMonto.setText(R.string.monto_500)
+            binding.inputMonto.setText("500")
             binding.layoutMonto.error = null
             actualizarResumen()
         }
         binding.chipMonto1000.setOnClickListener {
-            binding.inputMonto.setText(R.string.monto_1000)
+            binding.inputMonto.setText("1000")
             binding.layoutMonto.error = null
             actualizarResumen()
         }
@@ -134,24 +147,45 @@ class CajaChicaFragment : Fragment(R.layout.fragment_caja_chica) {
         })
 
         binding.btnRegistrar.setOnClickListener {
-            val monto = binding.inputMonto.text?.toString()?.toDoubleOrNull()
-            val descripcion = binding.inputDescripcion.text?.toString()?.trim().orEmpty()
+            binding.layoutMonto.error = null
+            binding.layoutDescripcion.error = null
+            binding.layoutFecha.error = null
+            binding.textError.isVisible = false
 
-            var errorValidacion = false
-
-            if (monto == null || monto <= 0.0) {
-                binding.layoutMonto.error = getString(R.string.monto_mayor_a_cero_error)
-                errorValidacion = true
+            val resMonto = Validadores.monto(binding.inputMonto.text?.toString(), "monto")
+            if (!resMonto.esOk) {
+                binding.layoutMonto.error = resMonto.mensajeError()
+                return@setOnClickListener
             }
 
-            if (descripcion.isBlank()) {
-                binding.layoutDescripcion.error = getString(R.string.motivo_requerido_error)
-                errorValidacion = true
+            val resDesc = Validadores.textoLibre(
+                binding.inputDescripcion.text?.toString(),
+                "el motivo o descripción",
+                3,
+                255,
+                esObligatorio = true
+            )
+            if (!resDesc.esOk) {
+                binding.layoutDescripcion.error = resDesc.mensajeError()
+                return@setOnClickListener
             }
 
-            if (errorValidacion) return@setOnClickListener
+            val hoyStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+            if (fechaEntregaApi.isBlank()) {
+                binding.layoutFecha.error = "Elige la fecha de entrega."
+                return@setOnClickListener
+            }
+            if (fechaEntregaApi > hoyStr) {
+                binding.layoutFecha.error = "La fecha no puede ser futura."
+                return@setOnClickListener
+            }
 
-            model.registrarCajaChica(conductorIdSeleccionado, monto!!, descripcion, fechaEntregaApi)
+            model.registrarCajaChica(
+                conductorIdSeleccionado,
+                resMonto.valorOrNull()!!,
+                resDesc.valorOrNull()!!,
+                fechaEntregaApi
+            )
         }
 
         if (SessionManager.esAdmin) {
@@ -217,6 +251,7 @@ class CajaChicaFragment : Fragment(R.layout.fragment_caja_chica) {
 
                             binding.layoutMonto.error = null
                             binding.layoutDescripcion.error = null
+                            binding.layoutFecha.error = null
                             binding.textError.isVisible = false
                             actualizarResumen()
 
@@ -251,7 +286,7 @@ class CajaChicaFragment : Fragment(R.layout.fragment_caja_chica) {
 
     private fun actualizarResumen() {
         val montoText = binding.inputMonto.text?.toString()?.trim().orEmpty()
-        val montoVal = montoText.toDoubleOrNull()
+        val montoVal = Validadores.monto(montoText, "monto").valorOrNull()
         val montoFmt = if (montoVal != null) String.format(Locale.US, "%,.2f", montoVal) else "0.00"
 
         val textoResumen = if (nombreConductorSeleccionado != null) {

@@ -1,13 +1,13 @@
 package com.example.apimovil.ui.login
 
-import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.apimovil.data.ApiClient
 import com.example.apimovil.data.SessionManager
 import com.example.apimovil.data.models.LoginRequest
 import com.example.apimovil.ui.common.UiState
-import com.example.apimovil.ui.common.mensajeDeError
+import com.example.apimovil.ui.common.Validadores
+import com.example.apimovil.ui.common.interpretarError
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,25 +20,26 @@ class LoginViewModel : ViewModel() {
     val state = _state.asStateFlow()
 
     // Realiza la autenticacion del usuario con la API
-    fun login(correo: String, contrasena: String) {
-        val correoTrim = correo.trim()
-        if (correoTrim.isBlank()) {
-            _state.value = UiState(error = "Escribe tu correo.")
+    fun login(correoInput: String?, contrasenaInput: String?) {
+        val resCorreo = Validadores.correo(correoInput)
+        if (!resCorreo.esOk) {
+            _state.value = UiState(error = resCorreo.mensajeError())
             return
         }
-        if (!Patterns.EMAIL_ADDRESS.matcher(correoTrim).matches()) {
-            _state.value = UiState(error = "Escribe un correo válido, por ejemplo nombre@empresa.com.")
+
+        val resContrasena = Validadores.contrasenaLogin(contrasenaInput)
+        if (!resContrasena.esOk) {
+            _state.value = UiState(error = resContrasena.mensajeError())
             return
         }
-        if (contrasena.isBlank()) {
-            _state.value = UiState(error = "Escribe tu contraseña.")
-            return
-        }
+
+        val correoLimpio = resCorreo.valorOrNull()!!
+        val contrasenaLimpia = resContrasena.valorOrNull()!!
 
         viewModelScope.launch {
             _state.value = UiState(loading = true)
             try {
-                val respuesta = ApiClient.api.login(LoginRequest(correoTrim, contrasena))
+                val respuesta = ApiClient.api.login(LoginRequest(correoLimpio, contrasenaLimpia))
                 SessionManager.guardarSesion(
                     token = respuesta.token,
                     usuarioId = respuesta.usuario.id,
@@ -50,7 +51,8 @@ class LoginViewModel : ViewModel() {
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _state.value = UiState(error = mensajeDeError(e))
+                val interp = interpretarError(e)
+                _state.value = UiState(error = interp.mensaje, camposError = interp.camposError)
             }
         }
     }

@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
@@ -21,6 +22,8 @@ import com.example.apimovil.data.models.DetalleLineaRequest
 import com.example.apimovil.data.models.Gasolinera
 import com.example.apimovil.data.models.Vehiculo
 import com.example.apimovil.databinding.FragmentAsignarMontoBinding
+import com.example.apimovil.ui.common.FiltrosEntrada
+import com.example.apimovil.ui.common.Validadores
 import com.example.apimovil.ui.common.formatearFechaIsoShort
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -36,20 +39,44 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
     private var listaGasolineras: List<Gasolinera> = emptyList()
     private var gasolineraIdSeleccionada: Int? = null
     private var listaVehiculos: List<Vehiculo> = emptyList()
+    private var vehiculoIdSolicitud: Int? = null
 
     private var galonesVehiculo: Double = 0.0
     private var galonesMgp: Double = 0.0
+
+    private val actualizarTotal = object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            binding.layoutMontoVehiculo.error = null
+            binding.layoutMontoMgp.error = null
+            binding.textError.isVisible = false
+        }
+        override fun afterTextChanged(s: Editable?) = recalcularTotal()
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         _binding = FragmentAsignarMontoBinding.bind(view)
 
         val solicitudId = arguments?.getInt("solicitudId") ?: -1
+        if (!Validadores.idValido(solicitudId)) {
+            Toast.makeText(requireContext(), "No se pudo abrir esta pantalla. Vuelve a intentarlo.", Toast.LENGTH_SHORT).show()
+            findNavController().navigateUp()
+            return
+        }
+
         val tipoDestino = arguments?.getString("tipoDestino") ?: "vehiculo"
-        var vehiculoId = arguments?.takeIf { it.containsKey("vehiculoId") }?.getInt("vehiculoId")
+        vehiculoIdSolicitud = arguments?.takeIf { it.containsKey("vehiculoId") }?.getInt("vehiculoId")
         val descripcionMgp = arguments?.getString("descripcionMgp")
         val descripcionActividad = arguments?.getString("descripcionActividad").orEmpty()
         val conductorNombre = arguments?.getString("conductorNombre")
         val conductorId = arguments?.getInt("conductorId") ?: 0
+
+        binding.inputHorasVigencia.filters = FiltrosEntrada.limiteYLargo(1, "^[1-3]$")
+        binding.inputMontoVehiculo.filters = FiltrosEntrada.limiteYLargo(11, "^[0-9.,]+$")
+        binding.inputMontoMgp.filters = FiltrosEntrada.limiteYLargo(11, "^[0-9.,]+$")
+
+        binding.inputHorasVigencia.addTextChangedListener { binding.layoutHorasVigencia.error = null }
+        binding.spinnerGasolinera.addTextChangedListener { binding.layoutGasolinera.error = null }
 
         binding.btnVolver.setOnClickListener { findNavController().navigateUp() }
         binding.textResumenConductor.text = conductorNombre ?: getString(R.string.conductor_numero, conductorId)
@@ -72,62 +99,47 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
         binding.tarjetaMontoVehiculo.isVisible = esVehiculo
         binding.tarjetaMontoMgp.isVisible = esMgp
 
-        binding.inputMontoVehiculo.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                binding.layoutMontoVehiculo.error = null
-                binding.textError.isVisible = false
-            }
-            override fun afterTextChanged(s: Editable?) = recalcularTotal()
-        })
-
-        binding.inputMontoMgp.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                binding.layoutMontoMgp.error = null
-                binding.textError.isVisible = false
-            }
-            override fun afterTextChanged(s: Editable?) = recalcularTotal()
-        })
+        binding.inputMontoVehiculo.addTextChangedListener(actualizarTotal)
+        binding.inputMontoMgp.addTextChangedListener(actualizarTotal)
 
         binding.btnMonto100Vehiculo.setOnClickListener {
-            binding.inputMontoVehiculo.setText(R.string.monto_100)
+            binding.inputMontoVehiculo.setText("100")
             binding.layoutMontoVehiculo.error = null
             recalcularTotal()
         }
         binding.btnMonto200Vehiculo.setOnClickListener {
-            binding.inputMontoVehiculo.setText(R.string.monto_200)
+            binding.inputMontoVehiculo.setText("200")
             binding.layoutMontoVehiculo.error = null
             recalcularTotal()
         }
         binding.btnMonto500Vehiculo.setOnClickListener {
-            binding.inputMontoVehiculo.setText(R.string.monto_500)
+            binding.inputMontoVehiculo.setText("500")
             binding.layoutMontoVehiculo.error = null
             recalcularTotal()
         }
         binding.btnMonto1000Vehiculo.setOnClickListener {
-            binding.inputMontoVehiculo.setText(R.string.monto_1000)
+            binding.inputMontoVehiculo.setText("1000")
             binding.layoutMontoVehiculo.error = null
             recalcularTotal()
         }
 
         binding.btnMonto100Mgp.setOnClickListener {
-            binding.inputMontoMgp.setText(R.string.monto_100)
+            binding.inputMontoMgp.setText("100")
             binding.layoutMontoMgp.error = null
             recalcularTotal()
         }
         binding.btnMonto200Mgp.setOnClickListener {
-            binding.inputMontoMgp.setText(R.string.monto_200)
+            binding.inputMontoMgp.setText("200")
             binding.layoutMontoMgp.error = null
             recalcularTotal()
         }
         binding.btnMonto500Mgp.setOnClickListener {
-            binding.inputMontoMgp.setText(R.string.monto_500)
+            binding.inputMontoMgp.setText("500")
             binding.layoutMontoMgp.error = null
             recalcularTotal()
         }
         binding.btnMonto1000Mgp.setOnClickListener {
-            binding.inputMontoMgp.setText(R.string.monto_1000)
+            binding.inputMontoMgp.setText("1000")
             binding.layoutMontoMgp.error = null
             recalcularTotal()
         }
@@ -137,6 +149,7 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
         binding.spinnerGasolinera.setOnItemClickListener { _, _, position, _ ->
             if (position in listaGasolineras.indices) {
                 gasolineraIdSeleccionada = listaGasolineras[position].id
+                binding.layoutGasolinera.error = null
             }
         }
 
@@ -148,9 +161,6 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
                 launch {
                     model.vehiculos.collect { estado ->
                         listaVehiculos = estado.data.orEmpty()
-                        if (vehiculoId == null && listaVehiculos.isNotEmpty()) {
-                            vehiculoId = listaVehiculos.first().id
-                        }
                         recalcularTotal()
                     }
                 }
@@ -256,42 +266,60 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
         }
 
         binding.btnAsignar.setOnClickListener {
+            binding.textError.isVisible = false
+            binding.layoutGasolinera.error = null
+            binding.layoutHorasVigencia.error = null
+            binding.layoutMontoVehiculo.error = null
+            binding.layoutMontoMgp.error = null
+
             val gasolineraId = gasolineraIdSeleccionada ?: run {
                 val txt = binding.spinnerGasolinera.text?.toString()?.trim().orEmpty()
                 listaGasolineras.find { g -> txt.contains(g.nombre, ignoreCase = true) }?.id
             }
-            val horas = binding.inputHorasVigencia.text?.toString()?.toIntOrNull()
-            if (gasolineraId == null || horas == null || horas !in 1..3) {
-                binding.textError.isVisible = true
-                binding.textError.text = getString(R.string.completa_gasolinera_y_vigencia)
+
+            if (gasolineraId == null) {
+                binding.layoutGasolinera.error = "Selecciona una gasolinera."
                 return@setOnClickListener
             }
 
-            var hasAmountError = false
-            val detalles = mutableListOf<DetalleLineaRequest>()
-            if (esVehiculo) {
-                val monto = binding.inputMontoVehiculo.text?.toString()?.toDoubleOrNull()
-                if (monto == null || monto <= 0.0) {
-                    binding.layoutMontoVehiculo.error = getString(R.string.monto_mayor_a_cero_error)
-                    hasAmountError = true
-                } else {
-                    binding.layoutMontoVehiculo.error = null
-                    val targetVehiculoId = vehiculoId ?: listaVehiculos.firstOrNull()?.id ?: 1
-                    detalles += DetalleLineaRequest("vehiculo", vehiculo_id = targetVehiculoId, monto = monto)
-                }
+            val resHoras = Validadores.horasVigencia(binding.inputHorasVigencia.text?.toString())
+            if (!resHoras.esOk) {
+                binding.layoutHorasVigencia.error = resHoras.mensajeError()
+                return@setOnClickListener
             }
-            if (esMgp) {
-                val monto = binding.inputMontoMgp.text?.toString()?.toDoubleOrNull()
-                if (monto == null || monto <= 0.0) {
-                    binding.layoutMontoMgp.error = getString(R.string.monto_mayor_a_cero_error)
-                    hasAmountError = true
+            val horasVal = resHoras.valorOrNull()!!
+
+            var hasError = false
+            val detalles = mutableListOf<DetalleLineaRequest>()
+
+            if (esVehiculo) {
+                val targetVehiculoId = vehiculoIdSolicitud ?: listaVehiculos.firstOrNull()?.id
+                if (!Validadores.idValido(targetVehiculoId)) {
+                    binding.textError.isVisible = true
+                    binding.textError.text = "No se pudo identificar el vehículo de la solicitud. Vuelve a abrirla."
+                    return@setOnClickListener
+                }
+
+                val resMontoV = Validadores.monto(binding.inputMontoVehiculo.text?.toString(), "monto del vehículo")
+                if (!resMontoV.esOk) {
+                    binding.layoutMontoVehiculo.error = resMontoV.mensajeError()
+                    hasError = true
                 } else {
-                    binding.layoutMontoMgp.error = null
-                    detalles += DetalleLineaRequest("mgp", descripcion_mgp = descripcionMgp, monto = monto)
+                    detalles += DetalleLineaRequest("vehiculo", vehiculo_id = targetVehiculoId, monto = resMontoV.valorOrNull()!!)
                 }
             }
 
-            if (hasAmountError) return@setOnClickListener
+            if (esMgp) {
+                val resMontoM = Validadores.monto(binding.inputMontoMgp.text?.toString(), "monto de MGP")
+                if (!resMontoM.esOk) {
+                    binding.layoutMontoMgp.error = resMontoM.mensajeError()
+                    hasError = true
+                } else {
+                    detalles += DetalleLineaRequest("mgp", descripcion_mgp = descripcionMgp, monto = resMontoM.valorOrNull()!!)
+                }
+            }
+
+            if (hasError) return@setOnClickListener
 
             if (detalles.isEmpty()) {
                 binding.textError.isVisible = true
@@ -299,7 +327,7 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
                 return@setOnClickListener
             }
 
-            mostrarDialogoConfirmarContrasena(solicitudId, gasolineraId, horas, detalles)
+            mostrarDialogoConfirmarContrasena(solicitudId, gasolineraId, horasVal, detalles)
         }
     }
 
@@ -315,6 +343,7 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
         val progress = dialogView.findViewById<ProgressBar>(R.id.progressVerificacion)
         val textError = dialogView.findViewById<TextView>(R.id.textErrorVerificacion)
 
+        inputContrasena.filters = FiltrosEntrada.limiteYLargo(128)
         inputContrasena.addTextChangedListener { layoutContrasena.error = null }
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
@@ -334,8 +363,9 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
 
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             val contrasena = inputContrasena.text?.toString()?.trim().orEmpty()
-            if (contrasena.isEmpty()) {
-                layoutContrasena.error = getString(R.string.contrasena_requerida)
+            val valPass = Validadores.contrasenaLogin(contrasena)
+            if (!valPass.esOk) {
+                layoutContrasena.error = valPass.mensajeError()
                 return@setOnClickListener
             }
             layoutContrasena.error = null
@@ -345,7 +375,7 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).isEnabled = false
             inputContrasena.isEnabled = false
 
-            model.verificarContrasena(contrasena) {
+            model.verificarContrasena(valPass.valorOrNull()!!) {
                 dialog.dismiss()
                 model.asignarOrden(solicitudId, gasolineraId, horas, detalles)
             }
@@ -362,7 +392,7 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
                     inputContrasena.isEnabled = buttonsEnabled
 
                     if (estado.error != null) {
-                        layoutContrasena.error = getString(R.string.contrasena_incorrecta)
+                        layoutContrasena.error = estado.error
                         inputContrasena.setText("")
                     }
                 }
@@ -385,9 +415,9 @@ class AsignarMontoFragment : Fragment(R.layout.fragment_asignar_monto) {
         val montoMgp = if (binding.tarjetaMontoMgp.isVisible)
             binding.inputMontoMgp.text?.toString()?.toDoubleOrNull() ?: 0.0 else 0.0
 
-        val vehiculoId = listaVehiculos.firstOrNull()?.id
-        if (binding.tarjetaMontoVehiculo.isVisible && vehiculoId != null) {
-            model.estimarVehiculo(montoVehiculo, vehiculoId)
+        val targetVehiculoId = vehiculoIdSolicitud ?: listaVehiculos.firstOrNull()?.id
+        if (binding.tarjetaMontoVehiculo.isVisible && targetVehiculoId != null) {
+            model.estimarVehiculo(montoVehiculo, targetVehiculoId)
         } else {
             galonesVehiculo = 0.0
             binding.textEstimacionVehiculo.isVisible = false
